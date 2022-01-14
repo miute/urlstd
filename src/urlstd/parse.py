@@ -1270,7 +1270,7 @@ class URL:
 
 class URLParserState(enum.IntEnum):
     EOF = -1
-    AUTHORITY_STATE = enum.auto()
+    AUTHORITY_STATE = 1
     FILE_HOST_STATE = enum.auto()
     FILE_SLASH_STATE = enum.auto()
     FILE_STATE = enum.auto()
