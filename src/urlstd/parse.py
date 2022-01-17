@@ -216,9 +216,22 @@ def starts_with_windows_drive_letter(text: str) -> bool:
 
 
 def string_percent_decode(s: str) -> bytes:
-    """Returns a percent-decoded byte sequence after encoding with utf-8.
+    r"""Returns a percent-decoded byte sequence after encoding with utf-8.
 
     Invalid surrogates will be replaced with U+FFFD.
+
+    Examples:
+        >>> string_percent_decode('%f0%9f%8c%88').decode()
+        '🌈'
+
+        >>> string_percent_decode('\U0001f308').decode()
+        '🌈'
+
+        >>> string_percent_decode('\ud83c\udf08').decode()
+        '🌈'
+
+        >>> string_percent_decode('\udf08\ud83c').decode() == '\ufffd\ufffd'
+        True
     """
     b = utf8_encode(s)
     return percent_decode(b)
@@ -227,13 +240,31 @@ def string_percent_decode(s: str) -> bytes:
 def string_percent_encode(
     s: str, safe: str, encoding: str = "utf-8", space_as_plus: bool = False
 ) -> str:
-    """Returns a percent-encoded string after encoding with *encoding*.
+    r"""Returns a percent-encoded string after encoding with *encoding*.
 
     Invalid surrogates will be replaced with U+FFFD.
     Also, if the encoding fails, it will be replaced with the appropriate XML
     character reference.
 
+    *safe* specifies ASCII characters that should not be percent-encoded.
+
     If *space_as_plus* is *True*, replace 0x20 (space) with U+002B (plus sign).
+
+    Examples:
+        >>> string_percent_encode('/El Niño/', '/')
+        '/El%20Ni%C3%B1o/'
+
+        >>> string_percent_encode('\U0001f308', '')
+        '%F0%9F%8C%88'
+
+        >>> string_percent_encode('\ud83c\udf08', '')
+        '%F0%9F%8C%88'
+
+        >>> string_percent_encode('\ud83c', '')
+        '%EF%BF%BD'  # → '\ufffd'
+
+        >>> string_percent_encode('\U0001f308', '', 'windows-1251')
+        '%26%23127752%3B'  # → '&#127752;'
     """
     s = s.encode("utf-16", "surrogatepass").decode("utf-16", "replace")
     quote_via = quote_plus if space_as_plus else quote
@@ -258,6 +289,10 @@ def urlencode(
 
     Converts a sequence of tuples of name-value pairs into a percent-encoded
     ASCII text string in the form application/x-www-form-urlencoded.
+
+    Invalid surrogates will be replaced with U+FFFD.
+    Also, if the encoding fails, it will be replaced with the appropriate XML
+    character reference.
     """
     params = []
     for name, value in query:
@@ -285,9 +320,22 @@ def urlparse(
 ) -> ParseResult:
     """An alternative to urllib.parse.urlparse().
 
-    Parses a string representation of a URL using the basic URL parser, and
-    returns urllib.parse.ParseResult.
-    A base URL *base* is necessary if the *urlstring* is a relative-URL string.
+    Parses a string *urlstring* against a base URL *base* using the basic URL
+    parser, and returns ``urllib.parse.ParseResult``.
+
+    Args:
+        urlstring: An absolute-URL or a relative-URL. If *urlstring* is a
+            relative-URL, *base* is required.
+        base: An absolute-URL for a relative-URL *urlstring*.
+        encoding: The encoding to encode URL’s query. If the encoding fails,
+            it will be replaced with the appropriate XML character reference.
+        allow_fragments: If *False*, fragment identifiers are not recognized.
+
+    Returns:
+        A named tuple ``urllib.parse.ParseResult``.
+
+    Raises:
+        urlstd.error.URLParseError: Raised when URL parsing fails.
     """
     url = parse_url(urlstring, base, encoding)
     hostname = url.serialize_host()
@@ -347,9 +395,12 @@ def utf8_percent_encode(s: str, safe: str, space_as_plus: bool = False) -> str:
     Also, if the encoding fails, it will be replaced with the appropriate XML
     character reference.
 
+    *safe* specifies ASCII characters that should not be percent-encoded.
+
     If *space_as_plus* is *True*, replace 0x20 (space) with U+002B (plus sign).
 
-    Same as "string_percent_encode(s, safe,'utf-8', space_as_plus)".
+    This is equivalent to
+    "string_percent_encode(s, safe,'utf-8', space_as_plus)".
     """
     return string_percent_encode(
         s, safe, encoding="utf-8", space_as_plus=space_as_plus
@@ -357,6 +408,8 @@ def utf8_percent_encode(s: str, safe: str, space_as_plus: bool = False) -> str:
 
 
 class Host:
+    """Utility class for hosts (domains and IP addresses)."""
+
     @classmethod
     def _ends_in_a_number(cls, host: str) -> bool:
         parts = host.split(".")
@@ -561,6 +614,22 @@ class Host:
     def parse(
         cls, host: str, is_not_special: bool = False
     ) -> Union[str, int, Tuple[int, ...]]:
+        """Parses a string *host*, and returns a domain, IP address, opaque
+        host, or empty host.
+
+        Args:
+            host: A host string to parse.
+            is_not_special: *True* if a URL’s scheme is not a special scheme,
+                *False* otherwise.
+
+        Returns:
+            - str -- A domain, an opaque host, or an empty host.
+            - int -- An IPv4 address.
+            - Tuple[int, ...] -- An IPv6 address.
+
+        Raises:
+            urlstd.error.URLParseError: Raised when URL parsing fails.
+        """
         if len(host) == 0:
             return ""  # empty host
 
@@ -599,6 +668,14 @@ class Host:
 
     @classmethod
     def serialize(cls, host: Union[str, int, Sequence[int]]) -> str:
+        """Returns a string representation of a host.
+
+        Args:
+            host: A domain, an IP address, an opaque host, or an empty host.
+
+        Returns:
+            A host string.
+        """
         if isinstance(host, int):
             # IPv4 address
             return cls._serialize_ipv4(host)
@@ -609,6 +686,8 @@ class Host:
 
 
 class IDNA:
+    """Utility class for IDNA processing."""
+
     # References:
     #  https://chromium.googlesource.com/chromium/src/+/refs/tags/99.0.4761.0/url/url_idna_icu.cc
     #  https://svn.webkit.org/repository/webkit/tags/Safari-613.1.9.2/Source/WTF/wtf/URLParser.h
@@ -664,7 +743,16 @@ class IDNA:
 
     @classmethod
     def domain_to_ascii(cls, domain: str, be_strict: bool = False) -> str:
-        """Converts a domain name to IDNA ASCII form."""
+        """Converts a domain name to IDNA ASCII form.
+
+        Args:
+            domain: A domain name.
+            be_strict: If True, set the UseSTD3ASCIIRules flag. See :rfc:`3490`
+                for more details.
+
+        Returns:
+            A domain name in IDNA ASCII form.
+        """
         log = get_logger(cls)
         info = icu.IDNAInfo()
         try:
@@ -716,12 +804,22 @@ class IDNA:
 
 
 class Origin(NamedTuple):
+    """A named tuple that represents the origin of the URL."""
+
+    #: A URL's scheme.
     scheme: str
+
+    #: A URL's host.
     host: Optional[Union[str, int, Tuple[int, ...]]]
+
+    #: A URL's port.
     port: Optional[int]
+
+    #: A URL's domain.
     domain: Optional[str]
 
     def __str__(self) -> str:
+        """Returns a string representation of the origin."""
         host = "" if self.host is None else Host.serialize(self.host)
         result = f"{self.scheme}://{host}"
         if self.port is not None:
@@ -729,19 +827,39 @@ class Origin(NamedTuple):
         return result
 
 
-@dataclass
+@dataclass(eq=False)
 class URLRecord:
+    """A data class that represents a universal identifier."""
+
+    #: A URL's scheme.
     scheme: str = ""
+
+    #: A URL's username.
     username: str = ""
+
+    #: A URL's password.
     password: str = ""
+
+    #: A URL's host.
     host: Optional[Union[str, int, Tuple[int, ...]]] = None
+
+    #: A URL's port.
     port: Optional[int] = None
+
+    #: A URL's path.
     path: Union[List[str], str] = field(default_factory=list)  # type: ignore
+
+    #: A URL's query.
     query: Optional[str] = None
+
+    #: A URL's fragment.
     fragment: Optional[str] = None
+
+    #: A URL's blob URL entry. (unused)
     blob_url_entry: Optional[str] = None
 
     def __repr__(self) -> str:
+        """Returns a nicely formatted representation string."""
         return (
             f"{self.__class__.__name__}("
             f"href={self.href!r}, "
@@ -757,6 +875,10 @@ class URLRecord:
         )
 
     def __str__(self) -> str:
+        """Returns a string representation of a URL.
+
+        This is equivalent to :attr:`.href`.
+        """
         return self.href
 
     def cannot_have_username_password_port(self) -> bool:
@@ -775,6 +897,10 @@ class URLRecord:
 
     @property
     def href(self) -> str:
+        """Returns a string representation of a URL.
+
+        This is equivalent to :meth:`.serialize_url` with no arguments.
+        """
         return self.serialize_url()
 
     def includes_credentials(self) -> bool:
@@ -797,6 +923,22 @@ class URLRecord:
 
     @property
     def origin(self) -> Optional[Origin]:
+        """Returns a URL’s origin or *None* as an `opaque origin
+        <https://html.spec.whatwg.org/multipage/origin.html#concept-origin-opaque>`_.
+
+        Examples:
+            >>> parse_url('blob:https://example.com:443/').origin
+            Origin(scheme='https', host='example.com', port=None, domain=None)
+
+            >>> parse_url('blob:d3958f5c-0777-0845-9dcf-2cb28783acaf').origin
+            # → None
+
+            >>> parse_url('http://example.org:82/foo/bar').origin
+            Origin(scheme='http', host='example.org', port=82, domain=None)
+
+            >>> parse_url('non-special://test/x').origin
+            # → None
+        """
         if self.scheme == "blob":
             # TODO: If url’s blob URL entry is non-null, then return url’s blob
             #  URL entry’s environment’s origin.
@@ -826,7 +968,12 @@ class URLRecord:
         return output
 
     def serialize_url(self, exclude_fragment: bool = False) -> str:
-        """Returns a string representation of a URL."""
+        """Returns a string representation of a URL.
+
+        Args:
+            exclude_fragment: If *True*, fragment identifiers will be removed
+                from the output string.
+        """
         output = self.scheme + ":"
         if self.host is not None:
             output += "//"
@@ -853,6 +1000,7 @@ class URLRecord:
         return output
 
     def shorten_path(self) -> None:
+        """Shortens a URL's path."""
         assert not self.has_opaque_path()
         path = self.path  # type: ignore
         path_size = len(path)
@@ -868,6 +1016,35 @@ class URLRecord:
 
 
 class URLSearchParams(collections.abc.Collection):
+    """Parses and manipulates URL's query.
+
+    Args:
+        init: One of: A string in application/x-www-form-urlencoded form,
+            a sequence of name-value pairs,
+            a dictionary containing name-value pairs,
+            :class:`.URLRecord` object,
+            or :class:`.URLSearchParams` object.
+
+    Examples:
+        To create a URLSearchParams:
+
+        >>> params = URLSearchParams('?a=1&b=2&a=3')
+        >>> list(params)
+        [('a', '1'), ('b', '2'), ('a', '3')]
+
+        >>> params = URLSearchParams([('a', '1'), ('b', '2'), ('a', '3')])
+        >>> list(params)
+        [('a', '1'), ('b', '2'), ('a', '3')]
+
+        >>> params = URLSearchParams({'a': '1', 'b': '2', 'a': '3'})
+        >>> list(params)
+        [('a', '3'), ('b', '2')]
+
+        >>> new_params = URLSearchParams(params)
+        >>> list(new_params)
+        [('a', '3'), ('b', '2')]
+    """
+
     @overload
     def __init__(self, init: str) -> None:
         ...
@@ -945,11 +1122,23 @@ class URLSearchParams(collections.abc.Collection):
         self._list += parse_qsl(utf8_encode(init))
 
     def __add__(self, other: Any) -> str:
+        """Returns a string in application/x-www-form-urlencoded form
+        concatenated with *other*.
+
+        *other* must be a string.
+        """
         if not isinstance(other, str):
             return NotImplemented
         return self._serialize_query() + other
 
     def __contains__(self, item: Any) -> bool:
+        """Returns *True* if a name-value pair with the specified *item* exists,
+        *False* otherwise.
+
+        *item* must be a string.
+
+        This is equivalent to :meth:`.has`.
+        """
         if not isinstance(item, str):
             raise TypeError(
                 f"Requires string as left operand, not {type(item).__name__}"
@@ -957,15 +1146,23 @@ class URLSearchParams(collections.abc.Collection):
         return self.get(item) is not None
 
     def __iter__(self) -> Iterator:
+        """Returns a new iterator of this object’s items
+        ((name, value) pairs).
+
+        This is equivalent to :meth:`.entries`.
+        """
         return iter(self._list)
 
     def __len__(self) -> int:
+        """Returns the number of name-value pairs."""
         return len(self._list)
 
     def __repr__(self) -> str:
+        """Returns a nicely formatted representation string."""
         return f"{self.__class__.__name__}({self._list})"
 
     def __str__(self) -> str:
+        """Returns a string in application/x-www-form-urlencoded form."""
         return self._serialize_query()
 
     def _serialize_query(self) -> str:
@@ -980,19 +1177,38 @@ class URLSearchParams(collections.abc.Collection):
         )
 
     def append(self, name: str, value: Union[str, int, float]) -> None:
-        """Appends a new name-value pair as a new search parameter."""
+        """Appends a new name-value pair as a new search parameter.
+
+        Examples:
+            >>> params = URLSearchParams()
+            >>> params.append('a', '1')
+            >>> params.append('b', '2')
+            >>> params.append('a', '3')
+            >>> list(params)
+            [('a', '1'), ('b', '2'), ('a', '3')]
+        """
         name = utf8_decode(string_percent_decode(name))
         value = utf8_decode(string_percent_decode(str(value)))
         self._list.append((name, value))
         self._update()
 
     def attach(self, init: URLRecord) -> None:
+        """Associates a URL record *init* with this URLSearchParams object."""
         query = init.query or ""
         self._list = parse_qsl(utf8_encode(query))
         self._url = init
 
     def delete(self, name: str) -> None:
-        """Removes all name-value pairs whose name is *name*."""
+        """Removes all name-value pairs whose name is *name*.
+
+        Examples:
+            >>> params = URLSearchParams('a=1&b=2&a=3')
+            >>> list(params)
+            [('a', '1'), ('b', '2'), ('a', '3')]
+            >>> params.delete('a')
+            >>> list(params)
+            [('b', '2')]
+        """
         name = utf8_decode(string_percent_decode(name))
         for i, name_value in reversed(list(enumerate(self._list))):
             if name_value[0] == name:
@@ -1002,6 +1218,8 @@ class URLSearchParams(collections.abc.Collection):
     def entries(self) -> Iterator:
         """Returns a new iterator of this object’s items
         ((name, value) pairs).
+
+        This is equivalent to :meth:`.__iter__`.
         """
         return iter(self._list)
 
@@ -1029,7 +1247,7 @@ class URLSearchParams(collections.abc.Collection):
         )
 
     def has(self, name: str) -> bool:
-        """Returns *True* if a name-value pair with the specified name exists,
+        """Returns *True* if a name-value pair with the specified *name* exists,
         *False* otherwise.
         """
         return self.get(name) is not None
@@ -1042,6 +1260,14 @@ class URLSearchParams(collections.abc.Collection):
         """If name-value pair with the specified name exists, sets the value of
         the first name-value pair whose name is *name* to *value* and remove
         the other values. Otherwise, appends a new name-value pair.
+
+        Examples:
+            >>> params = URLSearchParams('a=1&b=2&a=3')
+            >>> list(params)
+            [('a', '1'), ('b', '2'), ('a', '3')]
+            >>> params.set('a', '4')
+            >>> list(params)
+            [('a', '4'), ('b', '2')]
         """
         name = utf8_decode(string_percent_decode(name))
         value = utf8_decode(string_percent_decode(str(value)))
@@ -1082,11 +1308,64 @@ class URLSearchParams(collections.abc.Collection):
 
 
 class URL:
+    r"""Parses a string *url* against a base URL *base*.
+
+    Args:
+        url: An absolute-URL or a relative-URL.
+            If *url* is a relative-URL, *base* is required.
+        base: An absolute-URL for a relative-URL *url*.
+
+    Raises:
+        urlstd.error.URLParseError: Raised when URL parsing fails.
+
+    Examples:
+        To parse a string into a URL with using a base URL:
+
+        >>> URL('//foo/bar', 'http://example.org/foo/bar')
+        URL(href='http://foo/bar', origin='http://foo', protocol='http:',
+        username='', password='', host='foo', hostname='foo', port='',
+        pathname='/bar', search='', hash='')
+
+        >>> URL('/', 'http://example.org/foo/bar')
+        URL(href='http://example.org/', origin='http://example.org',
+        protocol='http:', username='', password='', host='example.org',
+        hostname='example.org', port='', pathname='/', search='', hash='')
+
+        >>> URL('https://test:@test', 'about:blank')
+        URL(href='https://test@test/', origin='https://test',
+        protocol='https:', username='test', password='', host='test',
+        hostname='test', port='', pathname='/', search='', hash='')
+
+        >>> URL('?a=b&c=d', 'http://example.org/foo/bar')
+        URL(href='http://example.org/foo/bar?a=b&c=d',
+        origin='http://example.org', protocol='http:', username='', password='',
+        host='example.org', hostname='example.org', port='',
+        pathname='/foo/bar', search='?a=b&c=d', hash='')
+
+        >>> URL('#β', 'http://example.org/foo/bar')
+        URL(href='http://example.org/foo/bar#%CE%B2',
+        origin='http://example.org', protocol='http:', username='', password='',
+        host='example.org', hostname='example.org', port='',
+        pathname='/foo/bar', search='', hash='#%CE%B2')
+
+        >>> URL('', 'http://example.org/foo/bar')
+        URL(href='http://example.org/foo/bar', origin='http://example.org',
+        protocol='http:', username='', password='', host='example.org',
+        hostname='example.org', port='', pathname='/foo/bar', search='',
+        hash='')
+
+        >>> URL('https://x/\ufffd?\ufffd#\ufffd', 'about:blank')
+        URL(href='https://x/%EF%BF%BD?%EF%BF%BD#%EF%BF%BD', origin='https://x',
+        protocol='https:', username='', password='', host='x', hostname='x',
+        port='', pathname='/%EF%BF%BD', search='?%EF%BF%BD', hash='#%EF%BF%BD')
+    """
+
     def __init__(self, url: str, base: Optional[str] = None):
         self._url: URLRecord = parse_url(url, base=base)
         self._query: URLSearchParams = URLSearchParams(self._url)
 
     def __repr__(self) -> str:
+        """Returns a nicely formatted representation string."""
         return (
             f"{self.__class__.__name__}("
             f"href={self.href!r}, "
@@ -1104,10 +1383,28 @@ class URL:
         )
 
     def __str__(self) -> str:
+        """Returns a string representation of a URL.
+
+        This is equivalent to :attr:`.href`.
+        """
         return self.href
 
     @property
     def hash(self) -> str:
+        """A URL's fragment (includes leading U+0023 (#) if non-empty).
+
+        Examples:
+            >>> url = URL('http://example.net')
+            >>> url.href
+            'http://example.net/'
+            >>> url.hash
+            ''
+            >>> url.hash = '%c3%89té'
+            >>> url.hash
+            '#%c3%89t%C3%A9'
+            >>> url.href
+            'http://example.net/#%c3%89t%C3%A9'
+        """
         fragment = self._url.fragment
         if fragment is None or len(fragment) == 0:
             return ""
@@ -1128,6 +1425,25 @@ class URL:
 
     @property
     def host(self) -> str:
+        """A URL’s host, and then, if a URL’s port is different from the
+        default port for a URL's scheme, U+003A (:), followed by URL’s port.
+
+        If a URL has an
+        `opaque path <https://url.spec.whatwg.org/#url-opaque-path>`_,
+        setting the value has no effect.
+
+        Examples:
+            >>> url = URL('http://example.net')
+            >>> url.href
+            'http://example.net/'
+            >>> url.host
+            'example.net'
+            >>> url.host = 'example.com:8080'
+            >>> url.host
+            'example.com:8080'
+            >>> url.href
+            'http://example.com:8080/'
+        """
         host = self._url.host
         if host is None:
             return ""
@@ -1147,6 +1463,24 @@ class URL:
 
     @property
     def hostname(self) -> str:
+        """A URL's host.
+
+        If a URL has an
+        `opaque path <https://url.spec.whatwg.org/#url-opaque-path>`_,
+        setting the value has no effect.
+
+        Examples:
+            >>> url = URL('http://example.net:8080')
+            >>> url.href
+            'http://example.net:8080/'
+            >>> url.hostname
+            'example.net'
+            >>> url.hostname = 'example.com'
+            >>> url.hostname
+            'example.com'
+            >>> url.href
+            'http://example.com:8080/'
+        """
         return self._url.serialize_host()
 
     @hostname.setter
@@ -1159,6 +1493,18 @@ class URL:
 
     @property
     def href(self) -> str:
+        """A string representation of a URL.
+
+        Must be an absolute-URL when setting a value.
+
+        Examples:
+            >>> url = URL('http://example.org/foo/bar')
+            >>> url.href
+            'http://example.org/foo/bar'
+            >>> url.href = 'http:/example.com/'
+            >>> url.href
+            'http://example.com/'
+        """
         return str(self._url)
 
     @href.setter
@@ -1168,6 +1514,21 @@ class URL:
 
     @property
     def origin(self) -> str:
+        """Returns a string representation of a URL's origin.
+
+        Examples:
+            >>> URL('blob:https://example.com:443/').origin
+            'https://example.com'
+
+            >>> URL('blob:d3958f5c-0777-0845-9dcf-2cb28783acaf').origin
+            'null'
+
+            >>> URL('http://example.org:82/foo/bar').origin
+            'http://example.org:82'
+
+            >>> URL('non-special://test/x').origin
+            'null'
+        """
         origin = self._url.origin
         if origin is None:
             return "null"
@@ -1175,6 +1536,23 @@ class URL:
 
     @property
     def password(self) -> str:
+        """A URL's password.
+
+        If a URL can't have a username/password/port, setting the value has no
+        effect.
+
+        Examples:
+            >>> url = URL('http://example.net')
+            >>> url.href
+            'http://example.net/'
+            >>> url.password
+            ''
+            >>> url.password = '%c3%89té'
+            >>> url.password
+            '%c3%89t%C3%A9'
+            >>> url.href
+            'http://:%c3%89t%C3%A9@example.net/'
+        """
         return self._url.password
 
     @password.setter
@@ -1187,6 +1565,24 @@ class URL:
 
     @property
     def pathname(self) -> str:
+        """A URL's path.
+
+        If a URL has an
+        `opaque path <https://url.spec.whatwg.org/#url-opaque-path>`_,
+        setting the value has no effect.
+
+        Examples:
+            >>> url = URL('http://example.net')
+            >>> url.href
+            'http://example.net/'
+            >>> url.pathname
+            '/'
+            >>> url.pathname = '%2e%2E%c3%89té'
+            >>> url.pathname
+            '/%2e%2E%c3%89t%C3%A9'
+            >>> url.href
+            'http://example.net/%2e%2E%c3%89t%C3%A9'
+        """
         return self._url.serialize_path()
 
     @pathname.setter
@@ -1202,6 +1598,23 @@ class URL:
 
     @property
     def port(self) -> str:
+        """A URL's port.
+
+        If a URL can't have a username/password/port, setting the value has no
+        effect.
+
+        Examples:
+            >>> url = URL('http://example.net:8080')
+            >>> url.href
+            'http://example.net:8080/'
+            >>> url.port
+            '8080'
+            >>> url.port = '80'
+            >>> url.port
+            ''
+            >>> url.href
+            'http://example.net/'
+        """
         port = self._url.port
         if port is None:
             return ""
@@ -1220,6 +1633,21 @@ class URL:
 
     @property
     def protocol(self) -> str:
+        """A URL's scheme, followed by
+        U+003A (:).
+
+        Examples:
+            >>> url = URL('a://example.net')
+            >>> url.href
+            'a://example.net'
+            >>> url.protocol
+            'a:'
+            >>> url.protocol = 'B'
+            >>> url.protocol
+            'b:'
+            >>> url.href
+            'b://example.net'
+        """
         return self._url.scheme + ":"
 
     @protocol.setter
@@ -1232,6 +1660,20 @@ class URL:
 
     @property
     def search(self) -> str:
+        """A URL's query (includes leading U+003F (?) if non-empty).
+
+        Examples:
+            >>> url = URL('http://example.net')
+            >>> url.href
+            'http://example.net/'
+            >>> url.search
+            ''
+            >>> url.search = '%c3%89té'
+            >>> url.search
+            '?%c3%89t%C3%A9'
+            >>> url.href
+            'http://example.net/?%c3%89t%C3%A9'
+        """
         query = self._url.query
         if query is None or len(query) == 0:
             return ""
@@ -1253,10 +1695,46 @@ class URL:
 
     @property
     def search_params(self) -> URLSearchParams:
+        """Returns a URLSearchParams object associated with this URL object.
+
+        Examples:
+            >>> url = URL('http://example.net/file')
+            >>> url.href
+            'http://example.net/file'
+            >>> url.search
+            ''
+            >>> params = url.search_params
+            >>> params.append('a', '1')
+            >>> params.append('b', '2')
+            >>> params.append('a', '3')
+            >>> list(params)
+            [('a', '1'), ('b', '2'), ('a', '3')]
+            >>> url.search
+            '?a=1&b=2&a=3'
+            >>> url.href
+            'http://example.net/file?a=1&b=2&a=3'
+        """
         return self._query
 
     @property
     def username(self) -> str:
+        """A URL's username.
+
+        If a URL can't have a username/password/port, setting the value has no
+        effect.
+
+        Examples:
+            >>> url = URL('http://example.net')
+            >>> url.href
+            'http://example.net/'
+            >>> url.username
+            ''
+            >>> url.username = '%c3%89té'
+            >>> url.username
+            '%c3%89t%C3%A9'
+            >>> url.href
+            'http://%c3%89t%C3%A9@example.net/'
+        """
         return self._url.username
 
     @username.setter
@@ -1269,6 +1747,8 @@ class URL:
 
 
 class URLParserState(enum.IntEnum):
+    """State machine enums for the basic URL parser."""
+
     EOF = -1
     AUTHORITY_STATE = 1
     FILE_HOST_STATE = enum.auto()
@@ -1294,7 +1774,10 @@ class URLParserState(enum.IntEnum):
 
 
 class BasicURLParser:
-    """An implementation of the basic URL parser in Python."""
+    """An implementation of the
+    `basic URL parser <https://url.spec.whatwg.org/#concept-basic-url-parser>`_
+    in Python.
+    """
 
     @classmethod
     def _parse_authority(
@@ -2122,6 +2605,109 @@ class BasicURLParser:
         url: Optional[URLRecord] = None,
         state_override: Optional[URLParserState] = None,
     ) -> URLRecord:
+        """Parses a string *urlstring* against a base URL *base*.
+
+        Args:
+            urlstring: A string to parse.
+            base: A base URL.
+            encoding: The encoding to encode URL's query.
+                If the encoding fails, it will be replaced with the appropriate
+                XML character reference.
+            url: An input URL record. It will be replaced with the parsing
+                result.
+            state_override: URLParserState enum.
+
+        Returns:
+            If *url* is specified, it will be used and returned, a new URL
+            record will be created otherwise.
+
+        Raises:
+            urlstd.error.URLParseError: Raised when URL parsing fails.
+
+        Examples:
+            To parse a string as a whole URL:
+
+            >>> url = BasicURLParser.parse('http://example.org/foo/bar')
+            >>> str(url)
+            'http://example.org/foo/bar'
+
+            To replace a URL's scheme with a string:
+
+            >>> url = BasicURLParser.parse('a://example.net')
+            >>> str(url)
+            'a://example.net'
+            >>> BasicURLParser.parse('B:', url=url,
+            ...     state_override=URLParserState.SCHEME_START_STATE)
+            >>> str(url)
+            'b://example.net'
+
+            To replace a URL's username, password, and host with a string:
+
+            >>> url = BasicURLParser.parse('http://example.org/foo/bar')
+            >>> str(url)
+            'http://example.org/foo/bar'
+            >>> BasicURLParser.parse('user:pass@example.net', url=url,
+            ...     state_override=URLParserState.AUTHORITY_STATE)
+            >>> str(url)
+            'http://user:pass@example.net/foo/bar'
+
+            To replace a URL's host and port with a string:
+
+            >>> url = BasicURLParser.parse(
+            ...     'http://user:pass@example.net/foo/bar')
+            >>> str(url)
+            'http://user:pass@example.net/foo/bar'
+            >>> BasicURLParser.parse('0x7F000001:8080', url=url,
+            ...     state_override=URLParserState.HOST_STATE)
+            >>> str(url)
+            'http://user:pass@127.0.0.1:8080/foo/bar'
+
+            To replace a URL's port with a string:
+
+            >>> url = BasicURLParser.parse(
+            ...     'http://user:pass@example.net:8080/foo/bar')
+            >>> str(url)
+            'http://user:pass@example.net:8080/foo/bar'
+            >>> BasicURLParser.parse('80', url=url,
+            ...     state_override=URLParserState.PORT_STATE)
+            >>> str(url)
+            'http://user:pass@example.net/foo/bar'
+
+            To replace a URL's path with a string:
+
+            >>> url = BasicURLParser.parse('http://example.org/foo/bar')
+            >>> str(url)
+            'http://example.org/foo/bar'
+            >>> if not url.has_opaque_path():
+            ...     url.path = []
+            ...     BasicURLParser.parse('?', url=url,
+            ...         state_override=URLParserState.PATH_START_STATE)
+            >>> str(url)
+            'http://example.org/%3F'
+
+            To replace a URL's query with a string:
+
+            >>> url = BasicURLParser.parse(
+            ...     'http://example.net/foo/bar?a=1')
+            >>> str(url)
+            'http://example.net/foo/bar?a=1'
+            >>> url.query = ''
+            >>> BasicURLParser.parse('baz=2', url=url,
+            ...     state_override=URLParserState.QUERY_STATE)
+            >>> str(url)
+            'http://example.net/foo/bar?baz=2'
+
+            To replace a URL's fragment with a string:
+
+            >>> url = BasicURLParser.parse('http://example.org/foo/bar#nav')
+            >>> str(url)
+            'http://example.org/foo/bar#nav'
+            >>> url.fragment = ''
+            >>> BasicURLParser.parse('main', url=url,
+            ...     state_override=URLParserState.FRAGMENT_STATE)
+            >>> str(url)
+            'http://example.org/foo/bar#main'
+        """
         log = get_logger(cls)
         if url is None:
             url = URLRecord()
@@ -2263,9 +2849,21 @@ def parse_url(
     base: str = None,
     encoding: str = "utf-8",
 ) -> URLRecord:
-    """Parses a string representation of a URL, and returns :class:`.URLRecord`.
+    """Parses a string *urlstring* against a base URL *base* using the basic
+    URL parser, and returns :class:`.URLRecord`.
 
-    A base URL *base* is necessary if the *urlstring* is a relative-URL string.
+    Args:
+        urlstring: An absolute-URL or a relative-URL. If *urlstring* is a
+            relative-URL, *base* is required.
+        base: An absolute-URL for a relative-URL *urlstring*.
+        encoding: The encoding to encode URL’s query. If the encoding fails,
+            it will be replaced with the appropriate XML character reference.
+
+    Returns:
+        A URL record.
+
+    Raises:
+        urlstd.error.URLParseError: Raised when URL parsing fails.
     """
     parsed_base = (
         BasicURLParser.parse(base, encoding=encoding) if base else None
