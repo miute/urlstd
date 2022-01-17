@@ -151,7 +151,7 @@ tests = ["pytest"]
 
 [[package]]
 name = "identify"
-version = "2.4.2"
+version = "2.4.4"
 description = "File identification library for Python"
 category = "dev"
 optional = false
@@ -590,8 +590,8 @@ icupy = [
     {file = "icupy-0.11.1.tar.gz", hash = "sha256:e46d67a6319e0f09f24adef9ac96cc9a447874966052ea910fbad502d51ff42d"},
 ]
 identify = [
-    {file = "identify-2.4.2-py2.py3-none-any.whl", hash = "sha256:67c1e66225870dce721228176637a8ef965e8dd58450bcc7592249d0dfc4da6c"},
-    {file = "identify-2.4.2.tar.gz", hash = "sha256:93e8ec965e888f2212aa5c24b2b662f4832c39acb1d7196a70ea45acb626a05e"},
+    {file = "identify-2.4.4-py2.py3-none-any.whl", hash = "sha256:aa68609c7454dbcaae60a01ff6b8df1de9b39fe6e50b1f6107ec81dcda624aa6"},
+    {file = "identify-2.4.4.tar.gz", hash = "sha256:6b4b5031f69c48bf93a646b90de9b381c6b5f560df4cbe0ed3cf7650ae741e4d"},
 ]
 importlib-metadata = [
     {file = "importlib_metadata-4.2.0-py3-none-any.whl", hash = "sha256:057e92c15bc8d9e8109738a48db0ccb31b4d9d5cfbee5a8670879a30be66304b"},
