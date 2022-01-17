@@ -4,10 +4,9 @@
 
 This library provides `URL` class, `URLSearchParams` class, and low-level APIs that comply with the URL specification.
 
-## API
+## Supported APIs
 
 - [URL class](https://url.spec.whatwg.org/#url-class)
-
   - class urlstd.parse.`URL(url: str, base: Optional[str] = None)`
     - [href](https://url.spec.whatwg.org/#dom-url-href): `readonly property href: str`
     - [origin](https://url.spec.whatwg.org/#dom-url-origin): `readonly property origin: str`
@@ -23,7 +22,6 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
     - [hash](https://url.spec.whatwg.org/#dom-url-hash): `property hash: str`
 
 - [URLSearchParams class](https://url.spec.whatwg.org/#interface-urlsearchparams)
-
   - class urlstd.parse.`URLSearchParams(init: Optional[Union[str, Sequence[Sequence[Union[str, int, float]]], Dict[str, Union[str, int, float]], URLRecord, URLSearchParams]] = None)`
     - [append](https://url.spec.whatwg.org/#dom-urlsearchparams-append): `append(name: str, value: Union[str, int, float]) -> None`
     - [delete](https://url.spec.whatwg.org/#dom-urlsearchparams-delete): `delete(name: str) -> None`
@@ -36,16 +34,13 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
 - Low-level APIs
 
   - [URL parser](https://url.spec.whatwg.org/#concept-url-parser)
-
     - urlstd.parse.`parse_url(urlstring: str, base: str = None, encoding: str = "utf-8") -> URLRecord`
 
   - [basic URL parser](https://url.spec.whatwg.org/#concept-basic-url-parser)
-
     - class urlstd.parse.`BasicURLParser`
       - classmethod `parse(urlstring: str, base: Optional[URLRecord] = None, encoding: str = "utf-8", url: Optional[URLRecord] = None, state_override: Optional[URLParserState] = None) -> URLRecord`
 
   - [URL record](https://url.spec.whatwg.org/#concept-url)
-
     - class urlstd.parse.`URLRecord`
       - [scheme](https://url.spec.whatwg.org/#concept-url-scheme): `property scheme: str = ""`
       - [username](https://url.spec.whatwg.org/#concept-url-username): `property username: str = ""`
@@ -65,41 +60,36 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
       - [host serializer](https://url.spec.whatwg.org/#concept-host-serializer): `serialize_host() -> str`
       - [URL path serializer](https://url.spec.whatwg.org/#url-path-serializer): `serialize_path() -> str`
 
-  - IDNA
+  - [domain to ASCII](https://url.spec.whatwg.org/#concept-domain-to-ascii)
+    - urlstd.parse.IDNA.`domain_to_ascii(domain: str, be_strict: bool = False) -> str`
 
-    - class urlstd.parse.`IDNA`
-      - [domain to ASCII](https://url.spec.whatwg.org/#concept-domain-to-ascii): classmethod `domain_to_ascii(domain: str, be_strict: bool = False) -> str`
+  - [host parser](https://url.spec.whatwg.org/#concept-host-parser)
+    - urlstd.parse.Host.`parse(host: str, is_not_special: bool = False) -> Union[str, int, Tuple[int, ...]]`
 
-  - Host parsing/Host serializing
-
-    - class urlstd.parse.`Host`
-      - [host parser](https://url.spec.whatwg.org/#concept-host-parser): classmethod `parse(host: str, is_not_special: bool = False) -> Union[str, int, Tuple[int, ...]]`
-      - [host serializer](https://url.spec.whatwg.org/#concept-host-serializer): classmethod `serialize(host: Union[str, int, Sequence[int]]) -> str`
+  - [host serializer](https://url.spec.whatwg.org/#concept-host-serializer)
+    - urlstd.parse.Host.`serialize(host: Union[str, int, Sequence[int]]) -> str`
 
   - [percent-decode a string](https://url.spec.whatwg.org/#string-percent-decode)
-
     - urlstd.parse.`string_percent_decode(s: str) -> bytes`
 
   - [percent-encode after encoding](https://url.spec.whatwg.org/#string-percent-encode-after-encoding)
-
     - urlstd.parse.`string_percent_encode(s: str, safe: str, encoding: str = "utf-8", space_as_plus: bool = False) -> str`
 
   - [application/x-www-form-urlencoded parser](https://url.spec.whatwg.org/#concept-urlencoded-parser)
-
     - urlstd.parse.`parse_qsl(query: bytes) -> List[Tuple[str, str]]`
 
   - [application/x-www-form-urlencoded serializer](https://url.spec.whatwg.org/#concept-urlencoded-serializer)
-
     - urlstd.parse.`urlencode(query: Sequence[Tuple[str, str]], encoding: str = "utf-8") -> str`
 
 - Compatibility with standard library `urllib`
-
   - urlstd.parse.`urlparse(urlstring: str, base: str = None, encoding: str = "utf-8", allow_fragments: bool = True) -> urllib.parse.ParseResult`
 
-    An alternative to `urllib.parse.urlparse()`.
+    `urlstd.parse.urlparse()` ia an alternative to `urllib.parse.urlparse()`.
     Parses a string representation of a URL using the basic URL parser, and returns `urllib.parse.ParseResult`.
 
 ## Basic Usage
+
+To parse a string into a `URL` with using a base URL:
 
 ```python
 >>> from urlstd.parse import URL
@@ -120,25 +110,28 @@ URLSearchParams([('🌈', ''), ('ﬃ', '')])
 'http://example.org/?%F0%9F%8C%88=&%EF%AC%83='
 ```
 
-An alternative to urllib.parse.urlparse():
+To parse a string into a `urllib.parse.ParseResult` with using a base URL:
 
 ```python
 >>> import html
 >>> from urllib.parse import unquote
 >>> from urlstd.parse import urlparse
->>> urlparse('?aÿb', 'http://example.org/foo/', encoding='utf-8')
+>>> pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='utf-8')
+>>> pr
 ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%C3%BFb', fragment='')
->>> unquote('a%C3%BFb')
+>>> unquote(pr.query)
 'aÿb'
->>> urlparse('?aÿb', 'http://example.org/foo/', encoding='windows-1251')
+>>> pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='windows-1251')
+>>> pr
 ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%26%23255%3Bb', fragment='')
->>> unquote('a%26%23255%3Bb', encoding='windows-1251')
+>>> unquote(pr.query, encoding='windows-1251')
 'a&#255;b'
 >>> html.unescape('a&#255;b')
 'aÿb'
->>> urlparse('?aÿb', 'http://example.org/foo/', encoding='windows-1252')
+>>> pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='windows-1252')
+>>> pr
 ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%FFb', fragment='')
->>> unquote('a%FFb', encoding='windows-1252')
+>>> unquote(pr.query, encoding='windows-1252')
 'aÿb'
 ```
 
@@ -154,14 +147,15 @@ logging.getLogger("urlstd").setLevel(logging.ERROR)
 ## Dependencies
 
 - [icupy](https://pypi.org/project/icupy/) >= 0.11.0
-  - [ICU](https://icu.unicode.org/download) - International Components for Unicode (ICU4C)
+  - icupy requirements:
+    - [ICU](https://icu.unicode.org/download) - International Components for Unicode [(ICU4C)](https://github.com/unicode-org/icu/releases)
+    - C++17 compatible compiler
+    - [CMake](https://cmake.org/)
 
 ## Installation
 
 1. Configuring environment variables for icupy (ICU):
-
     - Windows:
-
       - Set the `ICU_ROOT` environment variable to the root of the ICU installation (default is `C:\icu`). For example, if the ICU is located in `C:\icu4c`:
 
         ```bat
@@ -175,7 +169,6 @@ logging.getLogger("urlstd").setLevel(logging.ERROR)
         ```
 
     - Linux/POSIX:
-
       - If the ICU is located in a non-regular place, set the `PKG_CONFIG_PATH` and `LD_LIBRARY_PATH` environment variables. For example, if the ICU is located in `/usr/local`:
 
         ```bash
