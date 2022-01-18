@@ -1,0 +1,348 @@
+<!doctype html>
+<html class="no-js">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="User Guide" href="user-guide.html" />
+
+    <meta name="generator" content="sphinx-4.3.2, furo 2022.01.02"/>
+        <title>urlstd 2021.10.25.dev1</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=df49af52631e7917044a9c21a57f7b83170a6dd0" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=fade93df149f7c5fedb3ff897f799dc7d283b420" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  body[data-theme="dark"] {
+    --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+  }
+  @media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+  }
+</style></head>
+  <body>
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" />
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="10" y1="12" x2="20" y2="12" />
+      <line x1="6" y1="18" x2="20" y2="18" />
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="#"><div class="brand">urlstd 2021.10.25.dev1</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
+  
+  
+  <span class="sidebar-brand-text">urlstd 2021.10.25.dev1</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="user-guide.html">User Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="reference/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference/urlstd.parse.html">urlstd.parse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference/urlstd.error.html">urlstd.error</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="urlstd">
+<h1>urlstd<a class="headerlink" href="#urlstd" title="Permalink to this headline">¶</a></h1>
+<p><strong>urlstd</strong> is a Python implementation of the WHATWG <a class="reference external" href="https://url.spec.whatwg.org/">URL Standard</a>.</p>
+<p>This library provides URL class, URLSearchParams class, and low-level APIs that comply with the URL specification.</p>
+<section id="supported-apis">
+<h2>Supported APIs<a class="headerlink" href="#supported-apis" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#url-class">URL class</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL" title="urlstd.parse.URL"><code class="xref py py-class docutils literal notranslate"><span class="pre">urlstd.parse.URL</span></code></a></p>
+<ul>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-href">href</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.href" title="urlstd.parse.URL.href"><code class="xref py py-attr docutils literal notranslate"><span class="pre">href</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-origin">origin</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.origin" title="urlstd.parse.URL.origin"><code class="xref py py-attr docutils literal notranslate"><span class="pre">origin</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-protocol">protocol</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.protocol" title="urlstd.parse.URL.protocol"><code class="xref py py-attr docutils literal notranslate"><span class="pre">protocol</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-username">username</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.username" title="urlstd.parse.URL.username"><code class="xref py py-attr docutils literal notranslate"><span class="pre">username</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-password">password</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.password" title="urlstd.parse.URL.password"><code class="xref py py-attr docutils literal notranslate"><span class="pre">password</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-host">host</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.host" title="urlstd.parse.URL.host"><code class="xref py py-attr docutils literal notranslate"><span class="pre">host</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-hostname">hostname</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.hostname" title="urlstd.parse.URL.hostname"><code class="xref py py-attr docutils literal notranslate"><span class="pre">hostname</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-port">port</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.port" title="urlstd.parse.URL.port"><code class="xref py py-attr docutils literal notranslate"><span class="pre">port</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-pathname">pathname</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.pathname" title="urlstd.parse.URL.pathname"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pathname</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-search">search</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.search" title="urlstd.parse.URL.search"><code class="xref py py-attr docutils literal notranslate"><span class="pre">search</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-searchparams">searchParams</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.search_params" title="urlstd.parse.URL.search_params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">search_params</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-url-hash">hash</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL.hash" title="urlstd.parse.URL.hash"><code class="xref py py-attr docutils literal notranslate"><span class="pre">hash</span></code></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#interface-urlsearchparams">URLSearchParams class</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLSearchParams" title="urlstd.parse.URLSearchParams"><code class="xref py py-class docutils literal notranslate"><span class="pre">urlstd.parse.URLSearchParams</span></code></a></p>
+<ul>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-urlsearchparams-append">append</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLSearchParams.append" title="urlstd.parse.URLSearchParams.append"><code class="xref py py-meth docutils literal notranslate"><span class="pre">append()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-urlsearchparams-delete">delete</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLSearchParams.delete" title="urlstd.parse.URLSearchParams.delete"><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-urlsearchparams-get">get</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLSearchParams.get" title="urlstd.parse.URLSearchParams.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-urlsearchparams-getall">getAll</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLSearchParams.get_all" title="urlstd.parse.URLSearchParams.get_all"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_all()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-urlsearchparams-has">has</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLSearchParams.has" title="urlstd.parse.URLSearchParams.has"><code class="xref py py-meth docutils literal notranslate"><span class="pre">has()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-urlsearchparams-set">set</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLSearchParams.set" title="urlstd.parse.URLSearchParams.set"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#dom-urlsearchparams-sort">sort</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLSearchParams.sort" title="urlstd.parse.URLSearchParams.sort"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sort()</span></code></a></p></li>
+</ul>
+</li>
+<li><p>Low-level APIs</p>
+<ul>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-parser">URL parser</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.parse_url" title="urlstd.parse.parse_url"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlstd.parse.parse_url()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-basic-url-parser">basic URL parser</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.BasicURLParser.parse" title="urlstd.parse.BasicURLParser.parse"><code class="xref py py-meth docutils literal notranslate"><span class="pre">urlstd.parse.BasicURLParser.parse()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url">URL record</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord" title="urlstd.parse.URLRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">urlstd.parse.URLRecord</span></code></a></p>
+<ul>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-scheme">scheme</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.scheme" title="urlstd.parse.URLRecord.scheme"><code class="xref py py-attr docutils literal notranslate"><span class="pre">scheme</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-username">username</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.username" title="urlstd.parse.URLRecord.username"><code class="xref py py-attr docutils literal notranslate"><span class="pre">username</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-password">password</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.password" title="urlstd.parse.URLRecord.password"><code class="xref py py-attr docutils literal notranslate"><span class="pre">password</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-host">host</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.host" title="urlstd.parse.URLRecord.host"><code class="xref py py-attr docutils literal notranslate"><span class="pre">host</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-port">port</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.port" title="urlstd.parse.URLRecord.port"><code class="xref py py-attr docutils literal notranslate"><span class="pre">port</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-path">path</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.path" title="urlstd.parse.URLRecord.path"><code class="xref py py-attr docutils literal notranslate"><span class="pre">path</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-query">query</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.query" title="urlstd.parse.URLRecord.query"><code class="xref py py-attr docutils literal notranslate"><span class="pre">query</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-fragment">fragment</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.fragment" title="urlstd.parse.URLRecord.fragment"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fragment</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-origin">origin</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.origin" title="urlstd.parse.URLRecord.origin"><code class="xref py py-attr docutils literal notranslate"><span class="pre">origin</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#is-special">is special</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.is_special" title="urlstd.parse.URLRecord.is_special"><code class="xref py py-meth docutils literal notranslate"><span class="pre">is_special()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#is-not-special">is not special</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.is_not_special" title="urlstd.parse.URLRecord.is_not_special"><code class="xref py py-meth docutils literal notranslate"><span class="pre">is_not_special()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#include-credentials">includes credentials</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.includes_credentials" title="urlstd.parse.URLRecord.includes_credentials"><code class="xref py py-meth docutils literal notranslate"><span class="pre">includes_credentials()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#url-opaque-path">has an opaque path</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.has_opaque_path" title="urlstd.parse.URLRecord.has_opaque_path"><code class="xref py py-meth docutils literal notranslate"><span class="pre">has_opaque_path()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#cannot-have-a-username-password-port">cannot have a username/password/port</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.cannot_have_username_password_port" title="urlstd.parse.URLRecord.cannot_have_username_password_port"><code class="xref py py-meth docutils literal notranslate"><span class="pre">cannot_have_username_password_port()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-url-serializer">URL serializer</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.serialize_url" title="urlstd.parse.URLRecord.serialize_url"><code class="xref py py-meth docutils literal notranslate"><span class="pre">serialize_url()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-host-serializer">host serializer</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.serialize_host" title="urlstd.parse.URLRecord.serialize_host"><code class="xref py py-meth docutils literal notranslate"><span class="pre">serialize_host()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#url-path-serializer">URL path serializer</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URLRecord.serialize_path" title="urlstd.parse.URLRecord.serialize_path"><code class="xref py py-meth docutils literal notranslate"><span class="pre">serialize_path()</span></code></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-domain-to-ascii">domain to ASCII</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.IDNA.domain_to_ascii" title="urlstd.parse.IDNA.domain_to_ascii"><code class="xref py py-meth docutils literal notranslate"><span class="pre">urlstd.parse.IDNA.domain_to_ascii()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-host-parser">host parser</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.Host.parse" title="urlstd.parse.Host.parse"><code class="xref py py-meth docutils literal notranslate"><span class="pre">urlstd.parse.Host.parse()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-host-serializer">host serializer</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.Host.serialize" title="urlstd.parse.Host.serialize"><code class="xref py py-meth docutils literal notranslate"><span class="pre">urlstd.parse.Host.serialize()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#string-percent-decode">percent-decode a string</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.string_percent_decode" title="urlstd.parse.string_percent_decode"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlstd.parse.string_percent_decode()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#string-percent-encode-after-encoding">percent-encode after encoding</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.string_percent_encode" title="urlstd.parse.string_percent_encode"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlstd.parse.string_percent_encode()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-urlencoded-parser">application/x-www-form-urlencoded parser</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.parse_qsl" title="urlstd.parse.parse_qsl"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlstd.parse.parse_qsl()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://url.spec.whatwg.org/#concept-urlencoded-serializer">application/x-www-form-urlencoded serializer</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.urlencode" title="urlstd.parse.urlencode"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlstd.parse.urlencode()</span></code></a></p></li>
+</ul>
+</li>
+</ul>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="user-guide.html">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user-guide.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-guide.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-guide.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-guide.html#logging">Logging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference/index.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference/index.html#modules">Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference/index.html#url-and-urlsearchparams">URL and URLSearchParams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference/index.html#low-level-apis">Low-level APIs</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h2>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="user-guide.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">User Guide</div>
+              </div>
+              <svg><use href="#svg-arrow-right"></use></svg>
+            </a>
+          
+        </div>
+
+        <div class="related-information">
+              Copyright &#169; 2022, Tetsuya Miura |
+          Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+          <a href="https://github.com/pradyunsg/furo">Furo theme</a>.
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            Contents
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">urlstd</a><ul>
+<li><a class="reference internal" href="#supported-apis">Supported APIs</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and Tables</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    <script src="_static/tabs.js"></script>
+    </body>
+</html>
