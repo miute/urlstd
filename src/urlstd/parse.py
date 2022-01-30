@@ -186,7 +186,7 @@ def is_windows_drive_letter(text: str) -> bool:
 
 
 def parse_qsl(query: bytes) -> List[Tuple[str, str]]:
-    """An alternative to urllib.parse.parse_qsl().
+    """An alternative to :func:`urllib.parse.parse_qsl`.
 
     Parses a byte sequence in the form application/x-www-form-urlencoded,
     and returns a list of utf-8 decoded name-value pairs.
@@ -285,7 +285,7 @@ def string_percent_encode(
 def urlencode(
     query: Sequence[Tuple[str, str]], encoding: str = "utf-8"
 ) -> str:
-    """An alternative to urllib.parse.urlencode().
+    """An alternative to :func:`urllib.parse.urlencode`.
 
     Converts a sequence of tuples of name-value pairs into a percent-encoded
     ASCII text string in the form application/x-www-form-urlencoded.
@@ -318,10 +318,10 @@ def urlparse(
     encoding: str = "utf-8",
     allow_fragments: bool = True,
 ) -> ParseResult:
-    """An alternative to urllib.parse.urlparse().
+    """An alternative to :func:`urllib.parse.urlparse`.
 
     Parses a string *urlstring* against a base URL *base* using the basic URL
-    parser, and returns ``urllib.parse.ParseResult``.
+    parser, and returns :class:`urllib.parse.ParseResult`.
 
     Args:
         urlstring: An absolute-URL or a relative-URL. If *urlstring* is a
@@ -332,7 +332,7 @@ def urlparse(
         allow_fragments: If *False*, fragment identifiers are not recognized.
 
     Returns:
-        A named tuple ``urllib.parse.ParseResult``.
+        A named tuple :class:`urllib.parse.ParseResult`.
 
     Raises:
         urlstd.error.URLParseError: Raised when URL parsing fails.
@@ -747,8 +747,8 @@ class IDNA:
 
         Args:
             domain: A domain name.
-            be_strict: If True, set the UseSTD3ASCIIRules flag. See :rfc:`3490`
-                for more details.
+            be_strict: If *True*, set the UseSTD3ASCIIRules flag.
+                See :rfc:`3490` for more details.
 
         Returns:
             A domain name in IDNA ASCII form.
