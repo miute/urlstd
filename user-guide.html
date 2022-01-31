@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="API Reference" href="reference/index.html" /><link rel="prev" title="urlstd" href="index.html" />
 
-    <meta name="generator" content="sphinx-4.3.2, furo 2022.01.02"/>
-        <title>User Guide - urlstd 2021.10.25.dev1</title>
+    <meta name="generator" content="sphinx-4.4.0, furo 2022.01.02"/>
+        <title>User Guide - urlstd 2021.10.25</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=df49af52631e7917044a9c21a57f7b83170a6dd0" />
     <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">urlstd 2021.10.25.dev1</div></a>
+      <a href="index.html"><div class="brand">urlstd 2021.10.25</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -147,7 +147,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">urlstd 2021.10.25.dev1</span>
+  <span class="sidebar-brand-text">urlstd 2021.10.25</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
@@ -199,8 +199,8 @@
 <p class="admonition-title">Note</p>
 <dl class="simple">
 <dt>icupy requirements:</dt><dd><ul class="simple">
-<li><p><a class="reference external" href="https://icu.unicode.org">ICU</a> - International Components for Unicode
-(<a class="reference external" href="https://github.com/unicode-org/icu/releases">ICU4C</a>)</p></li>
+<li><p><a class="reference external" href="https://github.com/unicode-org/icu/releases">ICU4C</a>
+(<a class="reference external" href="https://icu.unicode.org">ICU</a> - International Components for Unicode)</p></li>
 <li><p>C++17 compatible compiler</p></li>
 <li><p><a class="reference external" href="https://cmake.org">CMake</a></p></li>
 </ul>
@@ -255,6 +255,11 @@ For example, if the ICU is located in “/usr/local”:</p>
 <span class="nb">export</span> <span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span>/usr/local/lib:<span class="nv">$LD_LIBRARY_PATH</span>
 </pre></div>
 </div>
+<p>To verify settings using <em>pkg-config</em>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ pkg-config --cflags --libs icu-uc
+-I/usr/local/include -L/usr/local/lib -licuuc -licudata
+</pre></div>
+</div>
 </li>
 </ul>
 </li>
@@ -288,8 +293,8 @@ For example, if the ICU is located in “/usr/local”:</p>
 <span class="go">'http://example.org/?%F0%9F%8C%88=&amp;%EF%AC%83='</span>
 </pre></div>
 </div>
-<p><a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.urlparse" title="urlstd.parse.urlparse"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlstd.parse.urlparse()</span></code></a> is an alternative to <em>urllib.parse.urlparse()</em>.
-To parse a string into a <em>urllib.parse.ParseResult</em> with using a base URL:</p>
+<p><a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.urlparse" title="urlstd.parse.urlparse"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlstd.parse.urlparse()</span></code></a> is an alternative to <a class="reference external" href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse" title="(in Python v3.10)"><code class="xref py py-func docutils literal notranslate"><span class="pre">urllib.parse.urlparse()</span></code></a>.
+To parse a string into a <a class="reference external" href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.ParseResult" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">urllib.parse.ParseResult</span></code></a> with using a base URL:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">html</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">unquote</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">urlstd.parse</span> <span class="kn">import</span> <span class="n">urlparse</span>
@@ -315,7 +320,7 @@ To parse a string into a <em>urllib.parse.ParseResult</em> with using a base URL
 </section>
 <section id="logging">
 <h2>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h2>
-<p><strong>urlstd</strong> uses standard library <em>logging</em> for <a class="reference external" href="https://url.spec.whatwg.org/#validation-error">validation error</a>.
+<p><strong>urlstd</strong> uses standard library <a class="reference external" href="https://docs.python.org/3/library/logging.html#module-logging" title="(in Python v3.10)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">logging</span></code></a> for <a class="reference external" href="https://url.spec.whatwg.org/#validation-error">validation error</a>.
 Change the logger log level of <strong>urlstd</strong> if needed:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'urlstd'</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
 </pre></div>

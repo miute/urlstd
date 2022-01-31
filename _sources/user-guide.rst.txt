@@ -8,8 +8,8 @@ Dependencies
 
   .. note::
     icupy requirements:
-      - `ICU <https://icu.unicode.org>`_ - International Components for Unicode
-        (`ICU4C <https://github.com/unicode-org/icu/releases>`_)
+      - `ICU4C <https://github.com/unicode-org/icu/releases>`_
+        (`ICU <https://icu.unicode.org>`_ - International Components for Unicode)
       - C++17 compatible compiler
       - `CMake <https://cmake.org>`_
 
@@ -26,29 +26,29 @@ Installation
 
        .. tab:: Command Prompt
 
-         .. code-block:: bat
+          .. code-block:: bat
 
-           set ICU_ROOT=C:\icu4c
+             set ICU_ROOT=C:\icu4c
 
        .. tab:: PowerShell
 
-         .. code-block:: powershell
+          .. code-block:: powershell
 
-           $env:ICU_ROOT = "C:\icu4c"
+             $env:ICU_ROOT = "C:\icu4c"
 
        To verify settings using *icuinfo*:
 
        .. tab:: Command Prompt (64 bit)
 
-         .. code-block:: bat
+          .. code-block:: bat
 
-           %ICU_ROOT%\bin64\icuinfo
+             %ICU_ROOT%\bin64\icuinfo
 
        .. tab:: PowerShell (64 bit)
 
-         .. code-block:: powershell
+          .. code-block:: powershell
 
-           & $env:ICU_ROOT\bin64\icuinfo
+             & $env:ICU_ROOT\bin64\icuinfo
 
    - Linux/POSIX:
 
@@ -57,8 +57,15 @@ Installation
 
        .. code-block:: bash
 
-         export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-         export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+          export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+          export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+       To verify settings using *pkg-config*:
+
+       .. code-block:: bash
+
+          $ pkg-config --cflags --libs icu-uc
+          -I/usr/local/include -L/usr/local/lib -licuuc -licudata
 
 2. Installing from PyPI:
 
@@ -91,8 +98,8 @@ To parse a string into a :class:`~urlstd.parse.URL` with using a base URL:
     >>> str(url)
     'http://example.org/?%F0%9F%8C%88=&%EF%AC%83='
 
-:func:`urlstd.parse.urlparse` is an alternative to *urllib.parse.urlparse()*.
-To parse a string into a *urllib.parse.ParseResult* with using a base URL:
+:func:`urlstd.parse.urlparse` is an alternative to :func:`urllib.parse.urlparse`.
+To parse a string into a :class:`urllib.parse.ParseResult` with using a base URL:
 
 .. code-block:: python
 
@@ -121,7 +128,7 @@ To parse a string into a *urllib.parse.ParseResult* with using a base URL:
 Logging
 -------
 
-**urlstd** uses standard library *logging* for `validation error <https://url.spec.whatwg.org/#validation-error>`_.
+**urlstd** uses standard library :mod:`logging` for `validation error <https://url.spec.whatwg.org/#validation-error>`_.
 Change the logger log level of **urlstd** if needed:
 
 .. code-block:: python

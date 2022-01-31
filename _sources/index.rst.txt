@@ -1,6 +1,26 @@
 urlstd
 ======
 
+.. image:: https://img.shields.io/pypi/v/urlstd.svg
+   :alt: PyPI
+   :target: https://pypi.org/project/urlstd/
+
+.. image:: https://img.shields.io/pypi/pyversions/urlstd
+   :alt: PyPI - Python Version
+   :target: https://pypi.org/project/urlstd/
+
+.. image:: https://img.shields.io/pypi/l/urlstd
+   :alt: PyPI - License
+   :target: https://pypi.org/project/urlstd/
+
+.. image:: https://github.com/miute/url-standard/actions/workflows/main.yml/badge.svg
+   :alt: CI
+   :target: https://github.com/miute/url-standard/actions/workflows/main.yml
+
+.. image:: https://codecov.io/gh/miute/url-standard/branch/main/graph/badge.svg?token=XJGM09H5TS
+   :alt: codecov
+   :target: https://codecov.io/gh/miute/url-standard
+
 **urlstd** is a Python implementation of the WHATWG `URL Standard <https://url.spec.whatwg.org/>`_.
 
 This library provides URL class, URLSearchParams class, and low-level APIs that comply with the URL specification.
