@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "urlstd"
-version = "2021.10.25.dev1"
+version = "2021.10.25"
 description = "Python implementation of the WHATWG URL Standard"
 license = "MIT"
 authors = ["Tetsuya Miura <miute.dev@gmail.com>"]
 readme = "README.md"
+homepage = "https://miute.github.io/url-standard/"
 repository = "https://github.com/miute/url-standard"
 keywords = ["url", "url-standard", "url-parser", "url-parsing"]
 classifiers = [
