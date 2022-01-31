@@ -1,8 +1,16 @@
 # url-standard
 
+[![PyPI](https://img.shields.io/pypi/v/urlstd)](https://pypi.org/project/urlstd/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/urlstd)](https://pypi.org/project/urlstd/)
+[![PyPI - License](https://img.shields.io/pypi/l/urlstd)](https://pypi.org/project/urlstd/)
+[![CI](https://github.com/miute/url-standard/actions/workflows/main.yml/badge.svg)](https://github.com/miute/url-standard/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/miute/url-standard/branch/main/graph/badge.svg?token=XJGM09H5TS)](https://codecov.io/gh/miute/url-standard)
+
 `urlstd` is a Python implementation of the WHATWG [URL Standard](https://url.spec.whatwg.org/).
 
 This library provides `URL` class, `URLSearchParams` class, and low-level APIs that comply with the URL specification.
+
+*Note: The latest release of urlstd is implemented based on the URL specification commit [f787850](https://github.com/whatwg/url/commit/f787850695969d51caaa5c290f2c2e050e083638).*
 
 ## Supported APIs
 
@@ -148,7 +156,7 @@ logging.getLogger("urlstd").setLevel(logging.ERROR)
 
 - [icupy](https://pypi.org/project/icupy/) >= 0.11.0
   - icupy requirements:
-    - [ICU](https://icu.unicode.org/download) - International Components for Unicode [(ICU4C)](https://github.com/unicode-org/icu/releases)
+    - [ICU4C](https://github.com/unicode-org/icu/releases) ([ICU](https://icu.unicode.org/download) - International Components for Unicode)
     - C++17 compatible compiler
     - [CMake](https://cmake.org/)
 
@@ -156,7 +164,8 @@ logging.getLogger("urlstd").setLevel(logging.ERROR)
 
 1. Configuring environment variables for icupy (ICU):
     - Windows:
-      - Set the `ICU_ROOT` environment variable to the root of the ICU installation (default is `C:\icu`). For example, if the ICU is located in `C:\icu4c`:
+      - Set the `ICU_ROOT` environment variable to the root of the ICU installation (default is `C:\icu`).
+        For example, if the ICU is located in `C:\icu4c`:
 
         ```bat
         set ICU_ROOT=C:\icu4c
@@ -168,12 +177,32 @@ logging.getLogger("urlstd").setLevel(logging.ERROR)
         $env:ICU_ROOT = "C:\icu4c"
         ```
 
+        To verify settings using *icuinfo (64 bit)*:
+
+        ```bat
+        %ICU_ROOT%\bin64\icuinfo
+        ```
+
+        or in PowerShell:
+
+        ```bat
+        & $env:ICU_ROOT\bin64\icuinfo
+        ```
+
     - Linux/POSIX:
-      - If the ICU is located in a non-regular place, set the `PKG_CONFIG_PATH` and `LD_LIBRARY_PATH` environment variables. For example, if the ICU is located in `/usr/local`:
+      - If the ICU is located in a non-regular place, set the `PKG_CONFIG_PATH` and `LD_LIBRARY_PATH` environment variables.
+        For example, if the ICU is located in `/usr/local`:
 
         ```bash
         export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
         export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+        ```
+
+        To verify settings using *pkg-config*:
+
+        ```bash
+        $ pkg-config --cflags --libs icu-uc
+        -I/usr/local/include -L/usr/local/lib -licuuc -licudata
         ```
 
 2. Installing from PyPI:

@@ -60,4 +60,8 @@ Exceptions
 
 .. autosummary::
 
+   HostParseError
+   IDNAError
+   IPv4AddressParseError
+   IPv6AddressParseError
    URLParseError
