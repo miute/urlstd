@@ -5,7 +5,13 @@ from urllib.parse import urlparse as urllib_urlparse
 import icupy.icu as icu
 import pytest
 
-from urlstd.error import URLParseError
+from urlstd.error import (
+    HostParseError,
+    IDNAError,
+    IPv4AddressParseError,
+    IPv6AddressParseError,
+    URLParseError,
+)
 from urlstd.parse import get_logger  # noqa
 from urlstd.parse import (
     IDNA,
@@ -52,7 +58,7 @@ def test_get_logger_self(caplog):
 def test_host_parse_ascii_domain_01(caplog):
     """Contains a forbidden host code point in ASCII-domain."""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse("a<b")
     assert exc_info.value.args[0].startswith(
         "Contains a forbidden host code point in ASCII-domain"
@@ -69,7 +75,7 @@ def test_host_parse_ascii_domain_01(caplog):
 def test_host_parse_ascii_domain_02(caplog):
     """Invalid domain name."""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse("xn--")
     assert exc_info.value.args[0].startswith("Invalid domain name")
 
@@ -82,7 +88,7 @@ def test_host_parse_ascii_domain_02(caplog):
 def test_host_parse_ascii_domain_03(caplog):
     """Empty host after the domain to ASCII."""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse("\u00ad")
     assert exc_info.value.args[0].startswith(
         "Empty host after the domain to ASCII"
@@ -99,7 +105,7 @@ def test_host_parse_ascii_domain_03(caplog):
 def test_host_parse_ascii_domain_04(caplog):
     """Contains a forbidden host code point in ASCII-domain."""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse("ho%00st")
     assert exc_info.value.args[0].startswith(
         "Contains a forbidden host code point in ASCII-domain"
@@ -116,7 +122,7 @@ def test_host_parse_ascii_domain_04(caplog):
 def test_host_parse_ipv4_01(caplog):
     """Invalid IPv4 address."""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(IPv4AddressParseError) as exc_info:
         _ = Host.parse("1.2.3.4.5")
     assert exc_info.value.args[0].endswith(
         "does not appear to be an IPv4 address"
@@ -133,7 +139,7 @@ def test_host_parse_ipv4_01(caplog):
 def test_host_parse_ipv4_02(caplog):
     """Invalid IPv4 address."""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(IPv4AddressParseError) as exc_info:
         _ = Host.parse("1.2.3.08")
     assert exc_info.value.args[0].endswith(
         "does not appear to be an IPv4 address"
@@ -150,7 +156,7 @@ def test_host_parse_ipv4_02(caplog):
 def test_host_parse_ipv4_03(caplog):
     """Any but the last part of IPv4 address are greater than 255."""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(IPv4AddressParseError) as exc_info:
         _ = Host.parse("0x100.0.0.1")
     assert exc_info.value.args[0].startswith(
         "Any but the last part of IPv4 address are greater than 255"
@@ -167,7 +173,7 @@ def test_host_parse_ipv4_03(caplog):
 def test_host_parse_ipv4_04(caplog):
     """The last part of IPv4 address is greater than or equal to 256"""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(IPv4AddressParseError) as exc_info:
         _ = Host.parse("192.168.0.0x100")
     assert exc_info.value.args[0].startswith(
         "The last part of IPv4 address is greater than or equal to"
@@ -184,11 +190,9 @@ def test_host_parse_ipv4_04(caplog):
 def test_host_parse_ipv6_01(caplog):
     """Invalid IPv6 address: Unexpected end of input."""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(IPv6AddressParseError) as exc_info:
         _ = Host.parse("[1::")
-    assert exc_info.value.args[0].startswith(
-        "Invalid IPv6 address: Unexpected end of input"
-    )
+    assert exc_info.value.args[0].startswith("Unexpected end of input")
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
@@ -201,10 +205,10 @@ def test_host_parse_ipv6_01(caplog):
 def test_host_parse_ipv6_02(caplog):
     """Invalid IPv6 address."""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(IPv6AddressParseError) as exc_info:
         _ = Host.parse("[0:1:2:3:4:5:6:7:8]")
     assert exc_info.value.args[0].startswith(
-        "Invalid IPv6 address: Exactly 8 parts expected without"
+        "Exactly 8 parts expected without"
     )
 
     assert len(caplog.record_tuples) > 0
@@ -218,7 +222,7 @@ def test_host_parse_ipv6_02(caplog):
 def test_host_parse_opaque_host_01(caplog):
     """Contains a forbidden host code point excluding '%'"""
     caplog.set_level(logging.INFO)
-    with pytest.raises(URLParseError) as exc_info:
+    with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse("a<b", True)
     assert exc_info.value.args[0].startswith(
         "Contains a forbidden host code point excluding '%'"
@@ -259,7 +263,7 @@ def test_idna_domain_to_ascii_exceptions(caplog, mocker):
         side_effect=icu.ICUError(icu.ErrorCode()),
     )
 
-    with pytest.raises(URLParseError):
+    with pytest.raises(IDNAError):
         _ = IDNA.domain_to_ascii("www.eXample.cOm")
 
     assert len(caplog.record_tuples) > 0
@@ -281,7 +285,7 @@ def test_idna_domain_to_ascii_use_std3_rules(caplog):
     assert IDNA.domain_to_ascii(domain, False) == "xn--abcd-5n9aqdi"
     assert len(caplog.record_tuples) == 0
 
-    with pytest.raises(URLParseError):
+    with pytest.raises(HostParseError):
         _ = IDNA.domain_to_ascii(domain, True)
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)

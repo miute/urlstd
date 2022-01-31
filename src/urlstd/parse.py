@@ -29,7 +29,13 @@ from urllib.parse import unquote_to_bytes as percent_decode
 
 import icupy.icu as icu
 
-from .error import URLParseError
+from .error import (
+    HostParseError,
+    IDNAError,
+    IPv4AddressParseError,
+    IPv6AddressParseError,
+    URLParseError,
+)
 
 __all__ = [
     "BasicURLParser",
@@ -438,7 +444,7 @@ class Host:
                 del parts[-1]
         if len(parts) > 4:
             log.error("%r does not appear to be an IPv4 address", host)
-            raise URLParseError(
+            raise IPv4AddressParseError(
                 f"{host!r} does not appear to be an IPv4 address"
             )
 
@@ -447,7 +453,7 @@ class Host:
             result = cls._parse_ipv4_number(part)
             if result[0] < 0:
                 log.error("%r does not appear to be an IPv4 address", host)
-                raise URLParseError(
+                raise IPv4AddressParseError(
                     f"{host!r} does not appear to be an IPv4 address"
                 )
             validation_error |= result[1]
@@ -472,7 +478,7 @@ class Host:
                 host,
                 numbers,
             )
-            raise URLParseError(
+            raise IPv4AddressParseError(
                 f"Any but the last part of IPv4 address are greater than 255: "
                 f"{host!r} {numbers!r}"
             )
@@ -485,7 +491,7 @@ class Host:
                 host,
                 numbers,
             )
-            raise URLParseError(
+            raise IPv4AddressParseError(
                 f"The last part of IPv4 address is greater than or equal to "
                 f"{limit}: {host!r} {numbers!r}"
             )
@@ -529,7 +535,7 @@ class Host:
             ipv6 = int(IPv6Address(host))
         except ValueError as e:
             log.error("Invalid IPv6 address: %s", e)
-            raise URLParseError(f"Invalid IPv6 address: {e!s}") from None
+            raise IPv6AddressParseError(f"{e!s}") from None
         address: List[int] = []
         for _ in range(8):
             address.insert(0, ipv6 & 0xFFFF)
@@ -545,7 +551,7 @@ class Host:
                 "opaque host %r",
                 host,
             )
-            raise URLParseError(
+            raise HostParseError(
                 f"Contains a forbidden host code point excluding '%' in "
                 f"opaque host {host!r}"
             )
@@ -628,7 +634,13 @@ class Host:
             - Tuple[int, ...] -- An IPv6 address.
 
         Raises:
-            urlstd.error.URLParseError: Raised when URL parsing fails.
+            urlstd.error.HostParseError: Raised when a host string is not valid.
+
+            urlstd.error.IPv4AddressParseError: Raised when IPv4 address
+                parsing fails.
+
+            urlstd.error.IPv6AddressParseError: Raised when IPv6 address
+                parsing fails.
         """
         if len(host) == 0:
             return ""  # empty host
@@ -640,8 +652,7 @@ class Host:
                 log.error(
                     "Invalid IPv6 address: Unexpected end of input in %r", host
                 )
-                raise URLParseError(
-                    f"Invalid IPv6 address: "
+                raise IPv6AddressParseError(
                     f"Unexpected end of input in {host!r}"
                 )
             return cls._parse_ipv6(host[1:-1])
@@ -656,7 +667,7 @@ class Host:
                 "Contains a forbidden host code point in ASCII-domain %r",
                 ascii_domain,
             )
-            raise URLParseError(
+            raise HostParseError(
                 f"Contains a forbidden host code point in ASCII-domain "
                 f"{ascii_domain!r}"
             )
@@ -752,6 +763,17 @@ class IDNA:
 
         Returns:
             A domain name in IDNA ASCII form.
+
+        Raises:
+            urlstd.error.HostParseError: Raised when a domain name is not valid.
+                See `uidna.h
+                <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/uidna_8h.html>`_
+                for more details.
+
+            urlstd.error.IDNAError: Raised when the ICU API returns an error.
+                See `UErrorCode
+                <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/utypes_8h.html>`_
+                for more details.
         """
         log = get_logger(cls)
         info = icu.IDNAInfo()
@@ -777,14 +799,14 @@ class IDNA:
                     error_names,
                     errors,
                 )
-                raise URLParseError(
+                raise HostParseError(
                     f"Invalid domain name {domain!r}: errors={error_names!s} "
                     f"(0x{errors:x})"
                 )
             ascii_domain = str(dest)
             if len(ascii_domain) == 0:
                 log.error("Empty host after the domain to ASCII: %r", domain)
-                raise URLParseError(
+                raise HostParseError(
                     f"Empty host after the domain to ASCII: {domain!r}"
                 )
             return ascii_domain
@@ -797,7 +819,7 @@ class IDNA:
                 e,
                 errors,
             )
-            raise URLParseError(
+            raise IDNAError(
                 f"Unable to convert domain name {domain!r} to ASCII form: "
                 f"{e!r}: errors=0x{errors:x}"
             ) from None
