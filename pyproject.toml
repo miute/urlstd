@@ -53,8 +53,17 @@ testpaths = [
 ]
 
 [tool.coverage.run]
+source = [
+    "urlstd",
+]
 omit = [
     "tests/*/conftest.py",
+]
+
+[tool.coverage.paths]
+source = [
+    "src/urlstd",
+    "*/urlstd",
 ]
 
 [tool.coverage.report]
