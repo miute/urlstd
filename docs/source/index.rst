@@ -13,13 +13,13 @@ urlstd
    :alt: PyPI - License
    :target: https://pypi.org/project/urlstd/
 
-.. image:: https://github.com/miute/url-standard/actions/workflows/main.yml/badge.svg
+.. image:: https://github.com/miute/urlstd/actions/workflows/main.yml/badge.svg
    :alt: CI
-   :target: https://github.com/miute/url-standard/actions/workflows/main.yml
+   :target: https://github.com/miute/urlstd/actions/workflows/main.yml
 
-.. image:: https://codecov.io/gh/miute/url-standard/branch/main/graph/badge.svg?token=XJGM09H5TS
+.. image:: https://codecov.io/gh/miute/urlstd/branch/main/graph/badge.svg?token=XJGM09H5TS
    :alt: codecov
-   :target: https://codecov.io/gh/miute/url-standard
+   :target: https://codecov.io/gh/miute/urlstd
 
 **urlstd** is a Python implementation of the WHATWG `URL Standard <https://url.spec.whatwg.org/>`_.
 

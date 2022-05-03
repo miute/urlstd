@@ -1,10 +1,10 @@
-# url-standard
+# urlstd
 
 [![PyPI](https://img.shields.io/pypi/v/urlstd)](https://pypi.org/project/urlstd/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/urlstd)](https://pypi.org/project/urlstd/)
 [![PyPI - License](https://img.shields.io/pypi/l/urlstd)](https://pypi.org/project/urlstd/)
-[![CI](https://github.com/miute/url-standard/actions/workflows/main.yml/badge.svg)](https://github.com/miute/url-standard/actions/workflows/main.yml)
-[![codecov](https://codecov.io/gh/miute/url-standard/branch/main/graph/badge.svg?token=XJGM09H5TS)](https://codecov.io/gh/miute/url-standard)
+[![CI](https://github.com/miute/urlstd/actions/workflows/main.yml/badge.svg)](https://github.com/miute/urlstd/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/miute/urlstd/branch/main/graph/badge.svg?token=XJGM09H5TS)](https://codecov.io/gh/miute/urlstd)
 
 `urlstd` is a Python implementation of the WHATWG [URL Standard](https://url.spec.whatwg.org/).
 
@@ -216,13 +216,13 @@ logging.getLogger("urlstd").setLevel(logging.ERROR)
 To run tests and generate a report:
 
 ```bash
-git clone https://github.com/miute/url-standard.git
-cd url-standard
+git clone https://github.com/miute/urlstd.git
+cd urlstd
 tox -e wpt
 ```
 
-See result: [tests/wpt/report.html](https://htmlpreview.github.io/?https://github.com/miute/url-standard/blob/main/tests/wpt/report.html)
+See result: [tests/wpt/report.html](https://htmlpreview.github.io/?https://github.com/miute/urlstd/blob/main/tests/wpt/report.html)
 
 ## License
 
-[MIT License](https://github.com/miute/url-standard/blob/main/LICENSE).
+[MIT License](https://github.com/miute/urlstd/blob/main/LICENSE).
