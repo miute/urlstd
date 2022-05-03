@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
 
 env:
-  ICU_DL_PATH: "https://github.com/unicode-org/icu/releases/download/release-70-1"
-  ICU4C_UBUNTU_TGZ: "icu4c-70_1-Ubuntu-20.04-x64.tgz"
-  ICU4C_WIN64_ZIP: "icu4c-70_1-Win64-MSVC2019.zip"
+  ICU_DL_PATH: "https://github.com/unicode-org/icu/releases/download/release-71-1"
+  ICU4C_UBUNTU_TGZ: "icu4c-71_1-Ubuntu20.04-x64.tgz"
+  ICU4C_WIN64_ZIP: "icu4c-71_1-Win64-MSVC2019.zip"
 
 jobs:
   download:
