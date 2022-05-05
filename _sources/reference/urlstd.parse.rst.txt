@@ -15,8 +15,10 @@ urlstd.parse
         __getnewargs__,
         __hash__,
         __init__,
+        __match_args__,
         __module__,
         __new__,
+        __orig_bases__,
         __repr__,
         __slots__,
         __weakref__
