@@ -192,10 +192,28 @@ def is_windows_drive_letter(text: str) -> bool:
 
 
 def parse_qsl(query: bytes) -> List[Tuple[str, str]]:
-    """An alternative to :func:`urllib.parse.parse_qsl`.
+    r"""An alternative to :func:`urllib.parse.parse_qsl`.
 
     Parses a byte sequence in the form application/x-www-form-urlencoded,
     and returns a list of utf-8 decoded name-value pairs.
+
+    Invalid surrogates will be replaced with U+FFFD.
+
+    Args:
+        query: A byte sequence to parse.
+
+    Returns:
+        A list of utf-8 decoded name-value pairs.
+
+    Examples:
+        >>> parse_qsl(b'a=a&a=b&a=c')
+        [('a', 'a'), ('a', 'b'), ('a', 'c')]
+
+        >>> parse_qsl(b'%61+%4d%4D=')
+        [('a MM', '')]
+
+        >>> parse_qsl(b'%FE%FF')
+        [('\ufffd\ufffd', '')]
     """
     sequences = query.split(b"&")
     output = []
@@ -226,6 +244,12 @@ def string_percent_decode(s: str) -> bytes:
 
     Invalid surrogates will be replaced with U+FFFD.
 
+    Args:
+        s: A string to percent-decode.
+
+    Returns:
+        A percent-decoded byte sequence after encoding with utf-8.
+
     Examples:
         >>> string_percent_decode('%f0%9f%8c%88').decode()
         '🌈'
@@ -236,8 +260,8 @@ def string_percent_decode(s: str) -> bytes:
         >>> string_percent_decode('\ud83c\udf08').decode()
         '🌈'
 
-        >>> string_percent_decode('\udf08\ud83c').decode() == '\ufffd\ufffd'
-        True
+        >>> string_percent_decode('\udf08\ud83c').decode()
+        '\ufffd\ufffd'
     """
     b = utf8_encode(s)
     return percent_decode(b)
@@ -252,9 +276,14 @@ def string_percent_encode(
     Also, if the encoding fails, it will be replaced with the appropriate XML
     character reference.
 
-    *safe* specifies ASCII characters that should not be percent-encoded.
+    Args:
+        s: A string to percent-encode.
+        safe: ASCII characters that should not be percent-encoded.
+        encoding: The encoding to encode *s*.
+        space_as_plus: If *True*, replace 0x20 (space) with U+002B (plus sign).
 
-    If *space_as_plus* is *True*, replace 0x20 (space) with U+002B (plus sign).
+    Returns:
+        A percent-encoded string after encoding with *encoding*.
 
     Examples:
         >>> string_percent_encode('/El Niño/', '/')
@@ -269,7 +298,7 @@ def string_percent_encode(
         >>> string_percent_encode('\ud83c', '')
         '%EF%BF%BD'  # → '\ufffd'
 
-        >>> string_percent_encode('\U0001f308', '', 'windows-1251')
+        >>> string_percent_encode('\U0001f308', '', encoding='windows-1252')
         '%26%23127752%3B'  # → '&#127752;'
     """
     s = s.encode("utf-16", "surrogatepass").decode("utf-16", "replace")
@@ -291,7 +320,7 @@ def string_percent_encode(
 def urlencode(
     query: Sequence[Tuple[str, str]], encoding: str = "utf-8"
 ) -> str:
-    """An alternative to :func:`urllib.parse.urlencode`.
+    r"""An alternative to :func:`urllib.parse.urlencode`.
 
     Converts a sequence of tuples of name-value pairs into a percent-encoded
     ASCII text string in the form application/x-www-form-urlencoded.
@@ -299,6 +328,29 @@ def urlencode(
     Invalid surrogates will be replaced with U+FFFD.
     Also, if the encoding fails, it will be replaced with the appropriate XML
     character reference.
+
+    Args:
+        query: A sequence of tuples of name-value pairs to percent-encode.
+        encoding: The encoding to encode *query*.
+
+    Returns:
+        A string in the form application/x-www-form-urlencoded.
+
+    Examples:
+        >>> urlencode([('a', 'a'), ('a', 'b'), ('a', 'c')])
+        'a=a&a=b&a=c'
+
+        >>> urlencode([('🌈', 'a')])
+        '%F0%9F%8C%88=a'
+
+        >>> urlencode([('🌈', 'a')], encoding="windows-1252")
+        '%26%23127752%3B=a'  # → '&#127752;=a'
+
+        >>> urlencode([('\ud83c\udf08', 'a')])
+        '%F0%9F%8C%88=a'
+
+        >>> urlencode([('\ud83c', 'a')])
+        '%EF%BF%BD=a'  # → '\ufffd=a'
     """
     params = []
     for name, value in query:
@@ -342,6 +394,20 @@ def urlparse(
 
     Raises:
         urlstd.error.URLParseError: Raised when URL parsing fails.
+
+    Examples:
+        >>> urlparse('http://user:pass@foo:21/bar;par?b#c')
+        ParseResult(scheme='http', netloc='user:pass@foo:21', path='/bar',
+        params='par', query='b', fragment='c')
+
+        >>> urlparse('?🌈=a#c', 'http://user:pass@foo:21/bar;par?b#c')
+        ParseResult(scheme='http', netloc='user:pass@foo:21', path='/bar',
+        params='par', query='%F0%9F%8C%88=a', fragment='c')
+
+        >>> urlparse('?🌈=a#c', 'http://user:pass@foo:21/bar;par?b#c',
+        ...     encoding='windows-1252')
+        ParseResult(scheme='http', netloc='user:pass@foo:21', path='/bar',
+        params='par', query='%26%23127752%3B=a', fragment='c')
     """
     url = parse_url(urlstring, base, encoding)
     hostname = url.serialize_host()
@@ -381,6 +447,12 @@ def utf8_decode(b: bytes) -> str:
     """Decodes a byte sequence with utf-8 and returns its string.
 
     If decoding fails, it will be replaced with U+FFFD.
+
+    Args:
+        b: A byte sequence to decode with utf-8.
+
+    Returns:
+        A utf-8 decoded string.
     """
     return b.decode("utf-8", "replace")
 
@@ -389,6 +461,12 @@ def utf8_encode(s: str) -> bytes:
     """Encodes a string with utf-8 and returns its byte sequence.
 
     Invalid surrogates will be replaced with U+FFFD.
+
+    Args:
+        s: A string to encode with utf-8.
+
+    Returns:
+        A utf-8 encoded byte sequence.
     """
     s = s.encode("utf-16", "surrogatepass").decode("utf-16", "replace")
     return s.encode("utf-8", "strict")
@@ -401,12 +479,16 @@ def utf8_percent_encode(s: str, safe: str, space_as_plus: bool = False) -> str:
     Also, if the encoding fails, it will be replaced with the appropriate XML
     character reference.
 
-    *safe* specifies ASCII characters that should not be percent-encoded.
-
-    If *space_as_plus* is *True*, replace 0x20 (space) with U+002B (plus sign).
-
     This is equivalent to
     "string_percent_encode(s, safe,'utf-8', space_as_plus)".
+
+    Args:
+        s: A string to percent-encode.
+        safe: ASCII characters that should not be percent-encoded.
+        space_as_plus: If *True*, replace 0x20 (space) with U+002B (plus sign).
+
+    Returns:
+        A percent-encoded string after encoding with utf-8.
     """
     return string_percent_encode(
         s, safe, encoding="utf-8", space_as_plus=space_as_plus
@@ -841,7 +923,11 @@ class Origin(NamedTuple):
     domain: Optional[str]
 
     def __str__(self) -> str:
-        """Returns a string representation of the origin."""
+        """Returns a string representation of the origin.
+
+        Returns:
+            A string representation of the origin.
+        """
         host = "" if self.host is None else Host.serialize(self.host)
         result = f"{self.scheme}://{host}"
         if self.port is not None:
@@ -900,12 +986,19 @@ class URLRecord:
         """Returns a string representation of a URL.
 
         This is equivalent to :attr:`.href`.
+
+        Returns:
+            A string representation of a URL.
         """
         return self.href
 
     def cannot_have_username_password_port(self) -> bool:
         """Returns *True* if a URL's host is *None*, host is the empty string,
         or scheme is "file", *False* otherwise.
+
+        Returns:
+            *True* if a URL's host is *None*, host is the empty string,
+            or scheme is "file", *False* otherwise.
         """
         return (
             self.host is None
@@ -914,7 +1007,11 @@ class URLRecord:
         )
 
     def has_opaque_path(self) -> bool:
-        """Returns *True* if a URL's path is a string, *False* otherwise."""
+        """Returns *True* if a URL's path is a string, *False* otherwise.
+
+        Returns:
+            *True* if a URL's path is a string, *False* otherwise.
+        """
         return isinstance(self.path, str)
 
     @property
@@ -928,18 +1025,30 @@ class URLRecord:
     def includes_credentials(self) -> bool:
         """Returns *True* if a URL's username or password is not the empty
         string, *False* otherwise.
+
+        Returns:
+            *True* if a URL's username or password is not the empty
+            string, *False* otherwise.
         """
         return len(self.username) > 0 or len(self.password) > 0
 
     def is_not_special(self) -> bool:
         """Returns *True* if a URL's scheme is not a special scheme
         ("ftp", "file", "http", "https", "ws", or "wss"), *False* otherwise.
+
+        Returns:
+            *True* if a URL's scheme is not a special scheme
+            ("ftp", "file", "http", "https", "ws", or "wss"), *False* otherwise.
         """
         return self.scheme not in SPECIAL_SCHEMES
 
     def is_special(self) -> bool:
         """Returns *True* if a URL's scheme is a special scheme
         ("ftp", "file", "http", "https", "ws", or "wss"), *False* otherwise.
+
+        Returns:
+            *True* if a URL's scheme is a special scheme
+            ("ftp", "file", "http", "https", "ws", or "wss"), *False* otherwise.
         """
         return self.scheme in SPECIAL_SCHEMES
 
@@ -952,14 +1061,12 @@ class URLRecord:
             >>> parse_url('blob:https://example.com:443/').origin
             Origin(scheme='https', host='example.com', port=None, domain=None)
 
-            >>> parse_url('blob:d3958f5c-0777-0845-9dcf-2cb28783acaf').origin
-            # → None
+            >>> parse_url('blob:d3958f5c-0777-0845-9dcf-2cb28783acaf').origin  # → None
 
             >>> parse_url('http://example.org:82/foo/bar').origin
             Origin(scheme='http', host='example.org', port=82, domain=None)
 
-            >>> parse_url('non-special://test/x').origin
-            # → None
+            >>> parse_url('non-special://test/x').origin  # → None
         """
         if self.scheme == "blob":
             # TODO: If url’s blob URL entry is non-null, then return url’s blob
@@ -977,11 +1084,19 @@ class URLRecord:
         return None
 
     def serialize_host(self) -> str:
-        """Returns a string representation of a URL's host."""
+        """Returns a string representation of a URL's host.
+
+        Returns:
+            A string representation of a URL's host.
+        """
         return Host.serialize(self.host) if self.host is not None else ""
 
     def serialize_path(self) -> str:
-        """Returns a string representation of a URL's path."""
+        """Returns a string representation of a URL's path.
+
+        Returns:
+            A string representation of a URL's path.
+        """
         if self.has_opaque_path():
             return self.path  # type: ignore
         output = ""
@@ -995,6 +1110,9 @@ class URLRecord:
         Args:
             exclude_fragment: If *True*, fragment identifiers will be removed
                 from the output string.
+
+        Returns:
+            A string representation of a URL.
         """
         output = self.scheme + ":"
         if self.host is not None:
@@ -1148,6 +1266,13 @@ class URLSearchParams(collections.abc.Collection):
         concatenated with *other*.
 
         *other* must be a string.
+
+        Args:
+            other: A string to concatenate.
+
+        Returns:
+            A string in application/x-www-form-urlencoded form
+            concatenated with *other*.
         """
         if not isinstance(other, str):
             return NotImplemented
@@ -1160,6 +1285,13 @@ class URLSearchParams(collections.abc.Collection):
         *item* must be a string.
 
         This is equivalent to :meth:`.has`.
+
+        Args:
+            item: The name of parameter to find.
+
+        Returns:
+            *True* if a name-value pair with the specified *item* exists,
+            *False* otherwise.
         """
         if not isinstance(item, str):
             raise TypeError(
@@ -1167,16 +1299,23 @@ class URLSearchParams(collections.abc.Collection):
             )
         return self.get(item) is not None
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[Tuple[str, str]]:
         """Returns a new iterator of this object’s items
         ((name, value) pairs).
 
         This is equivalent to :meth:`.entries`.
+
+        Returns:
+            An iterator of this object’s items ((name, value) pairs).
         """
         return iter(self._list)
 
     def __len__(self) -> int:
-        """Returns the number of name-value pairs."""
+        """Returns the number of name-value pairs.
+
+        Returns:
+            The number of name-value pairs.
+        """
         return len(self._list)
 
     def __repr__(self) -> str:
@@ -1184,7 +1323,11 @@ class URLSearchParams(collections.abc.Collection):
         return f"{self.__class__.__name__}({self._list})"
 
     def __str__(self) -> str:
-        """Returns a string in application/x-www-form-urlencoded form."""
+        """Returns a string in application/x-www-form-urlencoded form.
+
+        Returns:
+            A string in application/x-www-form-urlencoded form.
+        """
         return self._serialize_query()
 
     def _serialize_query(self) -> str:
@@ -1201,6 +1344,10 @@ class URLSearchParams(collections.abc.Collection):
     def append(self, name: str, value: Union[str, int, float]) -> None:
         """Appends a new name-value pair as a new search parameter.
 
+        Args:
+            name: The name of parameter to append.
+            value: The value of parameter to append.
+
         Examples:
             >>> params = URLSearchParams()
             >>> params.append('a', '1')
@@ -1215,13 +1362,20 @@ class URLSearchParams(collections.abc.Collection):
         self._update()
 
     def attach(self, init: URLRecord) -> None:
-        """Associates a URL record *init* with this URLSearchParams object."""
+        """Associates a URL record *init* with this URLSearchParams object.
+
+        Args:
+            init: The URL record to associate with.
+        """
         query = init.query or ""
         self._list = parse_qsl(utf8_encode(query))
         self._url = init
 
     def delete(self, name: str) -> None:
         """Removes all name-value pairs whose name is *name*.
+
+        Args:
+            name: The name of parameter to delete.
 
         Examples:
             >>> params = URLSearchParams('a=1&b=2&a=3')
@@ -1237,17 +1391,33 @@ class URLSearchParams(collections.abc.Collection):
                 self._list.pop(i)
         self._update()
 
-    def entries(self) -> Iterator:
+    def entries(self) -> Iterator[Tuple[str, str]]:
         """Returns a new iterator of this object’s items
         ((name, value) pairs).
 
         This is equivalent to :meth:`.__iter__`.
+
+        Returns:
+            An iterator of this object’s items ((name, value) pairs).
         """
         return iter(self._list)
 
     def get(self, name: str) -> Optional[str]:
         """Returns the value of the first name-value pair whose name is *name*,
-        and *None* if not exists.
+        or *None* if not exists.
+
+        Args:
+            name: The name of parameter to return.
+
+        Returns:
+            The value of the first name-value pair whose name is *name*,
+            or *None* if not exists.
+
+        Examples:
+            >>> params = URLSearchParams('a=1&b=2&a=3')
+            >>> params.get('a')
+            '1'
+            >>> params.get('c')  # → None
         """
         name = utf8_decode(string_percent_decode(name))
         for name_value in self._list:
@@ -1257,7 +1427,21 @@ class URLSearchParams(collections.abc.Collection):
 
     def get_all(self, name: str) -> Tuple[str, ...]:
         """Returns the values of all name-value pairs whose name is *name*,
-        and the empty tuple if not exists.
+        or the empty tuple if not exists.
+
+        Args:
+            name: The name of parameter to return.
+
+        Returns:
+            The values of all name-value pairs whose name is *name*,
+            or the empty tuple if not exists.
+
+        Examples:
+            >>> params = URLSearchParams('a=1&b=2&a=3')
+            >>> params.get_all('a')
+            ('1', '3')
+            >>> params.get_all('c')
+            ()
         """
         name = utf8_decode(string_percent_decode(name))
         return tuple(
@@ -1271,17 +1455,34 @@ class URLSearchParams(collections.abc.Collection):
     def has(self, name: str) -> bool:
         """Returns *True* if a name-value pair with the specified *name* exists,
         *False* otherwise.
+
+        This is equivalent to :meth:`.__contains__`.
+
+        Args:
+            name: The name of parameter to find.
+
+        Returns:
+            *True* if a name-value pair with the specified *name* exists,
+            *False* otherwise.
         """
         return self.get(name) is not None
 
-    def keys(self) -> Iterator:
-        """Returns a new iterator of this object’s names."""
+    def keys(self) -> Iterator[str]:
+        """Returns a new iterator of this object’s names.
+
+        Returns:
+            An iterator of this object’s names.
+        """
         return iter([name_value[0] for name_value in self._list])
 
     def set(self, name: str, value: Union[str, int, float]) -> None:
         """If name-value pair with the specified name exists, sets the value of
         the first name-value pair whose name is *name* to *value* and remove
         the other values. Otherwise, appends a new name-value pair.
+
+        Args:
+            name: The name of parameter to set.
+            value: The value of parameter to set.
 
         Examples:
             >>> params = URLSearchParams('a=1&b=2&a=3')
@@ -1315,6 +1516,16 @@ class URLSearchParams(collections.abc.Collection):
 
         The relative order between name-value pairs with equal names will be
         preserved.
+
+        Examples:
+            >>> params = URLSearchParams('ﬃ&🌈')
+            >>> list(params)
+            [('ﬃ', ''), ('🌈', '')]
+            >>> params.sort()
+            # code point: 'ﬃ' (0xFB03) < '🌈' (0x1F308), but
+            # code units: '🌈' (0xD83C, 0xDF08) < 'ﬃ' (0xFB03)
+            >>> list(params)
+            [('🌈', ''), ('ﬃ', '')]
         """
         self._list.sort(
             key=lambda x: icu.UnicodeString(  # type: ignore
@@ -1324,8 +1535,12 @@ class URLSearchParams(collections.abc.Collection):
         )
         self._update()
 
-    def values(self) -> Iterator:
-        """Returns a new iterator of this object’s values."""
+    def values(self) -> Iterator[str]:
+        """Returns a new iterator of this object’s values.
+
+        Returns:
+            An iterator of this object’s values.
+        """
         return iter([name_value[1] for name_value in self._list])
 
 
@@ -1408,6 +1623,9 @@ class URL:
         """Returns a string representation of a URL.
 
         This is equivalent to :attr:`.href`.
+
+        Returns:
+            A string representation of a URL.
         """
         return self.href
 
@@ -1417,14 +1635,14 @@ class URL:
 
         Examples:
             >>> url = URL('http://example.net')
-            >>> url.href
+            >>> str(url)
             'http://example.net/'
             >>> url.hash
             ''
             >>> url.hash = '%c3%89té'
             >>> url.hash
             '#%c3%89t%C3%A9'
-            >>> url.href
+            >>> str(url)
             'http://example.net/#%c3%89t%C3%A9'
         """
         fragment = self._url.fragment
@@ -1456,14 +1674,14 @@ class URL:
 
         Examples:
             >>> url = URL('http://example.net')
-            >>> url.href
+            >>> str(url)
             'http://example.net/'
             >>> url.host
             'example.net'
             >>> url.host = 'example.com:8080'
             >>> url.host
             'example.com:8080'
-            >>> url.href
+            >>> str(url)
             'http://example.com:8080/'
         """
         host = self._url.host
@@ -1493,14 +1711,14 @@ class URL:
 
         Examples:
             >>> url = URL('http://example.net:8080')
-            >>> url.href
+            >>> str(url)
             'http://example.net:8080/'
             >>> url.hostname
             'example.net'
             >>> url.hostname = 'example.com'
             >>> url.hostname
             'example.com'
-            >>> url.href
+            >>> str(url)
             'http://example.com:8080/'
         """
         return self._url.serialize_host()
@@ -1565,14 +1783,14 @@ class URL:
 
         Examples:
             >>> url = URL('http://example.net')
-            >>> url.href
+            >>> str(url)
             'http://example.net/'
             >>> url.password
             ''
             >>> url.password = '%c3%89té'
             >>> url.password
             '%c3%89t%C3%A9'
-            >>> url.href
+            >>> str(url)
             'http://:%c3%89t%C3%A9@example.net/'
         """
         return self._url.password
@@ -1595,14 +1813,14 @@ class URL:
 
         Examples:
             >>> url = URL('http://example.net')
-            >>> url.href
+            >>> str(url)
             'http://example.net/'
             >>> url.pathname
             '/'
             >>> url.pathname = '%2e%2E%c3%89té'
             >>> url.pathname
             '/%2e%2E%c3%89t%C3%A9'
-            >>> url.href
+            >>> str(url)
             'http://example.net/%2e%2E%c3%89t%C3%A9'
         """
         return self._url.serialize_path()
@@ -1627,14 +1845,14 @@ class URL:
 
         Examples:
             >>> url = URL('http://example.net:8080')
-            >>> url.href
+            >>> str(url)
             'http://example.net:8080/'
             >>> url.port
             '8080'
             >>> url.port = '80'
             >>> url.port
             ''
-            >>> url.href
+            >>> str(url)
             'http://example.net/'
         """
         port = self._url.port
@@ -1660,14 +1878,14 @@ class URL:
 
         Examples:
             >>> url = URL('a://example.net')
-            >>> url.href
+            >>> str(url)
             'a://example.net'
             >>> url.protocol
             'a:'
             >>> url.protocol = 'B'
             >>> url.protocol
             'b:'
-            >>> url.href
+            >>> str(url)
             'b://example.net'
         """
         return self._url.scheme + ":"
@@ -1686,14 +1904,14 @@ class URL:
 
         Examples:
             >>> url = URL('http://example.net')
-            >>> url.href
+            >>> str(url)
             'http://example.net/'
             >>> url.search
             ''
             >>> url.search = '%c3%89té'
             >>> url.search
             '?%c3%89t%C3%A9'
-            >>> url.href
+            >>> str(url)
             'http://example.net/?%c3%89t%C3%A9'
         """
         query = self._url.query
@@ -1721,7 +1939,7 @@ class URL:
 
         Examples:
             >>> url = URL('http://example.net/file')
-            >>> url.href
+            >>> str(url)
             'http://example.net/file'
             >>> url.search
             ''
@@ -1733,7 +1951,7 @@ class URL:
             [('a', '1'), ('b', '2'), ('a', '3')]
             >>> url.search
             '?a=1&b=2&a=3'
-            >>> url.href
+            >>> str(url)
             'http://example.net/file?a=1&b=2&a=3'
         """
         return self._query
@@ -1747,14 +1965,14 @@ class URL:
 
         Examples:
             >>> url = URL('http://example.net')
-            >>> url.href
+            >>> str(url)
             'http://example.net/'
             >>> url.username
             ''
             >>> url.username = '%c3%89té'
             >>> url.username
             '%c3%89t%C3%A9'
-            >>> url.href
+            >>> str(url)
             'http://%c3%89t%C3%A9@example.net/'
         """
         return self._url.username
@@ -2640,7 +2858,7 @@ class BasicURLParser:
             state_override: URLParserState enum.
 
         Returns:
-            If *url* is specified, it will be used and returned, a new URL
+            If *url* is specified, it will be updated and returned, a new URL
             record will be created otherwise.
 
         Raises:
