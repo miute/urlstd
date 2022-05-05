@@ -4,14 +4,14 @@ User Guide
 Dependencies
 ------------
 
-- `icupy <https://pypi.org/project/icupy/>`_ >=0.11.0
+- `icupy <https://pypi.org/project/icupy/>`_ >=0.11.0 (pre-built packages are `available <https://github.com/miute/icupy/releases>`_)
 
   .. note::
     icupy requirements:
       - `ICU4C <https://github.com/unicode-org/icu/releases>`_
-        (`ICU <https://icu.unicode.org>`_ - International Components for Unicode)
-      - C++17 compatible compiler
-      - `CMake <https://cmake.org>`_
+        (`ICU - International Components for Unicode <https://icu.unicode.org>`_) - latest version recommended
+      - C++17 compatible compiler (see `supported compilers <https://github.com/pybind/pybind11#supported-compilers>`_)
+      - `CMake <https://cmake.org>`_ >= 3.7
 
 
 Installation
@@ -36,7 +36,7 @@ Installation
 
              $env:ICU_ROOT = "C:\icu4c"
 
-       To verify settings using *icuinfo*:
+     - To verify settings using *icuinfo*:
 
        .. tab:: Command Prompt (64 bit)
 
@@ -60,7 +60,7 @@ Installation
           export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
           export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
-       To verify settings using *pkg-config*:
+     - To verify settings using *pkg-config*:
 
        .. code-block:: bash
 

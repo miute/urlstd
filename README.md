@@ -100,47 +100,34 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
 To parse a string into a `URL` with using a base URL:
 
 ```python
->>> from urlstd.parse import URL
->>> url = URL('?ﬃ&🌈', 'http://example.org')
->>> url
-URL(href='http://example.org/?%EF%AC%83&%F0%9F%8C%88', origin='http://example.org', protocol='http:', username='', password='', host='example.org', hostname='example.org', port='', pathname='/', search='?%EF%AC%83&%F0%9F%8C%88', hash='')
->>> url.search
-'?%EF%AC%83&%F0%9F%8C%88'
->>> params = url.search_params
->>> params
-URLSearchParams([('ﬃ', ''), ('🌈', '')])
->>> params.sort()
->>> params
-URLSearchParams([('🌈', ''), ('ﬃ', '')])
->>> url.search
-'?%F0%9F%8C%88=&%EF%AC%83='
->>> str(url)
-'http://example.org/?%F0%9F%8C%88=&%EF%AC%83='
+from urlstd.parse import URL
+url = URL('?ﬃ&🌈', 'http://example.org')
+url  # → URL(href='http://example.org/?%EF%AC%83&%F0%9F%8C%88', origin='http://example.org', protocol='http:', username='', password='', host='example.org', hostname='example.org', port='', pathname='/', search='?%EF%AC%83&%F0%9F%8C%88', hash='')
+url.search  # → '?%EF%AC%83&%F0%9F%8C%88'
+params = url.search_params
+params  # → URLSearchParams([('ﬃ', ''), ('🌈', '')])
+params.sort()
+params  # → URLSearchParams([('🌈', ''), ('ﬃ', '')])
+url.search  # → '?%F0%9F%8C%88=&%EF%AC%83='
+str(url)  # → 'http://example.org/?%F0%9F%8C%88=&%EF%AC%83='
 ```
 
 To parse a string into a `urllib.parse.ParseResult` with using a base URL:
 
 ```python
->>> import html
->>> from urllib.parse import unquote
->>> from urlstd.parse import urlparse
->>> pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='utf-8')
->>> pr
-ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%C3%BFb', fragment='')
->>> unquote(pr.query)
-'aÿb'
->>> pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='windows-1251')
->>> pr
-ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%26%23255%3Bb', fragment='')
->>> unquote(pr.query, encoding='windows-1251')
-'a&#255;b'
->>> html.unescape('a&#255;b')
-'aÿb'
->>> pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='windows-1252')
->>> pr
-ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%FFb', fragment='')
->>> unquote(pr.query, encoding='windows-1252')
-'aÿb'
+import html
+from urllib.parse import unquote
+from urlstd.parse import urlparse
+pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='utf-8')
+pr  # → ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%C3%BFb', fragment='')
+unquote(pr.query)  # → 'aÿb'
+pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='windows-1251')
+pr  # → ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%26%23255%3Bb', fragment='')
+unquote(pr.query, encoding='windows-1251')  # → 'a&#255;b'
+html.unescape('a&#255;b')  # → 'aÿb'
+pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='windows-1252')
+pr  # → ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%FFb', fragment='')
+unquote(pr.query, encoding='windows-1252')  # → 'aÿb'
 ```
 
 ## Logging
@@ -149,16 +136,16 @@ ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query=
 Change the logger log level of urlstd if needed:
 
 ```python
-logging.getLogger("urlstd").setLevel(logging.ERROR)
+logging.getLogger('urlstd').setLevel(logging.ERROR)
 ```
 
 ## Dependencies
 
-- [icupy](https://pypi.org/project/icupy/) >= 0.11.0
+- [icupy](https://pypi.org/project/icupy/) >= 0.11.0 (pre-built packages are [available](https://github.com/miute/icupy/releases))
   - icupy requirements:
-    - [ICU4C](https://github.com/unicode-org/icu/releases) ([ICU](https://icu.unicode.org/download) - International Components for Unicode)
-    - C++17 compatible compiler
-    - [CMake](https://cmake.org/)
+    - [ICU4C](https://github.com/unicode-org/icu/releases) ([ICU - International Components for Unicode](https://icu.unicode.org/)) - latest version recommended
+    - C++17 compatible compiler (see [supported compilers](https://github.com/pybind/pybind11#supported-compilers))
+    - [CMake](https://cmake.org/) >= 3.7
 
 ## Installation
 
@@ -177,7 +164,7 @@ logging.getLogger("urlstd").setLevel(logging.ERROR)
         $env:ICU_ROOT = "C:\icu4c"
         ```
 
-        To verify settings using *icuinfo (64 bit)*:
+      - To verify settings using *icuinfo (64 bit)*:
 
         ```bat
         %ICU_ROOT%\bin64\icuinfo
@@ -198,7 +185,7 @@ logging.getLogger("urlstd").setLevel(logging.ERROR)
         export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
         ```
 
-        To verify settings using *pkg-config*:
+      - To verify settings using *pkg-config*:
 
         ```bash
         $ pkg-config --cflags --libs icu-uc
@@ -212,6 +199,12 @@ logging.getLogger("urlstd").setLevel(logging.ERROR)
     ```
 
 ## Running Tests
+
+Install dependencies:
+
+```bash
+pip install tox
+```
 
 To run tests and generate a report:
 

@@ -20,6 +20,7 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
+    "sphinx_copybutton",
     "sphinx_inline_tabs",
 ]
 
@@ -44,7 +45,13 @@ html_theme = "furo"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-html_show_sourcelink = False
 html_title = f"{project} {version}"
 
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+
+napoleon_use_admonition_for_examples = True
+
+copybutton_prompt_is_regexp = True
+copybutton_prompt_text = (
+    r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+)
