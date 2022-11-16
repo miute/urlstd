@@ -372,7 +372,7 @@ def urlencode(
 
 def urlparse(
     urlstring: str,
-    base: str = None,
+    base: Optional[str] = None,
     encoding: str = "utf-8",
     allow_fragments: bool = True,
 ) -> ParseResult:
@@ -3086,7 +3086,7 @@ class BasicURLParser:
 
 def parse_url(
     urlstring: str,
-    base: str = None,
+    base: Optional[str] = None,
     encoding: str = "utf-8",
 ) -> URLRecord:
     """Parses a string *urlstring* against a base URL *base* using the basic
