@@ -13,130 +13,108 @@ env:
   ICU4C_WIN64_ZIP: "icu4c-71_1-Win64-MSVC2019.zip"
 
 jobs:
-  download:
-    runs-on: ubuntu-20.04
-
-    steps:
-    - run: mkdir requirements
-
-    - name: Download requirements
-      working-directory: requirements
-      run: |
-        curl -LO ${{env.ICU_DL_PATH}}/${{env.ICU4C_UBUNTU_TGZ}}
-        curl -LO ${{env.ICU_DL_PATH}}/${{env.ICU4C_WIN64_ZIP}}
-
-    - name: Store requirements
-      uses: actions/upload-artifact@v3
-      with:
-        name: requirements
-        path: requirements
-
   test:
-    needs: download
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, windows-latest]
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-        architecture: ["x64"]
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Python ${{matrix.python-version}}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{matrix.python-version}}
+      - run: mkdir -p build
 
-    - name: Upgrade pip
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools
+      - name: Set up requirements (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        working-directory: build
+        run: |
+          curl -LO ${{env.ICU_DL_PATH}}/${{env.ICU4C_UBUNTU_TGZ}}
+          sudo tar zxf ${{env.ICU4C_UBUNTU_TGZ}} -C / --strip-components=2
+          echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
 
-    - name: Restore requirements
-      uses: actions/download-artifact@v3
-      with:
-        name: requirements
-        path: build/extra
+      - name: Set up requirements (Windows)
+        if: startsWith(matrix.os, 'windows')
+        working-directory: build
+        env:
+          INSTALL_PREFIX: "${{github.workspace}}/build"
+          ICU4C_DIR: "icu4c"
+        run: |
+          curl -LO ${{env.ICU_DL_PATH}}/${{env.ICU4C_WIN64_ZIP}}
+          7z x ${{env.ICU4C_WIN64_ZIP}} -o${{env.ICU4C_DIR}}
+          echo "ICU_ROOT=${{env.INSTALL_PREFIX}}/${{env.ICU4C_DIR}}" >> $env:GITHUB_ENV
 
-    - name: Set up requirements (Ubuntu)
-      if: startsWith(matrix.os, 'ubuntu')
-      working-directory: build
-      run: |
-        sudo tar zxf extra/${{env.ICU4C_UBUNTU_TGZ}} -C / --strip-components=2
-        echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
+      - name: Set up Python ${{matrix.python-version}}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{matrix.python-version}}
 
-    - name: Set up requirements (Windows)
-      if: startsWith(matrix.os, 'windows')
-      working-directory: build
-      env:
-        INSTALL_PREFIX: "${{github.workspace}}/build"
-        ICU4C_DIR: "extra.icu4c"
-      run: |
-        Expand-Archive extra/${{env.ICU4C_WIN64_ZIP}} -DestinationPath ${{env.ICU4C_DIR}} -Force
-        echo "ICU_ROOT=${{env.INSTALL_PREFIX}}/${{env.ICU4C_DIR}}" >> $env:GITHUB_ENV
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools
 
-    - name: Set up Poetry (Ubuntu)
-      if: startsWith(matrix.os, 'ubuntu')
-      run: |
-        curl -sL https://install.python-poetry.org | python - -y
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Set up Poetry (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          curl -sL https://install.python-poetry.org | python - -y
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Set up Poetry (Windows)
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        curl -sL https://install.python-poetry.org | python - -y
-        echo "$env:APPDATA/Python/Scripts" >> $env:GITHUB_PATH
+      - name: Set up Poetry (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          curl -sL https://install.python-poetry.org | python - -y
+          echo "$env:APPDATA/Python/Scripts" >> $env:GITHUB_PATH
 
-    - name: Install dependencies
-      run: |
-        poetry install
+      - name: Install dependencies
+        run: |
+          poetry install
 
-    - name: Run tests and collect coverage data
-      continue-on-error: true
-      run: |
-        poetry run coverage run -p -m pytest --color=yes
+      - name: Run tests and collect coverage data
+        continue-on-error: true
+        run: |
+          poetry run coverage run -p -m pytest --color=yes
 
-    - name: Store coverage data
-      uses: actions/upload-artifact@v3
-      with:
-        name: coverage-data
-        path: ".coverage.*"
-        if-no-files-found: error
+      - name: Store coverage data
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-data
+          path: ".coverage.*"
+          if-no-files-found: error
 
   report:
     needs: test
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-    - name: Upgrade pip
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools
 
-    - name: Install dependencies
-      run: |
-        python -m pip install coverage[toml]
+      - name: Install dependencies
+        run: |
+          python -m pip install coverage[toml]
 
-    - name: Restore coverage data
-      uses: actions/download-artifact@v3
-      with:
-        name: coverage-data
+      - name: Restore coverage data
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage-data
 
-    - name: Report coverage statistics
-      run: |
-        coverage combine
-        coverage report -m
-        coverage xml
+      - name: Report coverage statistics
+        run: |
+          coverage combine
+          coverage report -m
+          coverage xml
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
