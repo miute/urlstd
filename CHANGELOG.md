@@ -2,6 +2,8 @@
 
 ## v2021.10.25.post2 / 2022-11-19
 
+- NEW
+  - Add support for Python 3.11
 - FIXED
   - Fix type hints
 
