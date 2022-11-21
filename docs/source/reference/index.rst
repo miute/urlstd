@@ -6,6 +6,7 @@ Modules
 -------
 
 .. toctree::
+   :maxdepth: 1
 
    urlstd.parse
    urlstd.error
