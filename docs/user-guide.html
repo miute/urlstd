@@ -1,17 +1,18 @@
 <!doctype html>
-<html class="no-js">
+<html class="no-js" lang="en">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="API Reference" href="reference/index.html" /><link rel="prev" title="urlstd" href="index.html" />
 
-    <meta name="generator" content="sphinx-4.5.0, furo 2022.04.07"/>
-        <title>User Guide - urlstd 2021.10.25.post1</title>
+    <meta name="generator" content="sphinx-5.3.0, furo 2022.09.29"/>
+        <title>User Guide - urlstd 2021.10.25.post2</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=68f4518137b9aefe99b631505a2064c3c42c9852" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
 
 
 
@@ -125,7 +126,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">urlstd 2021.10.25.post1</div></a>
+      <a href="index.html"><div class="brand">urlstd 2021.10.25.post2</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -148,7 +149,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
 
 
-  <span class="sidebar-brand-text">urlstd 2021.10.25.post1</span>
+  <span class="sidebar-brand-text">urlstd 2021.10.25.post2</span>
 
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
@@ -182,7 +183,9 @@
           </svg>
           <span>Back to top</span>
         </a>
-        <div class="content-icon-container"><div class="theme-toggle-container theme-toggle-content">
+        <div class="content-icon-container">
+
+<div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -197,9 +200,9 @@
         </div>
         <article role="main">
           <section id="user-guide">
-<h1>User Guide<a class="headerlink" href="#user-guide" title="Permalink to this headline">#</a></h1>
+<h1>User Guide<a class="headerlink" href="#user-guide" title="Permalink to this heading">#</a></h1>
 <section id="dependencies">
-<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">#</a></h2>
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this heading">#</a></h2>
 <ul>
 <li><p><a class="reference external" href="https://pypi.org/project/icupy/">icupy</a> &gt;=0.11.0 (pre-built packages are <a class="reference external" href="https://github.com/miute/icupy/releases">available</a>)</p>
 <div class="admonition note">
@@ -218,7 +221,7 @@
 </ul>
 </section>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">#</a></h2>
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h2>
 <ol class="arabic">
 <li><p>Configuring environment variables for icupy (ICU):</p>
 <ul>
@@ -227,13 +230,13 @@
 <li><p>Set the <strong>ICU_ROOT</strong> environment variable to the root of the ICU installation (default is “C:\icu”).
 For example, if the ICU is located in “C:\icu4c”:</p>
 <div class="tab-set docutils container">
-<input checked="True" class="tab-input" id="tab-set--0-input--1" name="tab-set--0" type="radio"/><label class="tab-label" for="tab-set--0-input--1">Command Prompt</label><div class="tab-content docutils container">
+<input checked="True" class="tab-input" id="tab-set--0-input--1" name="tab-set--0" type="radio"><label class="tab-label" for="tab-set--0-input--1">Command Prompt</label><div class="tab-content docutils container">
 <div class="highlight-bat notranslate"><div class="highlight"><pre><span></span><span class="k">set</span> <span class="nv">ICU_ROOT</span><span class="p">=</span>C:\icu4c
 </pre></div>
 </div>
 </div>
-<input class="tab-input" id="tab-set--0-input--2" name="tab-set--0" type="radio"/><label class="tab-label" for="tab-set--0-input--2">PowerShell</label><div class="tab-content docutils container">
-<div class="highlight-powershell notranslate"><div class="highlight"><pre><span></span><span class="nv">$env:ICU_ROOT</span> <span class="p">=</span> <span class="s2">"C:\icu4c"</span>
+<input class="tab-input" id="tab-set--0-input--2" name="tab-set--0" type="radio"><label class="tab-label" for="tab-set--0-input--2">PowerShell</label><div class="tab-content docutils container">
+<div class="highlight-powershell notranslate"><div class="highlight"><pre><span></span><span class="nv">$env:ICU_ROOT</span> <span class="p">=</span> <span class="s2">&quot;C:\icu4c&quot;</span>
 </pre></div>
 </div>
 </div>
@@ -241,12 +244,12 @@ For example, if the ICU is located in “C:\icu4c”:</p>
 </li>
 <li><p>To verify settings using <em>icuinfo</em>:</p>
 <div class="tab-set docutils container">
-<input checked="True" class="tab-input" id="tab-set--1-input--1" name="tab-set--1" type="radio"/><label class="tab-label" for="tab-set--1-input--1">Command Prompt (64 bit)</label><div class="tab-content docutils container">
+<input checked="True" class="tab-input" id="tab-set--1-input--1" name="tab-set--1" type="radio"><label class="tab-label" for="tab-set--1-input--1">Command Prompt (64 bit)</label><div class="tab-content docutils container">
 <div class="highlight-bat notranslate"><div class="highlight"><pre><span></span><span class="nv">%ICU_ROOT%</span>\bin64\icuinfo
 </pre></div>
 </div>
 </div>
-<input class="tab-input" id="tab-set--1-input--2" name="tab-set--1" type="radio"/><label class="tab-label" for="tab-set--1-input--2">PowerShell (64 bit)</label><div class="tab-content docutils container">
+<input class="tab-input" id="tab-set--1-input--2" name="tab-set--1" type="radio"><label class="tab-label" for="tab-set--1-input--2">PowerShell (64 bit)</label><div class="tab-content docutils container">
 <div class="highlight-powershell notranslate"><div class="highlight"><pre><span></span><span class="p">&amp;</span> <span class="nv">$env:ICU_ROOT</span><span class="p">\</span><span class="n">bin64</span><span class="p">\</span><span class="n">icuinfo</span>
 </pre></div>
 </div>
@@ -282,56 +285,56 @@ For example, if the ICU is located in “/usr/local”:</p>
 </ol>
 </section>
 <section id="basic-usage">
-<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">#</a></h2>
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this heading">#</a></h2>
 <p>To parse a string into a <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL" title="urlstd.parse.URL"><code class="xref py py-class docutils literal notranslate"><span class="pre">URL</span></code></a> with using a base URL:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">urlstd.parse</span> <span class="kn">import</span> <span class="n">URL</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">url</span> <span class="o">=</span> <span class="n">URL</span><span class="p">(</span><span class="s1">'?ﬃ&amp;🌈'</span><span class="p">,</span> <span class="s1">'http://example.org'</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">url</span> <span class="o">=</span> <span class="n">URL</span><span class="p">(</span><span class="s1">&#39;?ﬃ&amp;🌈&#39;</span><span class="p">,</span> <span class="s1">&#39;http://example.org&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">url</span>
-<span class="go">URL(href='http://example.org/?%EF%AC%83&amp;%F0%9F%8C%88', origin='http://example.org', protocol='http:', username='', password='', host='example.org', hostname='example.org', port='', pathname='/', search='?%EF%AC%83&amp;%F0%9F%8C%88', hash='')</span>
+<span class="go">URL(href=&#39;http://example.org/?%EF%AC%83&amp;%F0%9F%8C%88&#39;, origin=&#39;http://example.org&#39;, protocol=&#39;http:&#39;, username=&#39;&#39;, password=&#39;&#39;, host=&#39;example.org&#39;, hostname=&#39;example.org&#39;, port=&#39;&#39;, pathname=&#39;/&#39;, search=&#39;?%EF%AC%83&amp;%F0%9F%8C%88&#39;, hash=&#39;&#39;)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">url</span><span class="o">.</span><span class="n">search</span>
-<span class="go">'?%EF%AC%83&amp;%F0%9F%8C%88'</span>
+<span class="go">&#39;?%EF%AC%83&amp;%F0%9F%8C%88&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">params</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">search_params</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">params</span>
-<span class="go">URLSearchParams([('ﬃ', ''), ('🌈', '')])</span>
+<span class="go">URLSearchParams([(&#39;ﬃ&#39;, &#39;&#39;), (&#39;🌈&#39;, &#39;&#39;)])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">params</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">params</span>
-<span class="go">URLSearchParams([('🌈', ''), ('ﬃ', '')])</span>
+<span class="go">URLSearchParams([(&#39;🌈&#39;, &#39;&#39;), (&#39;ﬃ&#39;, &#39;&#39;)])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">url</span><span class="o">.</span><span class="n">search</span>
-<span class="go">'?%F0%9F%8C%88=&amp;%EF%AC%83='</span>
+<span class="go">&#39;?%F0%9F%8C%88=&amp;%EF%AC%83=&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-<span class="go">'http://example.org/?%F0%9F%8C%88=&amp;%EF%AC%83='</span>
+<span class="go">&#39;http://example.org/?%F0%9F%8C%88=&amp;%EF%AC%83=&#39;</span>
 </pre></div>
 </div>
-<p><a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.urlparse" title="urlstd.parse.urlparse"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlstd.parse.urlparse()</span></code></a> is an alternative to <a class="reference external" href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse" title="(in Python v3.10)"><code class="xref py py-func docutils literal notranslate"><span class="pre">urllib.parse.urlparse()</span></code></a>.
-To parse a string into a <a class="reference external" href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.ParseResult" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">urllib.parse.ParseResult</span></code></a> with using a base URL:</p>
+<p><a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.urlparse" title="urlstd.parse.urlparse"><code class="xref py py-func docutils literal notranslate"><span class="pre">urlstd.parse.urlparse()</span></code></a> is an alternative to <a class="reference external" href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse" title="(in Python v3.11)"><code class="xref py py-func docutils literal notranslate"><span class="pre">urllib.parse.urlparse()</span></code></a>.
+To parse a string into a <a class="reference external" href="https://docs.python.org/3/library/urllib.parse.html#urllib.parse.ParseResult" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">urllib.parse.ParseResult</span></code></a> with using a base URL:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">html</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">unquote</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">urlstd.parse</span> <span class="kn">import</span> <span class="n">urlparse</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pr</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="s1">'?aÿb'</span><span class="p">,</span> <span class="s1">'http://example.org/foo/'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pr</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="s1">&#39;?aÿb&#39;</span><span class="p">,</span> <span class="s1">&#39;http://example.org/foo/&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pr</span>
-<span class="go">ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%C3%BFb', fragment='')</span>
+<span class="go">ParseResult(scheme=&#39;http&#39;, netloc=&#39;example.org&#39;, path=&#39;/foo/&#39;, params=&#39;&#39;, query=&#39;a%C3%BFb&#39;, fragment=&#39;&#39;)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">unquote</span><span class="p">(</span><span class="n">pr</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
-<span class="go">'aÿb'</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pr</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="s1">'?aÿb'</span><span class="p">,</span> <span class="s1">'http://example.org/foo/'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'windows-1251'</span><span class="p">)</span>
+<span class="go">&#39;aÿb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pr</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="s1">&#39;?aÿb&#39;</span><span class="p">,</span> <span class="s1">&#39;http://example.org/foo/&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;windows-1251&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pr</span>
-<span class="go">ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%26%23255%3Bb', fragment='')</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">unquote</span><span class="p">(</span><span class="n">pr</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'windows-1251'</span><span class="p">)</span>
-<span class="go">'a&amp;#255;b'</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="s1">'a&amp;#255;b'</span><span class="p">)</span>
-<span class="go">'aÿb'</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pr</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="s1">'?aÿb'</span><span class="p">,</span> <span class="s1">'http://example.org/foo/'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'windows-1252'</span><span class="p">)</span>
+<span class="go">ParseResult(scheme=&#39;http&#39;, netloc=&#39;example.org&#39;, path=&#39;/foo/&#39;, params=&#39;&#39;, query=&#39;a%26%23255%3Bb&#39;, fragment=&#39;&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">unquote</span><span class="p">(</span><span class="n">pr</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;windows-1251&#39;</span><span class="p">)</span>
+<span class="go">&#39;a&amp;#255;b&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="s1">&#39;a&amp;#255;b&#39;</span><span class="p">)</span>
+<span class="go">&#39;aÿb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pr</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="s1">&#39;?aÿb&#39;</span><span class="p">,</span> <span class="s1">&#39;http://example.org/foo/&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;windows-1252&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pr</span>
-<span class="go">ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%FFb', fragment='')</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">unquote</span><span class="p">(</span><span class="n">pr</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'windows-1252'</span><span class="p">)</span>
-<span class="go">'aÿb'</span>
+<span class="go">ParseResult(scheme=&#39;http&#39;, netloc=&#39;example.org&#39;, path=&#39;/foo/&#39;, params=&#39;&#39;, query=&#39;a%FFb&#39;, fragment=&#39;&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">unquote</span><span class="p">(</span><span class="n">pr</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;windows-1252&#39;</span><span class="p">)</span>
+<span class="go">&#39;aÿb&#39;</span>
 </pre></div>
 </div>
 </section>
 <section id="logging">
-<h2>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">#</a></h2>
-<p><strong>urlstd</strong> uses standard library <a class="reference external" href="https://docs.python.org/3/library/logging.html#module-logging" title="(in Python v3.10)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">logging</span></code></a> for <a class="reference external" href="https://url.spec.whatwg.org/#validation-error">validation error</a>.
+<h2>Logging<a class="headerlink" href="#logging" title="Permalink to this heading">#</a></h2>
+<p><strong>urlstd</strong> uses standard library <a class="reference external" href="https://docs.python.org/3/library/logging.html#module-logging" title="(in Python v3.11)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">logging</span></code></a> for <a class="reference external" href="https://url.spec.whatwg.org/#validation-error">validation error</a>.
 Change the logger log level of <strong>urlstd</strong> if needed:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'urlstd'</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;urlstd&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -349,10 +352,10 @@ Change the logger log level of <strong>urlstd</strong> if needed:</p>
                 </div>
                 <div class="title">API Reference</div>
               </div>
-              <svg><use href="#svg-arrow-right"></use></svg>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
           <a class="prev-page" href="index.html">
-              <svg><use href="#svg-arrow-right"></use></svg>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
@@ -388,7 +391,7 @@ Change the logger log level of <strong>urlstd</strong> if needed:</p>
       <div class="toc-sticky toc-scroll">
         <div class="toc-title-container">
           <span class="toc-title">
-            Contents
+            On this page
           </span>
         </div>
         <div class="toc-tree-container">
@@ -413,7 +416,9 @@ Change the logger log level of <strong>urlstd</strong> if needed:</p>
 </div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/scripts/furo.js"></script>
     <script src="_static/clipboard.min.js"></script>
     <script src="_static/copybutton.js"></script>

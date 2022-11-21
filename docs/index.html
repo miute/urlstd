@@ -1,17 +1,18 @@
 <!doctype html>
-<html class="no-js">
+<html class="no-js" lang="en">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="User Guide" href="user-guide.html" />
 
-    <meta name="generator" content="sphinx-4.5.0, furo 2022.04.07"/>
-        <title>urlstd 2021.10.25.post1</title>
+    <meta name="generator" content="sphinx-5.3.0, furo 2022.09.29"/>
+        <title>urlstd 2021.10.25.post2</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=68f4518137b9aefe99b631505a2064c3c42c9852" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
 
 
 
@@ -125,7 +126,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="#"><div class="brand">urlstd 2021.10.25.post1</div></a>
+      <a href="#"><div class="brand">urlstd 2021.10.25.post2</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -148,7 +149,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
 
 
-  <span class="sidebar-brand-text">urlstd 2021.10.25.post1</span>
+  <span class="sidebar-brand-text">urlstd 2021.10.25.post2</span>
 
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
@@ -182,7 +183,9 @@
           </svg>
           <span>Back to top</span>
         </a>
-        <div class="content-icon-container"><div class="theme-toggle-container theme-toggle-content">
+        <div class="content-icon-container">
+
+<div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -197,16 +200,16 @@
         </div>
         <article role="main">
           <section id="urlstd">
-<h1>urlstd<a class="headerlink" href="#urlstd" title="Permalink to this headline">#</a></h1>
-<a class="reference external image-reference" href="https://pypi.org/project/urlstd/"><img alt="PyPI" src="https://img.shields.io/pypi/v/urlstd.svg"/></a>
-<a class="reference external image-reference" href="https://pypi.org/project/urlstd/"><img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/urlstd"/></a>
-<a class="reference external image-reference" href="https://pypi.org/project/urlstd/"><img alt="PyPI - License" src="https://img.shields.io/pypi/l/urlstd"/></a>
-<a class="reference external image-reference" href="https://github.com/miute/urlstd/actions/workflows/main.yml"><img alt="CI" src="https://github.com/miute/urlstd/actions/workflows/main.yml/badge.svg"/></a>
-<a class="reference external image-reference" href="https://codecov.io/gh/miute/urlstd"><img alt="codecov" src="https://codecov.io/gh/miute/urlstd/branch/main/graph/badge.svg?token=XJGM09H5TS"/></a>
+<h1>urlstd<a class="headerlink" href="#urlstd" title="Permalink to this heading">#</a></h1>
+<a class="reference external image-reference" href="https://pypi.org/project/urlstd/"><img alt="PyPI" src="https://img.shields.io/pypi/v/urlstd.svg" /></a>
+<a class="reference external image-reference" href="https://pypi.org/project/urlstd/"><img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/urlstd" /></a>
+<a class="reference external image-reference" href="https://pypi.org/project/urlstd/"><img alt="PyPI - License" src="https://img.shields.io/pypi/l/urlstd" /></a>
+<a class="reference external image-reference" href="https://github.com/miute/urlstd/actions/workflows/main.yml"><img alt="CI" src="https://github.com/miute/urlstd/actions/workflows/main.yml/badge.svg" /></a>
+<a class="reference external image-reference" href="https://codecov.io/gh/miute/urlstd"><img alt="codecov" src="https://codecov.io/gh/miute/urlstd/branch/main/graph/badge.svg?token=XJGM09H5TS" /></a>
 <p><strong>urlstd</strong> is a Python implementation of the WHATWG <a class="reference external" href="https://url.spec.whatwg.org/">URL Standard</a>.</p>
 <p>This library provides URL class, URLSearchParams class, and low-level APIs that comply with the URL specification.</p>
 <section id="supported-apis">
-<h2>Supported APIs<a class="headerlink" href="#supported-apis" title="Permalink to this headline">#</a></h2>
+<h2>Supported APIs<a class="headerlink" href="#supported-apis" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference external" href="https://url.spec.whatwg.org/#url-class">URL class</a>: <a class="reference internal" href="reference/urlstd.parse.html#urlstd.parse.URL" title="urlstd.parse.URL"><code class="xref py py-class docutils literal notranslate"><span class="pre">urlstd.parse.URL</span></code></a></p>
 <ul>
@@ -290,7 +293,7 @@
 </div>
 </section>
 <section id="indices-and-tables">
-<h2>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">#</a></h2>
+<h2>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
@@ -311,7 +314,7 @@
                 </div>
                 <div class="title">User Guide</div>
               </div>
-              <svg><use href="#svg-arrow-right"></use></svg>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
 
         </div>
@@ -340,7 +343,7 @@
       <div class="toc-sticky toc-scroll">
         <div class="toc-title-container">
           <span class="toc-title">
-            Contents
+            On this page
           </span>
         </div>
         <div class="toc-tree-container">
@@ -363,7 +366,9 @@
 </div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/scripts/furo.js"></script>
     <script src="_static/clipboard.min.js"></script>
     <script src="_static/copybutton.js"></script>
