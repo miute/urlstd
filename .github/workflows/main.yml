@@ -46,27 +46,15 @@ jobs:
           7z x ${{env.ICU4C_WIN64_ZIP}} -o${{env.ICU4C_DIR}}
           echo "ICU_ROOT=${{env.INSTALL_PREFIX}}/${{env.ICU4C_DIR}}" >> $env:GITHUB_ENV
 
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+
       - name: Set up Python ${{matrix.python-version}}
         uses: actions/setup-python@v4
         with:
           python-version: ${{matrix.python-version}}
-
-      - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools
-
-      - name: Set up Poetry (Ubuntu)
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          curl -sL https://install.python-poetry.org | python - -y
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Set up Poetry (Windows)
-        if: startsWith(matrix.os, 'windows')
-        run: |
-          curl -sL https://install.python-poetry.org | python - -y
-          echo "$env:APPDATA/Python/Scripts" >> $env:GITHUB_PATH
+          cache: "poetry"
 
       - name: Install dependencies
         run: |
@@ -75,7 +63,7 @@ jobs:
       - name: Run tests and collect coverage data
         continue-on-error: true
         run: |
-          poetry run coverage run -p -m pytest --color=yes
+          poetry run coverage run -p -m pytest
 
       - name: Store coverage data
         uses: actions/upload-artifact@v3
@@ -96,14 +84,9 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools
-
       - name: Install dependencies
         run: |
-          python -m pip install coverage[toml]
+          pipx install coverage[toml]
 
       - name: Restore coverage data
         uses: actions/download-artifact@v3
