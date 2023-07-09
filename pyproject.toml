@@ -15,7 +15,6 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
@@ -30,7 +29,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 icupy = ">=0.11.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -45,7 +44,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-addopts = "--tb=native -ra"
+addopts = "--tb=native --color=yes -ra"
 log_format = "%(asctime)s|%(levelname)s|%(name)s.%(funcName)s|%(message)s"
 log_date_format = "%H:%M:%S"
 testpaths = ["tests"]
