@@ -2,28 +2,18 @@
 Python implementation of the WHATWG URL Standard
 """
 
+from __future__ import annotations
+
 import codecs
-import collections.abc
 import copy
 import enum
 import re
 import string
+from collections.abc import Collection, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from ipaddress import IPv6Address
 from logging import Logger, getLogger
-from typing import (
-    Any,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    overload,
-)
+from typing import Any, NamedTuple, Optional, overload
 from urllib.parse import ParseResult, quote, quote_plus
 from urllib.parse import unquote_to_bytes as percent_decode
 
@@ -191,7 +181,7 @@ def is_windows_drive_letter(text: str) -> bool:
     return len(text) == 2 and text[0] in ASCII_ALPHA and text[1] in ":|"
 
 
-def parse_qsl(query: bytes) -> List[Tuple[str, str]]:
+def parse_qsl(query: bytes) -> list[tuple[str, str]]:
     r"""An alternative to :func:`urllib.parse.parse_qsl`.
 
     Parses a byte sequence in the form application/x-www-form-urlencoded,
@@ -318,7 +308,7 @@ def string_percent_encode(
 
 
 def urlencode(
-    query: Sequence[Tuple[str, str]], encoding: str = "utf-8"
+    query: Sequence[tuple[str, str]], encoding: str = "utf-8"
 ) -> str:
     r"""An alternative to :func:`urllib.parse.urlencode`.
 
@@ -584,7 +574,7 @@ class Host:
         return ipv4
 
     @classmethod
-    def _parse_ipv4_number(cls, text: str) -> Tuple[int, bool]:
+    def _parse_ipv4_number(cls, text: str) -> tuple[int, bool]:
         validation_error = False
         if len(text) == 0:
             return -1, validation_error
@@ -609,7 +599,7 @@ class Host:
         return -1, validation_error
 
     @classmethod
-    def _parse_ipv6(cls, host: str) -> Tuple[int, ...]:
+    def _parse_ipv6(cls, host: str) -> tuple[int, ...]:
         # TODO: Implement IPv6 parser?
         #  (https://url.spec.whatwg.org/#concept-ipv6-parser)
         log = get_logger(cls)
@@ -618,7 +608,7 @@ class Host:
         except ValueError as e:
             log.error("Invalid IPv6 address: %s", e)
             raise IPv6AddressParseError(f"{e!s}") from None
-        address: List[int] = []
+        address: list[int] = []
         for _ in range(8):
             address.insert(0, ipv6 & 0xFFFF)
             ipv6 >>= 16
@@ -650,7 +640,7 @@ class Host:
 
     @classmethod
     def _serialize_ipv4(cls, address: int) -> str:
-        output: List[str] = []
+        output: list[str] = []
         n = address
         for _ in range(4):
             output.insert(0, str(n % 256))
@@ -701,7 +691,7 @@ class Host:
     @classmethod
     def parse(
         cls, host: str, is_not_special: bool = False
-    ) -> Union[str, int, Tuple[int, ...]]:
+    ) -> str | int | tuple[int, ...]:
         """Parses a string *host*, and returns a domain, IP address, opaque
         host, or empty host.
 
@@ -713,7 +703,7 @@ class Host:
         Returns:
             - str -- A domain, an opaque host, or an empty host.
             - int -- An IPv4 address.
-            - Tuple[int, ...] -- An IPv6 address.
+            - tuple[int, ...] -- An IPv6 address.
 
         Raises:
             urlstd.error.HostParseError: Raised when a host string is not valid.
@@ -760,7 +750,7 @@ class Host:
         return ascii_domain  # ASCII domain
 
     @classmethod
-    def serialize(cls, host: Union[str, int, Sequence[int]]) -> str:
+    def serialize(cls, host: str | int | Sequence[int]) -> str:
         """Returns a string representation of a host.
 
         Args:
@@ -812,7 +802,7 @@ class IDNA:
         icu.UIDNA_ERROR_CONTEXTO_DIGITS: "UIDNA_ERROR_CONTEXTO_DIGITS",
     }
 
-    _cache: Dict[int, icu.IDNA] = {}
+    _cache: dict[int, icu.IDNA] = {}
 
     @classmethod
     def _create_instance(cls, options: int) -> icu.IDNA:
@@ -914,13 +904,13 @@ class Origin(NamedTuple):
     scheme: str
 
     #: A URL's host.
-    host: Optional[Union[str, int, Tuple[int, ...]]]
+    host: str | int | tuple[int, ...] | None
 
     #: A URL's port.
-    port: Optional[int]
+    port: int | None
 
     #: A URL's domain.
-    domain: Optional[str]
+    domain: str | None
 
     def __str__(self) -> str:
         """Returns a string representation of the origin.
@@ -949,13 +939,13 @@ class URLRecord:
     password: str = ""
 
     #: A URL's host.
-    host: Optional[Union[str, int, Tuple[int, ...]]] = None
+    host: Optional[str | int | tuple[int, ...]] = None
 
     #: A URL's port.
     port: Optional[int] = None
 
     #: A URL's path.
-    path: Union[List[str], str] = field(default_factory=list)  # type: ignore
+    path: list[str] | str = field(default_factory=list)  # type: ignore
 
     #: A URL's query.
     query: Optional[str] = None
@@ -1053,7 +1043,7 @@ class URLRecord:
         return self.scheme in SPECIAL_SCHEMES
 
     @property
-    def origin(self) -> Optional[Origin]:
+    def origin(self) -> Origin | None:
         """Returns a URL’s origin or *None* as an `opaque origin
         <https://html.spec.whatwg.org/multipage/origin.html#concept-origin-opaque>`_.
 
@@ -1155,7 +1145,7 @@ class URLRecord:
         del path[-1]  # type: ignore
 
 
-class URLSearchParams(collections.abc.Collection):
+class URLSearchParams(Collection):
     """Parses and manipulates URL's query.
 
     Args:
@@ -1190,13 +1180,11 @@ class URLSearchParams(collections.abc.Collection):
         ...
 
     @overload
-    def __init__(
-        self, init: Sequence[Sequence[Union[str, int, float]]]
-    ) -> None:
+    def __init__(self, init: Sequence[Sequence[str | int | float]]) -> None:
         ...
 
     @overload
-    def __init__(self, init: Dict[str, Union[str, int, float]]) -> None:
+    def __init__(self, init: dict[str, str | int | float]) -> None:
         ...
 
     @overload
@@ -1214,16 +1202,14 @@ class URLSearchParams(collections.abc.Collection):
     def __init__(
         self,
         init: Optional[
-            Union[
-                str,
-                Sequence[Sequence[Union[str, int, float]]],
-                Dict[str, Union[str, int, float]],
-                URLRecord,
-                "URLSearchParams",
-            ]
+            str
+            | Sequence[Sequence[str | int | float]]
+            | dict[str, str | int | float]
+            | URLRecord
+            | "URLSearchParams"
         ] = None,
     ) -> None:
-        self._list: List[Tuple[str, str]] = []
+        self._list: list[tuple[str, str]] = []
         self._url: Optional[URLRecord] = None
         if init is None:
             return
@@ -1299,7 +1285,7 @@ class URLSearchParams(collections.abc.Collection):
             )
         return self.get(item) is not None
 
-    def __iter__(self) -> Iterator[Tuple[str, str]]:
+    def __iter__(self) -> Iterator[tuple[str, str]]:
         """Returns a new iterator of this object’s items
         ((name, value) pairs).
 
@@ -1341,7 +1327,7 @@ class URLSearchParams(collections.abc.Collection):
             serialized_query if len(serialized_query) > 0 else None
         )
 
-    def append(self, name: str, value: Union[str, int, float]) -> None:
+    def append(self, name: str, value: str | int | float) -> None:
         """Appends a new name-value pair as a new search parameter.
 
         Args:
@@ -1391,7 +1377,7 @@ class URLSearchParams(collections.abc.Collection):
                 self._list.pop(i)
         self._update()
 
-    def entries(self) -> Iterator[Tuple[str, str]]:
+    def entries(self) -> Iterator[tuple[str, str]]:
         """Returns a new iterator of this object’s items
         ((name, value) pairs).
 
@@ -1402,7 +1388,7 @@ class URLSearchParams(collections.abc.Collection):
         """
         return iter(self._list)
 
-    def get(self, name: str) -> Optional[str]:
+    def get(self, name: str) -> str | None:
         """Returns the value of the first name-value pair whose name is *name*,
         or *None* if not exists.
 
@@ -1425,7 +1411,7 @@ class URLSearchParams(collections.abc.Collection):
                 return name_value[1]
         return None
 
-    def get_all(self, name: str) -> Tuple[str, ...]:
+    def get_all(self, name: str) -> tuple[str, ...]:
         """Returns the values of all name-value pairs whose name is *name*,
         or the empty tuple if not exists.
 
@@ -1475,7 +1461,7 @@ class URLSearchParams(collections.abc.Collection):
         """
         return iter([name_value[0] for name_value in self._list])
 
-    def set(self, name: str, value: Union[str, int, float]) -> None:
+    def set(self, name: str, value: str | int | float) -> None:
         """If name-value pair with the specified name exists, sets the value of
         the first name-value pair whose name is *name* to *value* and remove
         the other values. Otherwise, appends a new name-value pair.
@@ -2024,9 +2010,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **authority state**
         _ = base
         log = get_logger(cls)
@@ -2081,9 +2067,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **file state**
         log = get_logger(cls)
         url.scheme = "file"
@@ -2131,10 +2117,10 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-        state_override: Optional[URLParserState],
-    ) -> Tuple[URLParserState, int]:
+        state_override: URLParserState | None,
+    ) -> tuple[URLParserState, int]:
         # **file host state**
         _ = base
         log = get_logger(cls)
@@ -2174,9 +2160,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **file slash state**
         log = get_logger(cls)
         index = start
@@ -2209,9 +2195,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **fragment state**
         _ = base
         log = get_logger(cls)
@@ -2246,10 +2232,10 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-        state_override: Optional[URLParserState],
-    ) -> Tuple[URLParserState, int]:
+        state_override: URLParserState | None,
+    ) -> tuple[URLParserState, int]:
         # **host state**
         # **hostname state**
         _ = base
@@ -2305,9 +2291,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **no scheme state**
         log = get_logger(cls)
         index = start
@@ -2331,9 +2317,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **opaque path state**
         _ = base
         log = get_logger(cls)
@@ -2373,10 +2359,10 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-        state_override: Optional[URLParserState],
-    ) -> Tuple[URLParserState, int]:
+        state_override: URLParserState | None,
+    ) -> tuple[URLParserState, int]:
         # **path state**
         _ = base
         log = get_logger(cls)
@@ -2448,9 +2434,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **path or authority state**
         _ = base, url
         index = start
@@ -2465,10 +2451,10 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-        state_override: Optional[URLParserState],
-    ) -> Tuple[URLParserState, int]:
+        state_override: URLParserState | None,
+    ) -> tuple[URLParserState, int]:
         # **path start state**
         _ = base
         log = get_logger(cls)
@@ -2505,10 +2491,10 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-        state_override: Optional[URLParserState],
-    ) -> Tuple[URLParserState, int]:
+        state_override: URLParserState | None,
+    ) -> tuple[URLParserState, int]:
         # **port state**
         _ = base
         log = get_logger(cls)
@@ -2546,11 +2532,11 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-        state_override: Optional[URLParserState],
+        state_override: URLParserState | None,
         encoding: str,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **query state**
         _ = base
         log = get_logger(cls)
@@ -2600,9 +2586,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **relative state**
         log = get_logger(cls)
         assert base and base.scheme != "file"
@@ -2643,9 +2629,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **relative slash state**
         log = get_logger(cls)
         index = start
@@ -2677,10 +2663,10 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-        state_override: Optional[URLParserState],
-    ) -> Tuple[URLParserState, int]:
+        state_override: URLParserState | None,
+    ) -> tuple[URLParserState, int]:
         # **scheme start state**
         log = get_logger(cls)
         index = start
@@ -2766,9 +2752,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **special authority ignore slashes state**
         _ = base, url
         log = get_logger(cls)
@@ -2791,9 +2777,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **special authority slashes state**
         _ = base, url
         log = get_logger(cls)
@@ -2816,9 +2802,9 @@ class BasicURLParser:
         cls,
         urlstring: str,
         start: int,
-        base: Optional[URLRecord],
+        base: URLRecord | None,
         url: URLRecord,
-    ) -> Tuple[URLParserState, int]:
+    ) -> tuple[URLParserState, int]:
         # **special relative or authority state**
         _ = base, url
         log = get_logger(cls)
