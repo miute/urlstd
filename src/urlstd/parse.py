@@ -11,7 +11,6 @@ import re
 import string
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
-from ipaddress import IPv6Address
 from logging import Logger, getLogger
 from typing import Any, NamedTuple, Optional, overload
 from urllib.parse import ParseResult, quote, quote_plus
@@ -599,22 +598,6 @@ class Host:
         return -1, validation_error
 
     @classmethod
-    def _parse_ipv6(cls, host: str) -> tuple[int, ...]:
-        # TODO: Implement IPv6 parser?
-        #  (https://url.spec.whatwg.org/#concept-ipv6-parser)
-        log = get_logger(cls)
-        try:
-            ipv6 = int(IPv6Address(host))
-        except ValueError as e:
-            log.error("Invalid IPv6 address: %s", e)
-            raise IPv6AddressParseError(f"{e!s}") from None
-        address: list[int] = []
-        for _ in range(8):
-            address.insert(0, ipv6 & 0xFFFF)
-            ipv6 >>= 16
-        return tuple(address)
-
-    @classmethod
     def _parse_opaque_host(cls, host: str) -> str:
         log = get_logger(cls)
         if any(c in FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT for c in host):
@@ -722,12 +705,13 @@ class Host:
             # IPv6 address
             if not host.endswith("]"):
                 log.error(
-                    "Invalid IPv6 address: Unexpected end of input in %r", host
+                    "IPv6-unclosed: IPv6 address is missing the closing U+005D (]): %r",
+                    host,
                 )
                 raise IPv6AddressParseError(
-                    f"Unexpected end of input in {host!r}"
+                    f"IPv6 address is missing the closing U+005D (]): {host!r}"
                 )
-            return cls._parse_ipv6(host[1:-1])
+            return IPv6Address.parse(host[1:-1])
         elif is_not_special:
             # opaque host
             return cls._parse_opaque_host(host)
@@ -895,6 +879,200 @@ class IDNA:
                 f"Unable to convert domain name {domain!r} to ASCII form: "
                 f"{e!r}: errors=0x{errors:x}"
             ) from None
+
+
+class IPv6Address:
+    @classmethod
+    def parse(cls, address: str) -> tuple[int, ...]:
+        log = get_logger(cls)
+        piece_index = 0
+        compress: Optional[int] = None
+        start = 0
+        if address[0:1] == ":":
+            if address[1:2] == ":":
+                start += 2
+                piece_index += 1
+                compress = piece_index
+            else:
+                log.error(
+                    "IPv6-invalid-compression: "
+                    "IPv6 address begins with improper compression: %r",
+                    address,
+                )
+                raise IPv6AddressParseError(
+                    f"IPv6 address begins with improper compression: {address!r}"
+                )
+
+        ipv6_address = [0] * 8
+        piece = ""
+        previous: Optional[str] = None
+        for c in cpstream(address[start:]):
+            if piece_index >= 8:
+                log.error(
+                    "IPv6-too-many-pieces: "
+                    "IPv6 address contains more than 8 pieces: %r",
+                    address,
+                )
+                raise IPv6AddressParseError(
+                    f"IPv6 address contains more than 8 pieces: {address!r}"
+                )
+            if not iseof(c) and c != ":":
+                piece += c
+                previous = c
+                continue
+
+            if previous == ":" and c == ":":
+                if compress is not None:
+                    log.error(
+                        "IPv6-multiple-compression: "
+                        "IPv6 address is compressed in more than one spot: %r",
+                        address,
+                    )
+                    raise IPv6AddressParseError(
+                        f"IPv6 address is compressed in more than one spot: "
+                        f"{address!r}"
+                    )
+                piece_index += 1
+                compress = piece_index
+                continue
+            elif previous == ":" and iseof(c):
+                if compress is not None and piece_index == compress:
+                    break
+                log.error(
+                    "IPv6-invalid-code-point: "
+                    "IPv6 address contains a code point that is neither an ASCII "
+                    "hex digit nor a U+003A (:). Or it unexpectedly ends: %r",
+                    address,
+                )
+                raise IPv6AddressParseError(
+                    f"IPv6 address contains a code point that is neither an ASCII "
+                    f"hex digit nor a U+003A (:). Or it unexpectedly ends: "
+                    f"{address!r}"
+                )
+
+            if len(piece) == 0:
+                previous = c
+                piece_index += 1
+                continue
+
+            # ASCII hex digits
+            if "." not in piece:
+                if len(piece) > 4 or any(
+                    x not in ASCII_HEX_DIGITS for x in piece
+                ):
+                    log.error(
+                        "IPv6-invalid-code-point: "
+                        "IPv6 address contains a code point that is neither an ASCII "
+                        "hex digit nor a U+003A (:). Or it unexpectedly ends: "
+                        "%r in %r",
+                        piece,
+                        address,
+                    )
+                    raise IPv6AddressParseError(
+                        f"IPv6 address contains a code point that is neither an ASCII "
+                        f"hex digit nor a U+003A (:). Or it unexpectedly ends: "
+                        f"{piece!r} in {address!r}"
+                    )
+                ipv6_address[piece_index] = int(piece, 16)
+                piece_index += 1
+                piece = ""
+                previous = c
+                continue
+
+            # IPv4 in IPv6
+            if piece_index > 6:
+                log.error(
+                    "IPv4-in-IPv6-too-many-pieces: "
+                    "IPv6 address with IPv4 address syntax: "
+                    "The IPv6 address has more than 6 pieces: %r",
+                    address,
+                )
+                raise IPv6AddressParseError(
+                    f"IPv6 address with IPv4 address syntax: "
+                    f"The IPv6 address has more than 6 pieces: {address!r}"
+                )
+            ipv4_pieces = piece.split(".")
+            if len(ipv4_pieces) > 4 or any(
+                [
+                    len(x) == 0
+                    or any(y not in ASCII_DIGITS for y in x)
+                    or (len(x) >= 2 and x[0] == "0")
+                    for x in ipv4_pieces
+                ]
+            ):
+                log.error(
+                    "IPv4-in-IPv6-invalid-code-point: "
+                    "IPv6 address with IPv4 address syntax: "
+                    "An IPv4 part is empty or contains a non-ASCII digit / "
+                    "An IPv4 part contains a leading 0 / "
+                    "There are too many IPv4 parts: %r in %r",
+                    piece,
+                    address,
+                )
+                raise IPv6AddressParseError(
+                    f"IPv6 address with IPv4 address syntax: "
+                    f"An IPv4 part is empty or contains a non-ASCII digit / "
+                    f"An IPv4 part contains a leading 0 / "
+                    f"There are too many IPv4 parts: {piece!r} in {address!r}"
+                )
+            elif any([int(x) > 255 for x in ipv4_pieces]):
+                log.error(
+                    "IPv4-in-IPv6-out-of-range-part: "
+                    "IPv6 address with IPv4 address syntax: "
+                    "An IPv4 part exceeds 255: %r in %r",
+                    piece,
+                    address,
+                )
+                raise IPv6AddressParseError(
+                    f"IPv6 address with IPv4 address syntax: "
+                    f"An IPv4 part exceeds 255: {piece!r} in {address!r}"
+                )
+            elif len(ipv4_pieces) < 4:
+                log.error(
+                    "IPv4-in-IPv6-too-few-parts: "
+                    "IPv6 address with IPv4 address syntax: An IPv4 address "
+                    "contains too few parts: %r in %r",
+                    piece,
+                    address,
+                )
+                raise IPv6AddressParseError(
+                    f"IPv6 address with IPv4 address syntax: An IPv4 address "
+                    f"contains too few parts: {piece!r} in {address!r}"
+                )
+            ipv6_address[piece_index] = int(ipv4_pieces[0]) * 0x100 + int(
+                ipv4_pieces[1]
+            )
+            piece_index += 1
+            ipv6_address[piece_index] = int(ipv4_pieces[2]) * 0x100 + int(
+                ipv4_pieces[3]
+            )
+            piece_index += 1
+            piece = ""
+            previous = c
+
+        if compress is not None:
+            swaps = piece_index - compress
+            piece_index = 7
+            while piece_index != 0 and swaps > 0:
+                (
+                    ipv6_address[piece_index],
+                    ipv6_address[compress + swaps - 1],
+                ) = (
+                    ipv6_address[compress + swaps - 1],
+                    ipv6_address[piece_index],
+                )
+                piece_index -= 1
+                swaps -= 1
+        elif piece_index != 8:
+            log.error(
+                "IPv6-too-few-pieces: "
+                "Uncompressed IPv6 address contains fewer than 8 pieces: %r",
+                address,
+            )
+            raise IPv6AddressParseError(
+                f"Uncompressed IPv6 address contains fewer than 8 pieces: {address!r}"
+            )
+        return tuple(ipv6_address)
 
 
 class Origin(NamedTuple):

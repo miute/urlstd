@@ -187,35 +187,333 @@ def test_host_parse_ipv4_04(caplog):
     )
 
 
+def test_host_parse_ipv6_basic(caplog):
+    """IPv6 tests."""
+    address = Host.parse("[::]")
+    assert isinstance(address, tuple)
+    assert len(address) == 8
+    assert Host.serialize(address) == "[::]"
+
+    address = Host.parse("[1:0::]")
+    assert isinstance(address, tuple)
+    assert len(address) == 8
+    assert Host.serialize(address) == "[1::]"
+
+    address = Host.parse("[1:2:0:0:5:0:0:0]")
+    assert isinstance(address, tuple)
+    assert len(address) == 8
+    assert Host.serialize(address) == "[1:2:0:0:5::]"
+
+    address = Host.parse("[1:2:0:0:0:0:0:3]")
+    assert isinstance(address, tuple)
+    assert len(address) == 8
+    assert Host.serialize(address) == "[1:2::3]"
+
+    address = Host.parse("[1:2::3]")
+    assert isinstance(address, tuple)
+    assert len(address) == 8
+    assert Host.serialize(address) == "[1:2::3]"
+
+    address = Host.parse("[0:1:0:1:0:1:0:1]")
+    assert isinstance(address, tuple)
+    assert len(address) == 8
+    assert Host.serialize(address) == "[0:1:0:1:0:1:0:1]"
+
+    address = Host.parse("[1:0:1:0:1:0:1:0]")
+    assert isinstance(address, tuple)
+    assert len(address) == 8
+    assert Host.serialize(address) == "[1:0:1:0:1:0:1:0]"
+
+    address = Host.parse("[2001:0DB8:85A3:0000:0000:8A2E:0370:7334]")
+    assert isinstance(address, tuple)
+    assert len(address) == 8
+    assert Host.serialize(address) == "[2001:db8:85a3::8a2e:370:7334]"
+
+    address = Host.parse("[::ffff:192.0.2.128]")
+    assert isinstance(address, tuple)
+    assert len(address) == 8
+    assert Host.serialize(address) == "[::ffff:c000:280]"
+
+
 def test_host_parse_ipv6_01(caplog):
-    """Invalid IPv6 address: Unexpected end of input."""
+    """Invalid IPv6 address: IPv6-unclosed."""
     caplog.set_level(logging.INFO)
     with pytest.raises(IPv6AddressParseError) as exc_info:
         _ = Host.parse("[1::")
-    assert exc_info.value.args[0].startswith("Unexpected end of input")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address is missing the closing U+005D (]):"
+    )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2].startswith(
-        "Invalid IPv6 address: Unexpected end of input"
+        "IPv6-unclosed: IPv6 address is missing the closing U+005D (]):"
     )
 
 
 def test_host_parse_ipv6_02(caplog):
-    """Invalid IPv6 address."""
+    """Invalid IPv6 address: IPv6-invalid-compression."""
     caplog.set_level(logging.INFO)
     with pytest.raises(IPv6AddressParseError) as exc_info:
-        _ = Host.parse("[0:1:2:3:4:5:6:7:8]")
+        _ = Host.parse("[:1]")
     assert exc_info.value.args[0].startswith(
-        "Exactly 8 parts expected without"
+        "IPv6 address begins with improper compression:"
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2].startswith(
-        "Invalid IPv6 address: Exactly 8 parts expected without"
+        "IPv6-invalid-compression: IPv6 address begins with improper compression:"
+    )
+
+
+def test_host_parse_ipv6_03(caplog):
+    """Invalid IPv6 address: IPv6-too-many-pieces."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[1:2:3:4:5:6:7:8:9]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address contains more than 8 pieces:"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv6-too-many-pieces: IPv6 address contains more than 8 pieces:"
+    )
+
+
+def test_host_parse_ipv6_04(caplog):
+    """Invalid IPv6 address: IPv6-multiple-compression."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[1::1::1]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address is compressed in more than one spot:"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv6-multiple-compression: IPv6 address is compressed in more than one spot:"
+    )
+
+
+def test_host_parse_ipv6_05a(caplog):
+    """Invalid IPv6 address: IPv6-invalid-code-point."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[1:2:3!:4]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address contains a code point that is neither an ASCII hex digit "
+        "nor a U+003A (:). Or it unexpectedly ends:"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv6-invalid-code-point: "
+        "IPv6 address contains a code point that is neither an ASCII hex digit "
+        "nor a U+003A (:). Or it unexpectedly ends:"
+    )
+
+
+def test_host_parse_ipv6_05b(caplog):
+    """Invalid IPv6 address: IPv6-invalid-code-point."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[1:2:3:]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address contains a code point that is neither an ASCII hex digit "
+        "nor a U+003A (:). Or it unexpectedly ends:"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv6-invalid-code-point: "
+        "IPv6 address contains a code point that is neither an ASCII hex digit "
+        "nor a U+003A (:). Or it unexpectedly ends:"
+    )
+
+
+def test_host_parse_ipv6_06(caplog):
+    """Invalid IPv6 address: IPv6-too-few-pieces."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[1:2:3]")
+    assert exc_info.value.args[0].startswith(
+        "Uncompressed IPv6 address contains fewer than 8 pieces:"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv6-too-few-pieces: "
+        "Uncompressed IPv6 address contains fewer than 8 pieces:"
+    )
+
+
+def test_host_parse_ipv6_07(caplog):
+    """Invalid IPv6 address: IPv4-in-IPv6-too-many-pieces."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[1:1:1:1:1:1:1:127.0.0.1]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address with IPv4 address syntax: The IPv6 address has more than "
+        "6 pieces:"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-in-IPv6-too-many-pieces: "
+        "IPv6 address with IPv4 address syntax: The IPv6 address has more than "
+        "6 pieces:"
+    )
+
+
+def test_host_parse_ipv6_08a(caplog):
+    """Invalid IPv6 address: IPv4-in-IPv6-invalid-code-point."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[ffff::.0.0.1]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address with IPv4 address syntax: "
+        "An IPv4 part is empty or contains a non-ASCII digit /"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-in-IPv6-invalid-code-point: "
+        "IPv6 address with IPv4 address syntax: "
+        "An IPv4 part is empty or contains a non-ASCII digit /"
+    )
+
+
+def test_host_parse_ipv6_08b(caplog):
+    """Invalid IPv6 address: IPv4-in-IPv6-invalid-code-point."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[ffff::127.0.xyz.1]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address with IPv4 address syntax: "
+        "An IPv4 part is empty or contains a non-ASCII digit /"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-in-IPv6-invalid-code-point: "
+        "IPv6 address with IPv4 address syntax: "
+        "An IPv4 part is empty or contains a non-ASCII digit /"
+    )
+
+
+def test_host_parse_ipv6_08c(caplog):
+    """Invalid IPv6 address: IPv4-in-IPv6-invalid-code-point."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[ffff::127.0xyz]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address with IPv4 address syntax: "
+        "An IPv4 part is empty or contains a non-ASCII digit /"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-in-IPv6-invalid-code-point: "
+        "IPv6 address with IPv4 address syntax: "
+        "An IPv4 part is empty or contains a non-ASCII digit /"
+    )
+
+
+def test_host_parse_ipv6_08d(caplog):
+    """Invalid IPv6 address: IPv4-in-IPv6-invalid-code-point."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[ffff::127.00.0.1]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address with IPv4 address syntax: "
+        "An IPv4 part is empty or contains a non-ASCII digit /"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-in-IPv6-invalid-code-point: "
+        "IPv6 address with IPv4 address syntax: "
+        "An IPv4 part is empty or contains a non-ASCII digit /"
+    )
+
+
+def test_host_parse_ipv6_08e(caplog):
+    """Invalid IPv6 address: IPv4-in-IPv6-invalid-code-point."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[ffff::127.0.0.1.2]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address with IPv4 address syntax: "
+        "An IPv4 part is empty or contains a non-ASCII digit /"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-in-IPv6-invalid-code-point: "
+        "IPv6 address with IPv4 address syntax: "
+        "An IPv4 part is empty or contains a non-ASCII digit /"
+    )
+
+
+def test_host_parse_ipv6_09(caplog):
+    """Invalid IPv6 address: IPv4-in-IPv6-out-of-range-part."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[ffff::127.0.0.4000]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address with IPv4 address syntax: An IPv4 part exceeds 255:"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-in-IPv6-out-of-range-part: "
+        "IPv6 address with IPv4 address syntax: An IPv4 part exceeds 255:"
+    )
+
+
+def test_host_parse_ipv6_10(caplog):
+    """Invalid IPv6 address: IPv4-in-IPv6-too-few-parts."""
+    caplog.set_level(logging.INFO)
+    with pytest.raises(IPv6AddressParseError) as exc_info:
+        _ = Host.parse("[ffff::127.0.0]")
+    assert exc_info.value.args[0].startswith(
+        "IPv6 address with IPv4 address syntax: An IPv4 address contains too few parts:"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-in-IPv6-too-few-parts: "
+        "IPv6 address with IPv4 address syntax: An IPv4 address contains too few parts:"
     )
 
 
