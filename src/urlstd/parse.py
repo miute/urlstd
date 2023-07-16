@@ -631,47 +631,6 @@ class Host:
         return ".".join(output)
 
     @classmethod
-    def _serialize_ipv6(cls, address: Sequence[int]) -> str:
-        assert len(address) == 8
-        output = ""
-
-        # find the longest sequence of zeros
-        compress = zero_seq_start = None
-        max_zero_seq_len = 1
-        zero_seq_len = 0
-        for piece_index, value in enumerate(address):
-            if value == 0:
-                if zero_seq_start is None:
-                    zero_seq_start = piece_index
-                zero_seq_len += 1
-            else:
-                if zero_seq_len > max_zero_seq_len:
-                    compress = zero_seq_start
-                    max_zero_seq_len = zero_seq_len
-                zero_seq_start = None
-                zero_seq_len = 0
-        else:
-            if zero_seq_len > max_zero_seq_len:
-                compress = zero_seq_start
-
-        ignore0 = False
-        for piece_index, value in enumerate(address):
-            if ignore0 and value == 0:
-                continue
-            elif ignore0:
-                ignore0 = False
-
-            if compress == piece_index:
-                separator = "::" if piece_index == 0 else ":"
-                output += separator
-                ignore0 = True
-                continue
-            output += f"{value:x}"
-            if piece_index != 7:
-                output += ":"
-        return output
-
-    @classmethod
     def parse(
         cls, host: str, is_not_special: bool = False
     ) -> str | int | tuple[int, ...]:
@@ -748,7 +707,7 @@ class Host:
             return cls._serialize_ipv4(host)
         elif isinstance(host, (list, tuple)):
             # IPv6 address
-            return "[{}]".format(cls._serialize_ipv6(host))
+            return "[{}]".format(IPv6Address.serialize(host))
         return host  # type: ignore  # domain, opaque host, or empty host
 
 
@@ -1073,6 +1032,47 @@ class IPv6Address:
                 f"Uncompressed IPv6 address contains fewer than 8 pieces: {address!r}"
             )
         return tuple(ipv6_address)
+
+    @classmethod
+    def serialize(cls, address: Sequence[int]) -> str:
+        assert len(address) == 8
+        output = ""
+
+        # find the longest sequence of zeros
+        compress = zero_seq_start = None
+        max_zero_seq_len = 1
+        zero_seq_len = 0
+        for piece_index, value in enumerate(address):
+            if value == 0:
+                if zero_seq_start is None:
+                    zero_seq_start = piece_index
+                zero_seq_len += 1
+            else:
+                if zero_seq_len > max_zero_seq_len:
+                    compress = zero_seq_start
+                    max_zero_seq_len = zero_seq_len
+                zero_seq_start = None
+                zero_seq_len = 0
+        else:
+            if zero_seq_len > max_zero_seq_len:
+                compress = zero_seq_start
+
+        ignore0 = False
+        for piece_index, value in enumerate(address):
+            if ignore0 and value == 0:
+                continue
+            elif ignore0:
+                ignore0 = False
+
+            if compress == piece_index:
+                separator = "::" if piece_index == 0 else ":"
+                output += separator
+                ignore0 = True
+                continue
+            output += f"{value:x}"
+            if piece_index != 7:
+                output += ":"
+        return output
 
 
 class Origin(NamedTuple):
