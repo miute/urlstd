@@ -120,71 +120,126 @@ def test_host_parse_ascii_domain_04(caplog):
 
 
 def test_host_parse_ipv4_01(caplog):
-    """Invalid IPv4 address."""
+    """Invalid IPv4 address: IPv4-too-many-parts."""
     caplog.set_level(logging.INFO)
     with pytest.raises(IPv4AddressParseError) as exc_info:
         _ = Host.parse("1.2.3.4.5")
-    assert exc_info.value.args[0].endswith(
-        "does not appear to be an IPv4 address"
+    assert exc_info.value.args[0].startswith(
+        "IPv4 address does not consist of exactly 4 parts:"
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
-    assert caplog.record_tuples[-1][2].endswith(
-        "does not appear to be an IPv4 address"
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-too-many-parts: "
+        "IPv4 address does not consist of exactly 4 parts:"
     )
 
 
 def test_host_parse_ipv4_02(caplog):
-    """Invalid IPv4 address."""
+    """Invalid IPv4 address: IPv4-non-numeric-part."""
     caplog.set_level(logging.INFO)
     with pytest.raises(IPv4AddressParseError) as exc_info:
         _ = Host.parse("1.2.3.08")
-    assert exc_info.value.args[0].endswith(
-        "does not appear to be an IPv4 address"
+    assert exc_info.value.args[0].startswith(
+        "IPv4 address part is not numeric:"
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
-    assert caplog.record_tuples[-1][2].endswith(
-        "does not appear to be an IPv4 address"
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-non-numeric-part: IPv4 address part is not numeric:"
     )
 
 
 def test_host_parse_ipv4_03(caplog):
-    """Any but the last part of IPv4 address are greater than 255."""
+    """Invalid IPv4 address: Any but the last part of the IPv4 address is
+    greater than 255.
+    """
     caplog.set_level(logging.INFO)
     with pytest.raises(IPv4AddressParseError) as exc_info:
         _ = Host.parse("0x100.0.0.1")
     assert exc_info.value.args[0].startswith(
-        "Any but the last part of IPv4 address are greater than 255"
+        "Any but the last part of the IPv4 address is greater than 255:"
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2].startswith(
-        "Any but the last part of IPv4 address are greater than 255"
+        "Any but the last part of the IPv4 address is greater than 255:"
     )
 
 
 def test_host_parse_ipv4_04(caplog):
-    """The last part of IPv4 address is greater than or equal to 256"""
+    """Invalid IPv4 address: The last part of the IPv4 address is greater than
+    or equal to 256.
+    """
     caplog.set_level(logging.INFO)
     with pytest.raises(IPv4AddressParseError) as exc_info:
         _ = Host.parse("192.168.0.0x100")
     assert exc_info.value.args[0].startswith(
-        "The last part of IPv4 address is greater than or equal to"
+        "The last part of the IPv4 address is greater than or equal to "
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2].startswith(
-        "The last part of IPv4 address is greater than or equal to"
+        "The last part of the IPv4 address is greater than or equal to "
     )
+
+
+def test_host_parse_ipv4_05(caplog):
+    """IPv4 tests: IPv4-empty-part."""
+    caplog.set_level(logging.INFO)
+    address = Host.parse("127.0.0.1.")
+    assert isinstance(address, int)
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.INFO
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-empty-part: IPv4 address ends with a U+002E (.):"
+    )
+
+    assert Host.serialize(address) == "127.0.0.1"
+
+
+def test_host_parse_ipv4_06a(caplog):
+    """IPv4 tests: IPv4-non-decimal-part."""
+    caplog.set_level(logging.INFO)
+    address = Host.parse("0xC0.168.1")
+    assert isinstance(address, int)
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.INFO
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-non-decimal-part: "
+        "IPv4 address contains numbers expressed using hexadecimal or octal digits:"
+    )
+
+    assert Host.serialize(address) == "192.168.0.1"
+
+
+def test_host_parse_ipv4_06b(caplog):
+    """IPv4 tests: IPv4-non-decimal-part."""
+    caplog.set_level(logging.INFO)
+    address = Host.parse("192.0250.1")
+    assert isinstance(address, int)
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.INFO
+    assert caplog.record_tuples[-1][2].startswith(
+        "IPv4-non-decimal-part: "
+        "IPv4 address contains numbers expressed using hexadecimal or octal digits:"
+    )
+
+    assert Host.serialize(address) == "192.168.0.1"
 
 
 def test_host_parse_ipv6_basic(caplog):

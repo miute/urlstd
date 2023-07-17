@@ -488,116 +488,6 @@ class Host:
     """Utility class for hosts (domains and IP addresses)."""
 
     @classmethod
-    def _ends_in_a_number(cls, host: str) -> bool:
-        parts = host.split(".")
-        if len(parts[-1]) == 0:
-            # if len(parts) == 1:
-            #     return False
-            del parts[-1]
-
-        last = parts[-1]
-        result = cls._parse_ipv4_number(last)
-        if result[0] >= 0:
-            return True
-
-        if len(last) > 0 and all(c in ASCII_DIGITS for c in last):
-            return True
-        return False
-
-    @classmethod
-    def _parse_ipv4(cls, host: str) -> int:
-        log = get_logger(cls)
-        validation_error = False
-        parts = host.split(".")
-        if len(parts[-1]) == 0:
-            validation_error = True
-            if len(parts) > 1:
-                del parts[-1]
-        if len(parts) > 4:
-            log.error("%r does not appear to be an IPv4 address", host)
-            raise IPv4AddressParseError(
-                f"{host!r} does not appear to be an IPv4 address"
-            )
-
-        numbers = []
-        for part in parts:
-            result = cls._parse_ipv4_number(part)
-            if result[0] < 0:
-                log.error("%r does not appear to be an IPv4 address", host)
-                raise IPv4AddressParseError(
-                    f"{host!r} does not appear to be an IPv4 address"
-                )
-            validation_error |= result[1]
-            numbers.append(result[0])
-
-        if validation_error:
-            log.info(
-                "Convert string to numbers as IPv4 address: %r → %r",
-                host,
-                numbers,
-            )
-        if any(x > 255 for x in numbers):
-            log.info(
-                "Any parts of IPv4 address are greater than 255: %r %r",
-                host,
-                numbers,
-            )
-        if any(x > 255 for x in numbers[:-1]) and numbers[-1] <= 255:
-            log.error(
-                "Any but the last part of IPv4 address are greater than 255: "
-                "%r %r",
-                host,
-                numbers,
-            )
-            raise IPv4AddressParseError(
-                f"Any but the last part of IPv4 address are greater than 255: "
-                f"{host!r} {numbers!r}"
-            )
-        limit = 256 ** (5 - len(numbers))
-        if numbers[-1] >= limit:
-            log.error(
-                "The last part of IPv4 address is greater than or equal to "
-                "%d: %r %r",
-                limit,
-                host,
-                numbers,
-            )
-            raise IPv4AddressParseError(
-                f"The last part of IPv4 address is greater than or equal to "
-                f"{limit}: {host!r} {numbers!r}"
-            )
-
-        ipv4 = numbers[-1]
-        for counter, n in enumerate(numbers[:-1]):
-            ipv4 += n * 256 ** (3 - counter)
-        return ipv4
-
-    @classmethod
-    def _parse_ipv4_number(cls, text: str) -> tuple[int, bool]:
-        validation_error = False
-        if len(text) == 0:
-            return -1, validation_error
-
-        r = 10
-        if len(text) >= 2:
-            if text[:2] in ["0x", "0X"]:
-                validation_error = True
-                text = text[2:]
-                r = 16
-            elif text[0] == "0":
-                validation_error = True
-                text = text[1:]
-                r = 8
-        if len(text) == 0:
-            return 0, validation_error
-
-        try:
-            return int(text, r), validation_error
-        except ValueError:
-            validation_error = True
-        return -1, validation_error
-
-    @classmethod
     def _parse_opaque_host(cls, host: str) -> str:
         log = get_logger(cls)
         if any(c in FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT for c in host):
@@ -687,9 +577,9 @@ class Host:
                 f"{ascii_domain!r}"
             )
 
-        if cls._ends_in_a_number(ascii_domain):
+        if IPv4Address.is_ends_in_a_number(ascii_domain):
             # IPv4 address
-            return cls._parse_ipv4(ascii_domain)
+            return IPv4Address.parse(ascii_domain)
         return ascii_domain  # ASCII domain
 
     @classmethod
@@ -838,6 +728,132 @@ class IDNA:
                 f"Unable to convert domain name {domain!r} to ASCII form: "
                 f"{e!r}: errors=0x{errors:x}"
             ) from None
+
+
+class IPv4Address:
+    @classmethod
+    def _parse_ipv4_number(cls, address: str) -> tuple[int, bool]:
+        if len(address) == 0:
+            return -1, True
+
+        validation_error = False
+        r = 10
+        if len(address) >= 2:
+            if address[:2] in ["0x", "0X"]:
+                validation_error = True
+                address = address[2:]
+                r = 16
+            elif address[0] == "0":
+                validation_error = True
+                address = address[1:]
+                r = 8
+
+        if len(address) == 0:
+            return 0, True
+
+        try:
+            return int(address, r), validation_error
+        except ValueError:
+            pass
+        return -1, True
+
+    @classmethod
+    def is_ends_in_a_number(cls, address: str) -> bool:
+        parts = address.split(".")
+        if len(parts[-1]) == 0:
+            if len(parts) == 1:
+                return False
+            del parts[-1]
+
+        last = parts[-1]
+        if len(last) > 0 and all(c in ASCII_DIGITS for c in last):
+            return True
+
+        result, _ = cls._parse_ipv4_number(last)
+        if result >= 0:
+            return True
+        return False
+
+    @classmethod
+    def parse(cls, address: str) -> int:
+        log = get_logger(cls)
+        parts = address.split(".")
+        if len(parts[-1]) == 0:
+            log.info(
+                "IPv4-empty-part: IPv4 address ends with a U+002E (.): %r",
+                address,
+            )
+            if len(parts) > 1:
+                del parts[-1]
+
+        if len(parts) > 4:
+            log.error(
+                "IPv4-too-many-parts: "
+                "IPv4 address does not consist of exactly 4 parts: %r",
+                address,
+            )
+            raise IPv4AddressParseError(
+                f"IPv4 address does not consist of exactly 4 parts: {address!r}"
+            )
+
+        numbers: list[int] = []
+        for part in parts:
+            result = cls._parse_ipv4_number(part)
+            if result[0] < 0:
+                log.error(
+                    "IPv4-non-numeric-part: IPv4 address part is not numeric: %r in %r",
+                    part,
+                    address,
+                )
+                raise IPv4AddressParseError(
+                    f"IPv4 address part is not numeric: {part!r} in {address!r}"
+                )
+            elif result[1]:
+                log.info(
+                    "IPv4-non-decimal-part: "
+                    "IPv4 address contains numbers expressed using hexadecimal "
+                    "or octal digits: %r in %r",
+                    part,
+                    address,
+                )
+            numbers.append(result[0])
+
+        if any(x > 255 for x in numbers):
+            log.info(
+                "IPv4-out-of-range-part: "
+                "IPv4 address part exceeds 255: %r (%r)",
+                address,
+                numbers,
+            )
+        if any(x > 255 for x in numbers[:-1]) and numbers[-1] <= 255:
+            log.error(
+                "Any but the last part of the IPv4 address is greater than 255: "
+                "%r (%r)",
+                address,
+                numbers,
+            )
+            raise IPv4AddressParseError(
+                f"Any but the last part of the IPv4 address is greater than 255: "
+                f"{address!r} ({numbers!r})"
+            )
+        limit = 256 ** (5 - len(numbers))
+        if numbers[-1] >= limit:
+            log.error(
+                "The last part of the IPv4 address is greater than or equal to "
+                "%d: %r (%r)",
+                limit,
+                address,
+                numbers,
+            )
+            raise IPv4AddressParseError(
+                f"The last part of the IPv4 address is greater than or equal to "
+                f"{limit}: {address!r} ({numbers!r})"
+            )
+
+        ipv4 = numbers[-1]
+        for counter, n in enumerate(numbers[:-1]):
+            ipv4 += n * 256 ** (3 - counter)
+        return ipv4
 
 
 class IPv6Address:
