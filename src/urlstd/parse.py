@@ -512,15 +512,6 @@ class Host:
         return utf8_percent_encode(host, SAFE_C0_CONTROL_PERCENT_ENCODE_SET)
 
     @classmethod
-    def _serialize_ipv4(cls, address: int) -> str:
-        output: list[str] = []
-        n = address
-        for _ in range(4):
-            output.insert(0, str(n % 256))
-            n //= 256
-        return ".".join(output)
-
-    @classmethod
     def parse(
         cls, host: str, is_not_special: bool = False
     ) -> str | int | tuple[int, ...]:
@@ -594,7 +585,7 @@ class Host:
         """
         if isinstance(host, int):
             # IPv4 address
-            return cls._serialize_ipv4(host)
+            return IPv4Address.serialize(host)
         elif isinstance(host, (list, tuple)):
             # IPv6 address
             return "[{}]".format(IPv6Address.serialize(host))
@@ -854,6 +845,15 @@ class IPv4Address:
         for counter, n in enumerate(numbers[:-1]):
             ipv4 += n * 256 ** (3 - counter)
         return ipv4
+
+    @classmethod
+    def serialize(cls, address: int) -> str:
+        output: list[str] = []
+        n = address
+        for _ in range(4):
+            output.insert(0, str(n % 256))
+            n //= 256
+        return ".".join(output)
 
 
 class IPv6Address:
