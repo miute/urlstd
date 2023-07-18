@@ -77,12 +77,16 @@ def test_host_parse_ascii_domain_02(caplog):
     caplog.set_level(logging.INFO)
     with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse("xn--")
-    assert exc_info.value.args[0].startswith("Invalid domain name")
+    assert exc_info.value.args[0].startswith(
+        "Unicode ToASCII records an error:"
+    )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
-    assert caplog.record_tuples[-1][2].startswith("Invalid domain name")
+    assert caplog.record_tuples[-1][2].startswith(
+        "domain-to-ASCII: Unicode ToASCII records an error:"
+    )
 
 
 def test_host_parse_ascii_domain_03(caplog):
@@ -91,14 +95,14 @@ def test_host_parse_ascii_domain_03(caplog):
     with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse("\u00ad")
     assert exc_info.value.args[0].startswith(
-        "Empty host after the domain to ASCII"
+        "Unicode ToASCII returns the empty string:"
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2].startswith(
-        "Empty host after the domain to ASCII"
+        "domain-to-ASCII: Unicode ToASCII returns the empty string:"
     )
 
 
@@ -610,25 +614,53 @@ def test_idna_domain_to_ascii_errors_string():
 
 
 def test_idna_domain_to_ascii_exceptions(caplog, mocker):
+    """domain to ASCII test."""
     caplog.set_level(logging.INFO)
+    error_code = icu.ErrorCode()
+    error_code.set(icu.U_MEMORY_ALLOCATION_ERROR)
     mocker.patch(
         "icupy.icu.IDNA.name_to_ascii",
-        side_effect=icu.ICUError(icu.ErrorCode()),
+        side_effect=icu.ICUError(error_code),
     )
 
-    with pytest.raises(IDNAError):
+    with pytest.raises(IDNAError) as exc_info:
         _ = IDNA.domain_to_ascii("www.eXample.cOm")
+
+    ex = exc_info.value
+    assert isinstance(ex, IDNAError)
+    ec = ex.error_code
+    assert isinstance(ec, icu.ErrorCode)
+    assert ec == icu.U_MEMORY_ALLOCATION_ERROR
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2].startswith(
-        "Unable to convert domain name"
+        "domain-to-ASCII: Unicode ToASCII records an error:"
+    )
+
+
+def test_idna_domain_to_ascii_empty_string(caplog, mocker):
+    """domain to ASCII: The empty host after the domain to ASCII."""
+    caplog.set_level(logging.INFO)
+
+    with pytest.raises(HostParseError) as exc_info:
+        _ = IDNA.domain_to_ascii("\u00ad")
+
+    assert exc_info.value.args[0].startswith(
+        "Unicode ToASCII returns the empty string:"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2].startswith(
+        "domain-to-ASCII: Unicode ToASCII returns the empty string:"
     )
 
 
 def test_idna_domain_to_ascii_use_std3_rules(caplog):
-    """Domain contains non-LDH ASCII."""
+    """domain to ASCII: A domain contains non-LDH ASCII."""
     caplog.set_level(logging.INFO)
     domain = "a\u2260b\u226Ec\u226Fd"
 
@@ -640,10 +672,13 @@ def test_idna_domain_to_ascii_use_std3_rules(caplog):
 
     with pytest.raises(HostParseError):
         _ = IDNA.domain_to_ascii(domain, True)
+
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
-    assert caplog.record_tuples[-1][2].startswith("Invalid domain name")
+    assert caplog.record_tuples[-1][2].startswith(
+        "domain-to-ASCII: Unicode ToASCII records an error:"
+    )
 
 
 def test_parse_url_basic():

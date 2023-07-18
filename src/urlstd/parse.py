@@ -662,14 +662,11 @@ class IDNA:
 
         Raises:
             urlstd.error.HostParseError: Raised when a domain name is not valid.
-                See `uidna.h
+                See UIDNA_ERROR_* constants in `uidna.h
                 <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/uidna_8h.html>`_
-                for more details.
+                for more details on IDNA processing errors.
 
-            urlstd.error.IDNAError: Raised when the ICU API returns an error.
-                See `UErrorCode
-                <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/utypes_8h.html>`_
-                for more details.
+            urlstd.error.IDNAError: Raised when IDNA processing fails.
         """
         log = get_logger(cls)
         info = icu.IDNAInfo()
@@ -690,34 +687,40 @@ class IDNA:
             if errors & ~cls._ALLOWED_NAME_TO_ASCII_ERRORS:
                 error_names = cls._errors_to_string(errors)
                 log.error(
-                    "Invalid domain name %r: errors=%s (0x%x)",
+                    "domain-to-ASCII: Unicode ToASCII records an error: "
+                    "domain=%r errors=%s (0x%x)",
                     domain,
                     error_names,
                     errors,
                 )
                 raise HostParseError(
-                    f"Invalid domain name {domain!r}: errors={error_names!s} "
-                    f"(0x{errors:x})"
+                    f"Unicode ToASCII records an error: "
+                    f"domain={domain!r} errors={error_names!s} (0x{errors:x})"
                 )
             ascii_domain = str(dest)
             if len(ascii_domain) == 0:
-                log.error("Empty host after the domain to ASCII: %r", domain)
+                log.error(
+                    "domain-to-ASCII: Unicode ToASCII returns the empty string: "
+                    "domain=%r",
+                    domain,
+                )
                 raise HostParseError(
-                    f"Empty host after the domain to ASCII: {domain!r}"
+                    f"Unicode ToASCII returns the empty string: domain={domain!r}"
                 )
             return ascii_domain
         except icu.ICUError as e:
             errors = info.get_errors()
             log.error(
-                "Unable to convert domain name %r to ASCII form: "
-                "%r: errors=0x%x",
+                "domain-to-ASCII: Unicode ToASCII records an error: "
+                "domain=%r errors=0x%x error_code=%r",
                 domain,
-                e,
                 errors,
+                e.args[0],
             )
             raise IDNAError(
-                f"Unable to convert domain name {domain!r} to ASCII form: "
-                f"{e!r}: errors=0x{errors:x}"
+                f"Unicode ToASCII records an error: "
+                f"domain={domain!r} errors=0x{errors:x}",
+                e.args[0],
             ) from None
 
 
