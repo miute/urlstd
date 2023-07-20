@@ -54,6 +54,8 @@ LEADING_AND_TRAILING_C0_CONTROL_AND_SPACE_RE = re.compile(
 
 PERCENT_RE = re.compile(r"%[^%]*")
 
+C0_CONTROL = "".join([chr(x) for x in range(0, 0x20)])
+
 ASCII_ALPHA = string.ascii_letters
 
 ASCII_ALPHANUMERIC = string.ascii_letters + string.digits
@@ -62,25 +64,11 @@ ASCII_DIGITS = string.digits
 
 ASCII_HEX_DIGITS = string.hexdigits
 
-FORBIDDEN_HOST_CODE_POINT = "\x00\t\x0a\x0d #%/:<>?@[\\]^|"
+FORBIDDEN_HOST_CODE_POINT = "\x00\t\x0a\x0d #/:<>?@[\\]^|"
 
-FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT = "\x00\t\x0a\x0d #/:<>?@[\\]^|"
-
-# SURROGATE = set(range(0xd800, 0xe000))
-# NONCHARACTER = (set(range(0xfdd0, 0xfdf0)) |
-#                 {0xfffe, 0xffff, 0x1fffe, 0x1ffff, 0x2fffe,
-#                  0x2ffff, 0x3fffe, 0x3ffff, 0x4fffe, 0x4ffff,
-#                  0x5fffe, 0x5ffff, 0x6fffe, 0x6ffff, 0x7fffe,
-#                  0x7ffff, 0x8fffe, 0x8ffff, 0x9fffe, 0x9ffff,
-#                  0xafffe, 0xaffff, 0xbfffe, 0xbffff, 0xcfffe,
-#                  0xcffff, 0xdfffe, 0xdffff, 0xefffe, 0xeffff,
-#                  0xffffe, 0xfffff, 0x10fffe, 0x10ffff})
-# URL_CODE_POINTS = ''.join(
-#     sorted(
-#         set(ASCII_ALPHANUMERIC + "!$&'()*+,-./:;=?@_~") |
-#         {chr(x) for x in set(range(0xa0, 0x10fffe)) - SURROGATE - NONCHARACTER}
-#     )
-# )
+FORBIDDEN_DOMAIN_CODE_POINT = "".join(
+    sorted(set(FORBIDDEN_HOST_CODE_POINT) | set(C0_CONTROL) | {"%", "\x7f"})
+)
 
 SAFE_C0_CONTROL_PERCENT_ENCODE_SET = "".join(
     [chr(x) for x in range(0x20, 0x7F)]
@@ -174,6 +162,34 @@ def iseof(c: str) -> bool:
 
 def is_normalized_windows_drive_letter(text: str) -> bool:
     return is_windows_drive_letter(text) and text[1] == ":"
+
+
+def is_url_code_points(
+    url: str, extra: Optional[str] = None
+) -> tuple[bool, str]:
+    for c in url:
+        if not (
+            c in ASCII_ALPHANUMERIC
+            or c in "!$&'()*+,-./:;=?@_~"
+            or (
+                "\u00a0" <= c <= "\U0010fffd"
+                and not ("\ud800" <= c <= "\udbff")  # leading surrogate
+                and not ("\udc00" <= c <= "\udfff")  # trailing surrogate
+                and not (
+                    "\ufdd0" <= c <= "\ufdef"
+                    or c
+                    in "\ufffe\uffff\U0001fffe\U0001ffff\U0002fffe\U0002ffff"
+                    "\U0003fffe\U0003ffff\U0004fffe\U0004ffff\U0005fffe\U0005ffff"
+                    "\U0006fffe\U0006ffff\U0007fffe\U0007ffff\U0008fffe\U0008ffff"
+                    "\U0009fffe\U0009ffff\U000afffe\U000affff\U000bfffe\U000bffff"
+                    "\U000cfffe\U000cffff\U000dfffe\U000dffff\U000efffe\U000effff"
+                    "\U000ffffe\U000fffff\U0010fffe\U0010ffff"
+                )  # noncharacter
+            )
+            or (extra and c in extra)
+        ):
+            return False, c
+    return True, ""
 
 
 def is_windows_drive_letter(text: str) -> bool:
@@ -490,25 +506,40 @@ class Host:
     @classmethod
     def _parse_opaque_host(cls, host: str) -> str:
         log = get_logger(cls)
-        if any(c in FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT for c in host):
+        if any(c in FORBIDDEN_HOST_CODE_POINT for c in host):
             log.error(
-                "Contains a forbidden host code point excluding '%%' in "
-                "opaque host %r",
+                "host-invalid-code-point: "
+                "Opaque host (in a URL that is not special) contains a forbidden "
+                "host code point: %r",
                 host,
             )
             raise HostParseError(
-                f"Contains a forbidden host code point excluding '%' in "
-                f"opaque host {host!r}"
+                f"Opaque host (in a URL that is not special) contains a forbidden "
+                f"host code point: {host!r}"
+            )
+
+        result, c = is_url_code_points(host, extra="%")
+        if not result:
+            log.info(
+                "invalid-URL-unit: "
+                "Code point is found that is not a URL unit: %r (0x%x) in %r",
+                c,
+                ord(c),
+                host,
             )
 
         parts = [m.group() for m in PERCENT_RE.finditer(host)]
-        if not (
-            all(len(x) >= 3 for x in parts)
-            and all(c in ASCII_HEX_DIGITS for c in (x[1:3] for x in parts))
-        ):
-            log.info(
-                f"Found incorrect percent-encoding in opaque host {host!r}"
-            )
+        for part in parts:
+            if len(part) < 3 or any(
+                c not in ASCII_HEX_DIGITS for c in part[1:3]
+            ):
+                log.info(
+                    "invalid-URL-unit: "
+                    "Code point is found that is not a URL unit: %r in %r",
+                    part[:3],
+                    host,
+                )
+                break
         return utf8_percent_encode(host, SAFE_C0_CONTROL_PERCENT_ENCODE_SET)
 
     @classmethod
@@ -530,6 +561,8 @@ class Host:
 
         Raises:
             urlstd.error.HostParseError: Raised when a host string is not valid.
+
+            urlstd.error.IDNAError: Raised when IDNA processing fails.
 
             urlstd.error.IPv4AddressParseError: Raised when IPv4 address
                 parsing fails.
@@ -558,13 +591,14 @@ class Host:
 
         domain = utf8_decode(string_percent_decode(host))
         ascii_domain = IDNA.domain_to_ascii(domain)
-        if any(c in FORBIDDEN_HOST_CODE_POINT for c in ascii_domain):
+        if any(c in FORBIDDEN_DOMAIN_CODE_POINT for c in ascii_domain):
             log.error(
-                "Contains a forbidden host code point in ASCII-domain %r",
+                "domain-invalid-code-point: "
+                "Host contains a forbidden domain code point: %r",
                 ascii_domain,
             )
             raise HostParseError(
-                f"Contains a forbidden host code point in ASCII-domain "
+                f"Host contains a forbidden domain code point: "
                 f"{ascii_domain!r}"
             )
 

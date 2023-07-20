@@ -56,19 +56,22 @@ def test_get_logger_self(caplog):
 
 
 def test_host_parse_ascii_domain_01(caplog):
-    """Contains a forbidden host code point in ASCII-domain."""
+    """Contains a forbidden domain code point in ASCII-domain:
+    domain-invalid-code-point.
+    """
     caplog.set_level(logging.INFO)
     with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse("a<b")
     assert exc_info.value.args[0].startswith(
-        "Contains a forbidden host code point in ASCII-domain"
+        "Host contains a forbidden domain code point:"
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2].startswith(
-        "Contains a forbidden host code point in ASCII-domain"
+        "domain-invalid-code-point: "
+        "Host contains a forbidden domain code point:"
     )
 
 
@@ -107,19 +110,22 @@ def test_host_parse_ascii_domain_03(caplog):
 
 
 def test_host_parse_ascii_domain_04(caplog):
-    """Contains a forbidden host code point in ASCII-domain."""
+    """Contains a forbidden host code point in ASCII-domain:
+    domain-invalid-code-point.
+    """
     caplog.set_level(logging.INFO)
     with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse("ho%00st")
     assert exc_info.value.args[0].startswith(
-        "Contains a forbidden host code point in ASCII-domain"
+        "Host contains a forbidden domain code point:"
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2].startswith(
-        "Contains a forbidden host code point in ASCII-domain"
+        "domain-invalid-code-point: "
+        "Host contains a forbidden domain code point:"
     )
 
 
@@ -577,24 +583,40 @@ def test_host_parse_ipv6_10(caplog):
 
 
 def test_host_parse_opaque_host_01(caplog):
-    """Contains a forbidden host code point excluding '%'"""
+    """Contains a forbidden host code point: host-invalid-code-point."""
     caplog.set_level(logging.INFO)
     with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse("a<b", True)
     assert exc_info.value.args[0].startswith(
-        "Contains a forbidden host code point excluding '%'"
+        "Opaque host (in a URL that is not special) contains a forbidden host code "
+        "point:"
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2].startswith(
-        "Contains a forbidden host code point excluding '%'"
+        "host-invalid-code-point: "
+        "Opaque host (in a URL that is not special) contains a forbidden host code "
+        "point:"
     )
 
 
-def test_host_parse_opaque_host_02(caplog):
-    """Incorrect percent-encoding."""
+def test_host_parse_opaque_host_02a(caplog):
+    """Incorrect percent-encoding: invalid-URL-unit."""
+    caplog.set_level(logging.INFO)
+    _ = Host.parse('a"b', True)
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.INFO
+    assert caplog.record_tuples[-1][2].startswith(
+        "invalid-URL-unit: Code point is found that is not a URL unit:"
+    )
+
+
+def test_host_parse_opaque_host_02b(caplog):
+    """Incorrect percent-encoding: invalid-URL-unit."""
     caplog.set_level(logging.INFO)
     _ = Host.parse("%zz%66%a.com", True)
 
@@ -602,7 +624,7 @@ def test_host_parse_opaque_host_02(caplog):
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.INFO
     assert caplog.record_tuples[-1][2].startswith(
-        "Found incorrect percent-encoding in"
+        "invalid-URL-unit: Code point is found that is not a URL unit:"
     )
 
 
