@@ -48,7 +48,7 @@ __all__ = [
 
 ASCII_TAB_OR_NEWLINE_RE = re.compile(r"[\t\x0a\x0d]")
 
-LEADING_AND_TRAILING_C0_CONTROL_AND_SPACE_RE = re.compile(
+LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE_RE = re.compile(
     r"^[\x00-\x1f\x20]+|[\x00-\x1f\x20]+$"
 )
 
@@ -509,22 +509,23 @@ class Host:
         if any(c in FORBIDDEN_HOST_CODE_POINT for c in host):
             log.error(
                 "host-invalid-code-point: "
-                "Opaque host (in a URL that is not special) contains a forbidden "
-                "host code point: %r",
+                "opaque host (in a URL that is not special) contains "
+                "a forbidden host code point: %r",
                 host,
             )
             raise HostParseError(
-                f"Opaque host (in a URL that is not special) contains a forbidden "
-                f"host code point: {host!r}"
+                f"opaque host (in a URL that is not special) contains "
+                f"a forbidden host code point: {host!r}"
             )
 
-        result, c = is_url_code_points(host, extra="%")
-        if not result:
+        valid, c = is_url_code_points(host, extra="%")
+        if not valid:
+            _c = utf8_encode(c).decode()
             log.info(
                 "invalid-URL-unit: "
-                "Code point is found that is not a URL unit: %r (0x%x) in %r",
-                c,
+                "code point is found that is not a URL unit: U+%04X (%s) in %r",
                 ord(c),
+                _c,
                 host,
             )
 
@@ -535,7 +536,7 @@ class Host:
             ):
                 log.info(
                     "invalid-URL-unit: "
-                    "Code point is found that is not a URL unit: %r in %r",
+                    "incorrect percent encoding is found: %r in %r",
                     part[:3],
                     host,
                 )
@@ -594,11 +595,11 @@ class Host:
         if any(c in FORBIDDEN_DOMAIN_CODE_POINT for c in ascii_domain):
             log.error(
                 "domain-invalid-code-point: "
-                "Host contains a forbidden domain code point: %r",
+                "input's host contains a forbidden domain code point: %r",
                 ascii_domain,
             )
             raise HostParseError(
-                f"Host contains a forbidden domain code point: "
+                f"input's host contains a forbidden domain code point: "
                 f"{ascii_domain!r}"
             )
 
@@ -722,38 +723,37 @@ class IDNA:
                 error_names = cls._errors_to_string(errors)
                 log.error(
                     "domain-to-ASCII: Unicode ToASCII records an error: "
-                    "domain=%r errors=%s (0x%x)",
+                    "domain=%r errors=%s (0x%04X)",
                     domain,
                     error_names,
                     errors,
                 )
                 raise HostParseError(
                     f"Unicode ToASCII records an error: "
-                    f"domain={domain!r} errors={error_names!s} (0x{errors:x})"
+                    f"domain={domain!r} errors={error_names!s} (0x{errors:04X})"
                 )
             ascii_domain = str(dest)
             if len(ascii_domain) == 0:
                 log.error(
-                    "domain-to-ASCII: Unicode ToASCII returns the empty string: "
-                    "domain=%r",
+                    "domain-to-ASCII: Unicode ToASCII returns the empty string: %r",
                     domain,
                 )
                 raise HostParseError(
-                    f"Unicode ToASCII returns the empty string: domain={domain!r}"
+                    f"Unicode ToASCII returns the empty string: {domain!r}"
                 )
             return ascii_domain
         except icu.ICUError as e:
             errors = info.get_errors()
             log.error(
-                "domain-to-ASCII: Unicode ToASCII records an error: "
-                "domain=%r errors=0x%x error_code=%r",
+                "domain-to-ASCII: Unicode ToASCII failed: "
+                "domain=%r errors=0x%04X error_code=%r",
                 domain,
                 errors,
                 e.args[0],
             )
             raise IDNAError(
-                f"Unicode ToASCII records an error: "
-                f"domain={domain!r} errors=0x{errors:x}",
+                f"Unicode ToASCII failed: "
+                f"domain={domain!r} errors=0x{errors:04X}",
                 e.args[0],
             ) from None
 
@@ -839,8 +839,8 @@ class IPv4Address:
             elif result[1]:
                 log.info(
                     "IPv4-non-decimal-part: "
-                    "IPv4 address contains numbers expressed using hexadecimal "
-                    "or octal digits: %r in %r",
+                    "IPv4 address contains numbers expressed using "
+                    "hexadecimal or octal digits: %r in %r",
                     part,
                     address,
                 )
@@ -855,27 +855,27 @@ class IPv4Address:
             )
         if any(x > 255 for x in numbers[:-1]) and numbers[-1] <= 255:
             log.error(
-                "Any but the last part of the IPv4 address is greater than 255: "
+                "any part but the last part of the IPv4 address is greater than 255: "
                 "%r (%r)",
                 address,
                 numbers,
             )
             raise IPv4AddressParseError(
-                f"Any but the last part of the IPv4 address is greater than 255: "
+                f"any part but the last part of the IPv4 address is greater than 255: "
                 f"{address!r} ({numbers!r})"
             )
         limit = 256 ** (5 - len(numbers))
         if numbers[-1] >= limit:
             log.error(
-                "The last part of the IPv4 address is greater than or equal to "
-                "%d: %r (%r)",
+                "last part of the IPv4 address is greater than or equal to %d: "
+                "%r (%r)",
                 limit,
                 address,
                 numbers,
             )
             raise IPv4AddressParseError(
-                f"The last part of the IPv4 address is greater than or equal to "
-                f"{limit}: {address!r} ({numbers!r})"
+                f"last part of the IPv4 address is greater than or equal to {limit}: "
+                f"{address!r} ({numbers!r})"
             )
 
         ipv4 = numbers[-1]
@@ -952,14 +952,11 @@ class IPv6Address:
                     break
                 log.error(
                     "IPv6-invalid-code-point: "
-                    "IPv6 address contains a code point that is neither an ASCII "
-                    "hex digit nor a U+003A (:). Or it unexpectedly ends: %r",
+                    "IPv6 address unexpectedly ends: %r",
                     address,
                 )
                 raise IPv6AddressParseError(
-                    f"IPv6 address contains a code point that is neither an ASCII "
-                    f"hex digit nor a U+003A (:). Or it unexpectedly ends: "
-                    f"{address!r}"
+                    f"IPv6 address unexpectedly ends: {address!r}"
                 )
 
             if len(piece) == 0:
@@ -974,15 +971,15 @@ class IPv6Address:
                 ):
                     log.error(
                         "IPv6-invalid-code-point: "
-                        "IPv6 address contains a code point that is neither an ASCII "
-                        "hex digit nor a U+003A (:). Or it unexpectedly ends: "
+                        "IPv6 address contains a code point that is neither "
+                        "an ASCII hex digit nor a U+003A (:): "
                         "%r in %r",
                         piece,
                         address,
                     )
                     raise IPv6AddressParseError(
-                        f"IPv6 address contains a code point that is neither an ASCII "
-                        f"hex digit nor a U+003A (:). Or it unexpectedly ends: "
+                        f"IPv6 address contains a code point that is neither "
+                        f"an ASCII hex digit nor a U+003A (:): "
                         f"{piece!r} in {address!r}"
                     )
                 ipv6_address[piece_index] = int(piece, 16)
@@ -996,12 +993,12 @@ class IPv6Address:
                 log.error(
                     "IPv4-in-IPv6-too-many-pieces: "
                     "IPv6 address with IPv4 address syntax: "
-                    "The IPv6 address has more than 6 pieces: %r",
+                    "IPv6 address has more than 6 pieces: %r",
                     address,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address with IPv4 address syntax: "
-                    f"The IPv6 address has more than 6 pieces: {address!r}"
+                    f"IPv6 address has more than 6 pieces: {address!r}"
                 )
             ipv4_pieces = piece.split(".")
             if len(ipv4_pieces) > 4 or any(
@@ -1015,41 +1012,41 @@ class IPv6Address:
                 log.error(
                     "IPv4-in-IPv6-invalid-code-point: "
                     "IPv6 address with IPv4 address syntax: "
-                    "An IPv4 part is empty or contains a non-ASCII digit / "
-                    "An IPv4 part contains a leading 0 / "
-                    "There are too many IPv4 parts: %r in %r",
+                    "IPv4 part is empty or contains a non-ASCII digit / "
+                    "IPv4 part contains a leading 0 / "
+                    "there are too many IPv4 parts: %r in %r",
                     piece,
                     address,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address with IPv4 address syntax: "
-                    f"An IPv4 part is empty or contains a non-ASCII digit / "
-                    f"An IPv4 part contains a leading 0 / "
-                    f"There are too many IPv4 parts: {piece!r} in {address!r}"
+                    f"IPv4 part is empty or contains a non-ASCII digit / "
+                    f"IPv4 part contains a leading 0 / "
+                    f"there are too many IPv4 parts: {piece!r} in {address!r}"
                 )
             elif any([int(x) > 255 for x in ipv4_pieces]):
                 log.error(
                     "IPv4-in-IPv6-out-of-range-part: "
                     "IPv6 address with IPv4 address syntax: "
-                    "An IPv4 part exceeds 255: %r in %r",
+                    "IPv4 part exceeds 255: %r in %r",
                     piece,
                     address,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address with IPv4 address syntax: "
-                    f"An IPv4 part exceeds 255: {piece!r} in {address!r}"
+                    f"IPv4 part exceeds 255: {piece!r} in {address!r}"
                 )
             elif len(ipv4_pieces) < 4:
                 log.error(
                     "IPv4-in-IPv6-too-few-parts: "
-                    "IPv6 address with IPv4 address syntax: An IPv4 address "
-                    "contains too few parts: %r in %r",
+                    "IPv6 address with IPv4 address syntax: "
+                    "IPv4 address contains too few parts: %r in %r",
                     piece,
                     address,
                 )
                 raise IPv6AddressParseError(
-                    f"IPv6 address with IPv4 address syntax: An IPv4 address "
-                    f"contains too few parts: {piece!r} in {address!r}"
+                    f"IPv6 address with IPv4 address syntax: "
+                    f"IPv4 address contains too few parts: {piece!r} in {address!r}"
                 )
             ipv6_address[piece_index] = int(ipv4_pieces[0]) * 0x100 + int(
                 ipv4_pieces[1]
@@ -1078,11 +1075,11 @@ class IPv6Address:
         elif piece_index != 8:
             log.error(
                 "IPv6-too-few-pieces: "
-                "Uncompressed IPv6 address contains fewer than 8 pieces: %r",
+                "uncompressed IPv6 address contains fewer than 8 pieces: %r",
                 address,
             )
             raise IPv6AddressParseError(
-                f"Uncompressed IPv6 address contains fewer than 8 pieces: {address!r}"
+                f"uncompressed IPv6 address contains fewer than 8 pieces: {address!r}"
             )
         return tuple(ipv6_address)
 
@@ -2255,7 +2252,10 @@ class BasicURLParser:
             index += 1
             if c == "@":
                 log.info(
-                    "Found %r in %r at position %d", c, urlstring, index - 1
+                    "invalid-credentials: input includes credentials: "
+                    "%r at position %d",
+                    urlstring,
+                    index - 1,
                 )
                 if at_sign_seen:
                     buffer = "%40" + buffer
@@ -2282,9 +2282,12 @@ class BasicURLParser:
                 iseof(c) or iscp(c, "/?#") or (url.is_special() and c == "\\")
             ):
                 if at_sign_seen and len(buffer) == 0:
-                    log.error("Invalid username or password in %r", urlstring)
+                    log.error(
+                        "invalid-credentials: credentials are empty: %r",
+                        urlstring,
+                    )
                     raise URLParseError(
-                        f"Invalid username or password in {urlstring!r}"
+                        f"credentials are empty: {urlstring!r}"
                     )
                 index -= len(buffer) + 1
                 # return URLParserState.HOST_STATE, index
@@ -2311,8 +2314,9 @@ class BasicURLParser:
         if iscp(c, "/\\"):
             if c == "\\":
                 log.info(
-                    "Expected '/' but got %r in %r at position %d",
-                    c,
+                    "invalid-reverse-solidus: "
+                    "URL has a special scheme and it uses U+005C (\\) "
+                    "instead of U+002F (/): %r at position %d",
                     urlstring,
                     index - 1,
                 )
@@ -2335,7 +2339,11 @@ class BasicURLParser:
                     url.shorten_path()
                 else:
                     log.info(
-                        "Unexpected Windows drive letter in %r at position %d",
+                        "file-invalid-Windows-drive-letter: "
+                        "input is a relative-URL string that starts with "
+                        "a Windows drive letter and the base URL's scheme is 'file': "
+                        "%r in %r at position %d",
+                        urlstring[index - 1 : index + 1],
                         urlstring,
                         index - 1,
                     )
@@ -2363,7 +2371,10 @@ class BasicURLParser:
                 index -= 1
                 if state_override is None and is_windows_drive_letter(buffer):
                     log.info(
-                        "Unexpected Windows drive letter in %r at position %d",
+                        "file-invalid-Windows-drive-letter-host: "
+                        "'file:' URL's host is a Windows drive letter: "
+                        "%r in %r at position %d",
+                        buffer,
                         urlstring,
                         index - len(buffer),
                     )
@@ -2402,8 +2413,9 @@ class BasicURLParser:
         if iscp(c, "/\\"):
             if c == "\\":
                 log.info(
-                    "Expected '/' but got %r in %r at position %d",
-                    c,
+                    "invalid-reverse-solidus: "
+                    "URL has a special scheme and it uses U+005C (\\) "
+                    "instead of U+002F (/): %r at position %d",
                     urlstring,
                     index - 1,
                 )
@@ -2437,14 +2449,29 @@ class BasicURLParser:
         for c in cpstream(urlstring[index:]):
             index += 1
             if not iseof(c):
-                # TODO: If c is not a URL code point and not U+0025 (%),
-                #  validation error.
-                if c == "%" and any(
-                    x not in ASCII_HEX_DIGITS
-                    for x in urlstring[index : index + 2]
+                valid, _ = is_url_code_points(c)
+                if not valid and c != "%":
+                    _c = utf8_encode(c).decode()
+                    log.info(
+                        "invalid-URL-unit: "
+                        "code point is found that is not a URL unit: "
+                        "U+%04X (%s) in %r at position %d",
+                        ord(c),
+                        _c,
+                        urlstring,
+                        index - 1,
+                    )
+                if c == "%" and (
+                    len(urlstring[index:]) < 2
+                    or any(
+                        x not in ASCII_HEX_DIGITS
+                        for x in urlstring[index : index + 2]
+                    )
                 ):
                     log.info(
-                        "Found incorrect percent-encoding in %r at position %d",
+                        "invalid-URL-unit: "
+                        "incorrect percent encoding is found: %r in %r at position %d",
+                        urlstring[index - 1 : index + 2],
                         urlstring,
                         index - 1,
                     )
@@ -2481,9 +2508,12 @@ class BasicURLParser:
             index += 1
             if c == ":" and not inside_brackets:
                 if len(buffer) == 0:
-                    log.error("Unexpected empty host in %r", urlstring)
+                    log.error(
+                        "host-missing: input does not contain a host: %r",
+                        urlstring,
+                    )
                     raise URLParseError(
-                        f"Unexpected empty host in {urlstring!r}"
+                        f"input does not contain a host: {urlstring!r}"
                     )
                 if state_override == URLParserState.HOSTNAME_STATE:
                     return URLParserState.EOF, index - 1
@@ -2494,9 +2524,14 @@ class BasicURLParser:
             ):
                 index -= 1
                 if url.is_special() and len(buffer) == 0:
-                    log.error("Unexpected empty host in %r", urlstring)
+                    log.error(
+                        "host-missing: "
+                        "input has a special scheme, but does not contain a host: %r",
+                        urlstring,
+                    )
                     raise URLParseError(
-                        f"Unexpected empty host in {urlstring!r}"
+                        f"input has a special scheme, but does not contain a host: "
+                        f"{urlstring!r}"
                     )
                 elif (
                     state_override
@@ -2531,8 +2566,22 @@ class BasicURLParser:
         c = urlstring[index : index + 1]
         index += 1
         if base is None or (base.has_opaque_path() and c != "#"):
-            log.error("URL scheme not found in %r", urlstring)
-            raise URLParseError(f"URL scheme not found in {urlstring!r}")
+            _base = str(base) if base else None
+            log.error(
+                "missing-scheme-non-relative-URL: "
+                "input is missing a scheme, because it does not begin with "
+                "an ASCII alpha, and either no base URL was provided or "
+                "the base URL cannot be used as a base URL because "
+                "it has an opaque path: input=%r base=%r",
+                urlstring,
+                _base,
+            )
+            raise URLParseError(
+                f"input is missing a scheme, because it does not begin with "
+                f"an ASCII alpha, and either no base URL was provided or "
+                f"the base URL cannot be used as a base URL because "
+                f"it has an opaque path: input={urlstring!r} base={_base!r}"
+            )
         elif base.has_opaque_path() and c == "#":
             url.scheme = base.scheme
             url.path = copy.copy(base.path)
@@ -2565,14 +2614,29 @@ class BasicURLParser:
                 url.fragment = ""
                 return URLParserState.FRAGMENT_STATE, index
             else:
-                # TODO: If c is not the EOF code point, not a URL code point,
-                #  and not U+0025 (%), validation error.
-                if c == "%" and any(
-                    x not in ASCII_HEX_DIGITS
-                    for x in urlstring[index : index + 2]
+                valid, _ = is_url_code_points(c)
+                if not iseof(c) and not valid and c != "%":
+                    _c = utf8_encode(c).decode()
+                    log.info(
+                        "invalid-URL-unit: "
+                        "code point is found that is not a URL unit: "
+                        "U+%04X (%s) in %r at position %d",
+                        ord(c),
+                        _c,
+                        urlstring,
+                        index - 1,
+                    )
+                if c == "%" and (
+                    len(urlstring[index:]) < 2
+                    or any(
+                        x not in ASCII_HEX_DIGITS
+                        for x in urlstring[index : index + 2]
+                    )
                 ):
                     log.info(
-                        "Found incorrect percent-encoding in %r at position %d",
+                        "invalid-URL-unit: "
+                        "incorrect percent encoding is found: %r in %r at position %d",
+                        urlstring[index - 1 : index + 2],
                         urlstring,
                         index - 1,
                     )
@@ -2608,8 +2672,9 @@ class BasicURLParser:
             ):
                 if url.is_special() and c == "\\":
                     log.info(
-                        "Expected '/' but got %r in %r at position %d",
-                        c,
+                        "invalid-reverse-solidus: "
+                        "URL has a special scheme and it uses U+005C (\\) "
+                        "instead of U+002F (/): %r at position %d",
                         urlstring,
                         index - 1,
                     )
@@ -2646,14 +2711,29 @@ class BasicURLParser:
                     url.fragment = ""
                     return URLParserState.FRAGMENT_STATE, index
             else:
-                # TODO: If c is not a URL code point and not U+0025 (%),
-                #  validation error.
-                if c == "%" and any(
-                    x not in ASCII_HEX_DIGITS
-                    for x in urlstring[index : index + 2]
+                valid, _ = is_url_code_points(c)
+                if not valid and c != "%":
+                    _c = utf8_encode(c).decode()
+                    log.info(
+                        "invalid-URL-unit: "
+                        "code point is found that is not a URL unit: "
+                        "U+%04X (%s) in %r at position %d",
+                        ord(c),
+                        _c,
+                        urlstring,
+                        index - 1,
+                    )
+                if c == "%" and (
+                    len(urlstring[index:]) < 2
+                    or any(
+                        x not in ASCII_HEX_DIGITS
+                        for x in urlstring[index : index + 2]
+                    )
                 ):
                     log.info(
-                        "Found incorrect percent-encoding in %r at position %d",
+                        "invalid-URL-unit: "
+                        "incorrect percent encoding is found: %r in %r at position %d",
+                        urlstring[index - 1 : index + 2],
                         urlstring,
                         index - 1,
                     )
@@ -2695,8 +2775,9 @@ class BasicURLParser:
         if url.is_special():
             if c == "\\":
                 log.info(
-                    "Expected '/' but got %r in %r at position %d",
-                    c,
+                    "invalid-reverse-solidus: "
+                    "URL has a special scheme and it uses U+005C (\\) "
+                    "instead of U+002F (/): %r at position %d",
                     urlstring,
                     index - 1,
                 )
@@ -2743,8 +2824,14 @@ class BasicURLParser:
                 if len(buffer) > 0:
                     port = int(buffer)
                     if port > 0xFFFF:
-                        log.error("Port out of range: %d", port)
-                        raise URLParseError(f"Port out of range: {port}")
+                        log.error(
+                            "port-out-of-range: input's port is too big: %d in %r",
+                            port,
+                            urlstring,
+                        )
+                        raise URLParseError(
+                            f"input's port is too big: {port} in {urlstring!r}"
+                        )
                     if SPECIAL_SCHEMES.get(url.scheme) == port:
                         url.port = None
                     else:
@@ -2754,8 +2841,10 @@ class BasicURLParser:
                 # return URLParserState.PATH_START_STATE, index - 1
                 break
             else:
-                log.error("Invalid port in %r", urlstring)
-                raise URLParseError(f"Invalid port in {urlstring!r}")
+                log.error(
+                    "port-invalid: input's port is invalid: %r", urlstring
+                )
+                raise URLParseError(f"input's port is invalid: {urlstring!r}")
         return URLParserState.PATH_START_STATE, index - 1
 
     @classmethod
@@ -2798,14 +2887,29 @@ class BasicURLParser:
                     index -= 1
                     break
             elif not iseof(c):
-                # TODO: If c is not a URL code point and not U+0025 (%),
-                #  validation error.
-                if c == "%" and any(
-                    x not in ASCII_HEX_DIGITS
-                    for x in urlstring[index : index + 2]
+                valid, _ = is_url_code_points(c)
+                if not valid and c != "%":
+                    _c = utf8_encode(c).decode()
+                    log.info(
+                        "invalid-URL-unit: "
+                        "code point is found that is not a URL unit: "
+                        "U+%04X (%s) in %r at position %d",
+                        ord(c),
+                        _c,
+                        urlstring,
+                        index - 1,
+                    )
+                if c == "%" and (
+                    len(urlstring[index:]) < 2
+                    or any(
+                        x not in ASCII_HEX_DIGITS
+                        for x in urlstring[index : index + 2]
+                    )
                 ):
                     log.info(
-                        "Found incorrect percent-encoding in %r at position %d",
+                        "invalid-URL-unit: "
+                        "incorrect percent encoding is found: %r in %r at position %d",
+                        urlstring[index - 1 : index + 2],
                         urlstring,
                         index - 1,
                     )
@@ -2831,12 +2935,14 @@ class BasicURLParser:
             return URLParserState.RELATIVE_SLASH_STATE, index
         elif url.is_special() and c == "\\":
             log.info(
-                "Expected '/' but got %r in %r at position %d",
-                c,
+                "invalid-reverse-solidus: "
+                "URL has a special scheme and it uses U+005C (\\) "
+                "instead of U+002F (/): %r at position %d",
                 urlstring,
                 index - 1,
             )
             return URLParserState.RELATIVE_SLASH_STATE, index
+        assert base is not None
         url.username = base.username
         url.password = base.password
         url.host = base.host
@@ -2871,8 +2977,9 @@ class BasicURLParser:
         if url.is_special() and iscp(c, "/\\"):
             if c == "\\":
                 log.info(
-                    "Expected '/' but got %r in %r at position %d",
-                    c,
+                    "invalid-reverse-solidus: "
+                    "URL has a special scheme and it uses U+005C (\\) "
+                    "instead of U+002F (/): %r at position %d",
                     urlstring,
                     index - 1,
                 )
@@ -2909,8 +3016,9 @@ class BasicURLParser:
         elif state_override is None:
             return URLParserState.NO_SCHEME_STATE, index - 1
         else:
-            log.error("Invalid URL scheme: %r", urlstring)
-            raise URLParseError(f"Invalid URL scheme: {urlstring!r}")
+            raise URLParseError(
+                f"input's scheme does not begin with an ASCII alpha: {urlstring!r}"
+            )
 
         # **scheme state**
         for c in cpstream(urlstring[index:]):
@@ -2948,8 +3056,9 @@ class BasicURLParser:
                 elif url.scheme == "file":
                     if not urlstring[index:].startswith("//"):
                         log.info(
-                            "Expected to start with '//' but got %r in %r "
-                            "at position %d",
+                            "special-scheme-missing-following-solidus: "
+                            "input's scheme is not followed by '//': "
+                            "%r in %r at position %d",
                             urlstring[index : index + 2],
                             urlstring,
                             index,
@@ -2975,8 +3084,9 @@ class BasicURLParser:
                 return URLParserState.NO_SCHEME_STATE, start
             else:
                 break
-        log.error("%r does not end with ':'", urlstring)
-        raise URLParseError(f"{urlstring!r} does not end with ':'")
+        raise URLParseError(
+            f"input's scheme does not end with U+003A (:): {urlstring!r}"
+        )
 
     @classmethod
     def _parse_special_authority_ignore_slashes(
@@ -2994,14 +3104,19 @@ class BasicURLParser:
             index += 1
             if not iscp(c, "/\\"):
                 # return URLParserState.AUTHORITY_STATE, index - 1
+                index -= 1
                 break
+            # TODO: need to confirm.
             log.info(
-                "Expected neither '/' nor '\\' but got %r in %r at position %d",
+                "special-scheme-missing-following-solidus: "
+                "input's scheme is not followed by '//': "
+                "U+%04X (%s) in %r at position %d",
+                ord(c),
                 c,
                 urlstring,
                 index - 1,
             )
-        return URLParserState.AUTHORITY_STATE, index - 1
+        return URLParserState.AUTHORITY_STATE, index
 
     @classmethod
     def _parse_special_authority_slashes(
@@ -3023,8 +3138,10 @@ class BasicURLParser:
                 index + 1,
             )
         log.info(
-            "Expected to start with '//' but got %r in %r "
-            "at position %d" % (urlstring[start : start + 2], urlstring, start)
+            "special-scheme-missing-following-solidus: "
+            "input's scheme is not followed by '//': "
+            "%r in %r at position %d"
+            % (urlstring[start : start + 2], urlstring, start)
         )
         return URLParserState.SPECIAL_AUTHORITY_IGNORE_SLASHES_STATE, index - 1
 
@@ -3048,8 +3165,10 @@ class BasicURLParser:
                 index + 1,
             )
         log.info(
-            "Expected to start with '//' but got %r in %r "
-            "at position %d" % (urlstring[start : start + 2], urlstring, start)
+            "special-scheme-missing-following-solidus: "
+            "input's scheme is not followed by '//': "
+            "%r in %r at position %d"
+            % (urlstring[start : start + 2], urlstring, start)
         )
         return URLParserState.RELATIVE_STATE, index - 1
 
@@ -3168,17 +3287,21 @@ class BasicURLParser:
         log = get_logger(cls)
         if url is None:
             url = URLRecord()
-            if LEADING_AND_TRAILING_C0_CONTROL_AND_SPACE_RE.search(urlstring):
+            if LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE_RE.search(urlstring):
                 log.info(
-                    "Remove any leading and trailing C0 control or space in %r",
+                    "invalid-URL-unit: "
+                    "remove any leading and trailing C0 control or space from %r",
                     urlstring,
                 )
-                urlstring = LEADING_AND_TRAILING_C0_CONTROL_AND_SPACE_RE.sub(
+                urlstring = LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE_RE.sub(
                     "", urlstring
                 )
 
         if ASCII_TAB_OR_NEWLINE_RE.search(urlstring):
-            log.info("Remove all ASCII tab or newline in %r", urlstring)
+            log.info(
+                "invalid-URL-unit: remove all ASCII tab or newline from %r",
+                urlstring,
+            )
             urlstring = ASCII_TAB_OR_NEWLINE_RE.sub("", urlstring)
 
         state = state_override or URLParserState.SCHEME_START_STATE
