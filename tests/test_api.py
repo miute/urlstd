@@ -15,6 +15,7 @@ from urlstd.error import (
 from urlstd.parse import get_logger  # noqa
 from urlstd.parse import (
     IDNA,
+    URL,
     BasicURLParser,
     Host,
     IPv4Address,
@@ -1846,6 +1847,22 @@ def test_parse_url_special_relative_or_authority_state(caplog):
     )
 
 
+def test_url_equals():
+    url1 = URL("https://example.org:314/path?a=1&b=2#c")
+    url2 = URL("https://example.org:314/path?a=1&b=2#d")
+    url3 = URL("https://example.org:314/path?a=1&b=2#c")
+
+    assert url1.equals(url2) is False
+    assert url1.equals(url3) is True
+
+    assert url1.equals(url2, exclude_fragments=True) is True
+    assert url1.equals(url3, exclude_fragments=True) is True
+
+    assert url1 != url2
+    assert url1 == url3
+    assert url1 != str(url3)
+
+
 @pytest.mark.parametrize(
     "urlstring",
     [
@@ -1933,6 +1950,7 @@ def test_urlrecord_equals():
 
     assert url1 != url2
     assert url1 == url3
+    assert url1 != str(url3)
 
 
 def test_urlsearchparams_add():

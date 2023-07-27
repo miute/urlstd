@@ -1907,6 +1907,21 @@ class URL:
         self._url: URLRecord = parse_url(url, base=base)
         self._query: URLSearchParams = URLSearchParams(self._url)
 
+    def __eq__(self, other: Any) -> bool:
+        """Returns *True* if *other* is equal to this object.
+
+        This is equivalent to :meth:`.equals` with no arguments.
+
+        Args:
+            other: A URL to compare to this one.
+
+        Returns:
+            *True* if *other* is equal to this object, *False* otherwise.
+        """
+        if not isinstance(other, URL):
+            return False
+        return self.equals(other)
+
     def __repr__(self) -> str:
         """Returns a nicely formatted representation string."""
         return (
@@ -1934,6 +1949,18 @@ class URL:
             A string representation of a URL.
         """
         return self.href
+
+    def equals(self, other: URL, exclude_fragments: bool = False) -> bool:
+        """Returns *True* if *other* is equal to this object.
+
+        Args:
+            other: A URL to compare to this one.
+            exclude_fragments: If *True*, the fragment is excluded from the comparison.
+
+        Returns:
+            *True* if *other* is equal to this object, *False* otherwise.
+        """
+        return self._url.equals(other._url, exclude_fragments)
 
     @property
     def hash(self) -> str:
