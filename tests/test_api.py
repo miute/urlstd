@@ -993,6 +993,29 @@ def test_origin_is_same_origin_domain(a, b, same_origin, same_origin_domain):
     assert origin2.is_same_origin_domain(origin1) is same_origin_domain
 
 
+def test_origin_repr():
+    origin1 = Origin("https", "example.org", None, None)
+    str1 = repr(origin1)
+    assert (
+        str1
+        == "Origin(scheme='https', host='example.org', port=None, domain=None)"
+    )
+    origin2 = eval(str1)
+    assert isinstance(origin2, Origin)
+    assert origin1 == origin2
+
+    origin3 = Origin("https", "example.org", 314, "example.org")
+    str3 = repr(origin3)
+    assert (
+        str3
+        == "Origin(scheme='https', host='example.org', port=314, domain='example.org')"
+    )
+    origin4 = eval(str3)
+    assert isinstance(origin4, Origin)
+    assert origin3 == origin4
+    assert origin3 != origin1
+
+
 def test_parse_url_basic():
     """parse_url()"""
     urlstring = "/some/path?b#c"
@@ -1863,6 +1886,42 @@ def test_url_equals():
     assert url1 != str(url3)
 
 
+def test_url_repr():
+    url1 = URL("https://example.org:314/")
+    assert repr(url1) == (
+        "<URL("
+        "href='https://example.org:314/', "
+        "origin='https://example.org:314', "
+        "protocol='https:', "
+        "username='', "
+        "password='', "
+        "host='example.org:314', "
+        "hostname='example.org', "
+        "port='314', "
+        "pathname='/', "
+        "search='', "
+        "hash=''"
+        ")>"
+    )
+
+    url2 = URL("https://user:passwd@example.org?a=b#c")
+    assert repr(url2) == (
+        "<URL("
+        "href='https://user:passwd@example.org/?a=b#c', "
+        "origin='https://example.org', "
+        "protocol='https:', "
+        "username='user', "
+        "password='passwd', "
+        "host='example.org', "
+        "hostname='example.org', "
+        "port='', "
+        "pathname='/', "
+        "search='?a=b', "
+        "hash='#c'"
+        ")>"
+    )
+
+
 @pytest.mark.parametrize(
     "urlstring",
     [
@@ -1953,6 +2012,67 @@ def test_urlrecord_equals():
     assert url1 != str(url3)
 
 
+def test_urlrecord_repr():
+    url1 = URLRecord(scheme="https", host="example.org", port=314, path=[""])
+    str1 = repr(url1)
+    assert str1 == (
+        "URLRecord("
+        "scheme='https', "
+        "username='', "
+        "password='', "
+        "host='example.org', "
+        "port=314, "
+        "path=[''], "
+        "query=None, "
+        "fragment=None"
+        ")"
+    )
+    url2 = eval(str1)
+    assert isinstance(url2, URLRecord)
+    assert url2.scheme == "https"
+    assert len(url2.username) == 0
+    assert len(url2.password) == 0
+    assert url2.host == "example.org"
+    assert url2.port == 314
+    assert url2.path == [""]
+    assert url2.query is None
+    assert url2.fragment is None
+
+    url3 = URLRecord(
+        scheme="https",
+        host="example.org",
+        port=420,
+        path=[""],
+        username="user",
+        password="passwd",
+        query="a=1&b=2",
+        fragment="c",
+    )
+    str3 = repr(url3)
+    assert str3 == (
+        "URLRecord("
+        "scheme='https', "
+        "username='user', "
+        "password='passwd', "
+        "host='example.org', "
+        "port=420, "
+        "path=[''], "
+        "query='a=1&b=2', "
+        "fragment='c'"
+        ")"
+    )
+    url4 = eval(str3)
+    assert isinstance(url4, URLRecord)
+    assert url4.scheme == "https"
+    assert url4.username == "user"
+    assert url4.password == "passwd"
+    assert url4.host == "example.org"
+    assert url4.port == 420
+    assert url4.path == [""]
+    assert url4.query == "a=1&b=2"
+    assert url4.fragment == "c"
+
+
 def test_urlsearchparams_add():
     params = URLSearchParams("a=1&b=2&a=3&c=4")
     with pytest.raises(TypeError):
@@ -2029,3 +2149,14 @@ def test_urlsearchparams_eq():
     params3.delete("b")
     params3.append("b", "2")
     assert params3 == params1
+
+
+def test_urlsearchparams_repr():
+    params1 = URLSearchParams("?a=1&b=\U0001f338")
+    str1 = repr(params1)
+    assert str1 == "URLSearchParams([('a', '1'), ('b', '🌸')])"
+    params2 = eval(str1)
+    assert isinstance(params2, URLSearchParams)
+    assert list(params2) == [("a", "1"), ("b", "🌸")]
+    str2 = repr(params2)
+    assert str2 == str1

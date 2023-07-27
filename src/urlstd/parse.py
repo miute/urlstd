@@ -1251,7 +1251,6 @@ class URLRecord:
         """Returns a nicely formatted representation string."""
         return (
             f"{self.__class__.__name__}("
-            f"href={self.href!r}, "
             f"scheme={self.scheme!r}, "
             f"username={self.username!r}, "
             f"password={self.password!r}, "
@@ -1865,42 +1864,42 @@ class URL:
         To parse a string into a URL with using a base URL:
 
         >>> URL('//foo/bar', 'http://example.org/foo/bar')
-        URL(href='http://foo/bar', origin='http://foo', protocol='http:',
+        <URL(href='http://foo/bar', origin='http://foo', protocol='http:',
         username='', password='', host='foo', hostname='foo', port='',
-        pathname='/bar', search='', hash='')
+        pathname='/bar', search='', hash='')>
 
         >>> URL('/', 'http://example.org/foo/bar')
-        URL(href='http://example.org/', origin='http://example.org',
+        <URL(href='http://example.org/', origin='http://example.org',
         protocol='http:', username='', password='', host='example.org',
-        hostname='example.org', port='', pathname='/', search='', hash='')
+        hostname='example.org', port='', pathname='/', search='', hash='')>
 
         >>> URL('https://test:@test', 'about:blank')
-        URL(href='https://test@test/', origin='https://test',
+        <URL(href='https://test@test/', origin='https://test',
         protocol='https:', username='test', password='', host='test',
-        hostname='test', port='', pathname='/', search='', hash='')
+        hostname='test', port='', pathname='/', search='', hash='')>
 
         >>> URL('?a=b&c=d', 'http://example.org/foo/bar')
-        URL(href='http://example.org/foo/bar?a=b&c=d',
+        <URL(href='http://example.org/foo/bar?a=b&c=d',
         origin='http://example.org', protocol='http:', username='', password='',
         host='example.org', hostname='example.org', port='',
-        pathname='/foo/bar', search='?a=b&c=d', hash='')
+        pathname='/foo/bar', search='?a=b&c=d', hash='')>
 
         >>> URL('#β', 'http://example.org/foo/bar')
-        URL(href='http://example.org/foo/bar#%CE%B2',
+        <URL(href='http://example.org/foo/bar#%CE%B2',
         origin='http://example.org', protocol='http:', username='', password='',
         host='example.org', hostname='example.org', port='',
-        pathname='/foo/bar', search='', hash='#%CE%B2')
+        pathname='/foo/bar', search='', hash='#%CE%B2')>
 
         >>> URL('', 'http://example.org/foo/bar')
-        URL(href='http://example.org/foo/bar', origin='http://example.org',
+        <URL(href='http://example.org/foo/bar', origin='http://example.org',
         protocol='http:', username='', password='', host='example.org',
         hostname='example.org', port='', pathname='/foo/bar', search='',
-        hash='')
+        hash='')>
 
         >>> URL('https://x/\ufffd?\ufffd#\ufffd', 'about:blank')
-        URL(href='https://x/%EF%BF%BD?%EF%BF%BD#%EF%BF%BD', origin='https://x',
+        <URL(href='https://x/%EF%BF%BD?%EF%BF%BD#%EF%BF%BD', origin='https://x',
         protocol='https:', username='', password='', host='x', hostname='x',
-        port='', pathname='/%EF%BF%BD', search='?%EF%BF%BD', hash='#%EF%BF%BD')
+        port='', pathname='/%EF%BF%BD', search='?%EF%BF%BD', hash='#%EF%BF%BD')>
     """
 
     def __init__(self, url: str, base: Optional[str] = None):
@@ -1925,7 +1924,7 @@ class URL:
     def __repr__(self) -> str:
         """Returns a nicely formatted representation string."""
         return (
-            f"{self.__class__.__name__}("
+            f"<{self.__class__.__name__}("
             f"href={self.href!r}, "
             f"origin={self.origin!r}, "
             f"protocol={self.protocol!r}, "
@@ -1937,7 +1936,7 @@ class URL:
             f"pathname={self.pathname!r}, "
             f"search={self.search!r}, "
             f"hash={self.hash!r}"
-            f")"
+            f")>"
         )
 
     def __str__(self) -> str:
