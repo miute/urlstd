@@ -1956,3 +1956,16 @@ def test_urlsearchparams_construct_with_surrogates():
 
     params.delete("x\uFFFD")
     assert len(params) == 0
+
+
+def test_urlsearchparams_eq():
+    params1 = URLSearchParams([("a", "1"), ("b", "2")])
+    params2 = URLSearchParams([("a", "1"), ("b", "2")])
+    assert params2 == params1
+    assert params2 != [("a", "1"), ("b", "2")]
+
+    params3 = URLSearchParams([("b", "2"), ("a", "1")])
+    assert params3 != params1
+    params3.delete("b")
+    params3.append("b", "2")
+    assert params3 == params1

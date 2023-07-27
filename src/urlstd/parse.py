@@ -1561,6 +1561,19 @@ class URLSearchParams(Collection):
             )
         return self.get(item) is not None
 
+    def __eq__(self, other: Any) -> bool:
+        """Returns *True* if *other* is equal to this object.
+
+        Args:
+            other: The *URLSearchParams* to compare to this one.
+
+        Returns:
+            *True* if *other* is equal to this object, *False* otherwise.
+        """
+        if not isinstance(other, URLSearchParams):
+            return False
+        return self._list == other._list
+
     def __iter__(self) -> Iterator[tuple[str, str]]:
         """Returns a new iterator of this object’s items
         ((name, value) pairs).
