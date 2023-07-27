@@ -1893,6 +1893,48 @@ def test_urlparse_with_encoding():
     assert result == ("http", "example.org", "/test", "", "y%FF", "")
 
 
+def test_urlrecord_equals():
+    url1 = URLRecord(
+        scheme="https",
+        username="",
+        password="",
+        host="example.org",
+        port=314,
+        path=["path"],
+        query="a=1&b=2",
+        fragment="c",
+    )
+    url2 = URLRecord(
+        scheme="https",
+        username="",
+        password="",
+        host="example.org",
+        port=314,
+        path=["path"],
+        query="a=1&b=2",
+        fragment="d",
+    )
+    url3 = URLRecord(
+        scheme="https",
+        username="",
+        password="",
+        host="example.org",
+        port=314,
+        path=["path"],
+        query="a=1&b=2",
+        fragment="c",
+    )
+
+    assert url1.equals(url2) is False
+    assert url1.equals(url3) is True
+
+    assert url1.equals(url2, exclude_fragments=True) is True
+    assert url1.equals(url3, exclude_fragments=True) is True
+
+    assert url1 != url2
+    assert url1 == url3
+
+
 def test_urlsearchparams_add():
     params = URLSearchParams("a=1&b=2&a=3&c=4")
     with pytest.raises(TypeError):

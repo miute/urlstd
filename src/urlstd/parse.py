@@ -1232,6 +1232,21 @@ class URLRecord:
     #: A URL's blob URL entry. (unused)
     blob_url_entry: Optional[str] = None
 
+    def __eq__(self, other: Any) -> bool:
+        """Returns *True* if *other* is equal to this object.
+
+        This is equivalent to :meth:`.equals` with no arguments.
+
+        Args:
+            other: The URL record to compare to this one.
+
+        Returns:
+            *True* if *other* is equal to this object, *False* otherwise.
+        """
+        if not isinstance(other, URLRecord):
+            return False
+        return self.equals(other)
+
     def __repr__(self) -> str:
         """Returns a nicely formatted representation string."""
         return (
@@ -1271,6 +1286,22 @@ class URLRecord:
             or (isinstance(self.host, str) and len(self.host) == 0)
             or self.scheme == "file"
         )
+
+    def equals(
+        self, other: URLRecord, exclude_fragments: bool = False
+    ) -> bool:
+        """Returns *True* if *other* is equal to this object.
+
+        Args:
+            other: The URL record to compare to this one.
+            exclude_fragments: If *True*, the fragment is excluded from the comparison.
+
+        Returns:
+            *True* if *other* is equal to this object, *False* otherwise.
+        """
+        serialized1 = self.serialize_url(exclude_fragments)
+        serialized2 = other.serialize_url(exclude_fragments)
+        return serialized1 == serialized2
 
     def has_opaque_path(self) -> bool:
         """Returns *True* if a URL's path is a string, *False* otherwise.
