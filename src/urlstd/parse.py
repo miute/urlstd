@@ -1152,6 +1152,54 @@ class Origin(NamedTuple):
             result += f":{self.port}"
         return result
 
+    def is_same_origin(self, other: Origin) -> bool:
+        """Returns *True* if *other* can be said to be of
+        `same origin
+        <https://html.spec.whatwg.org/multipage/browsers.html#same-origin>`_
+        as this object.
+
+        Args:
+            other: The *Origin* to compare to this one.
+
+        Returns:
+            *True* if the schemes, hosts, and ports of this object and *other*
+            are identical, *False* otherwise.
+        """
+        return (
+            self.scheme == other.scheme
+            and self.host == other.host
+            and self.port == other.port
+        )
+
+    def is_same_origin_domain(self, other: Origin) -> bool:
+        """Returns *True* if *other* can be said to be of
+        `same origin-domain
+        <https://html.spec.whatwg.org/multipage/browsers.html#same-origin-domain>`_
+        as this object.
+
+        Args:
+            other: The *Origin* to compare to this one.
+
+        Returns:
+            *True* if the schemes of this object and *other* are identical and
+            their domains are identical and not *None*, or if this object and
+            *other* are
+            `same origin
+            <https://html.spec.whatwg.org/multipage/browsers.html#same-origin>`_
+            and their domains are identical and *None*, *False* otherwise.
+        """
+        if (
+            self.scheme == other.scheme
+            and self.domain
+            and self.domain == other.domain
+        ) or (
+            self.is_same_origin(other)
+            and self.domain is None
+            and other.domain is None
+        ):
+            return True
+        return False
+
 
 @dataclass(eq=False)
 class URLRecord:

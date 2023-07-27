@@ -948,6 +948,50 @@ def test_is_url_code_points(text, extra, valid, error):
         assert result[1] == error
 
 
+@pytest.mark.parametrize(
+    ("a", "b", "same_origin", "same_origin_domain"),
+    [
+        [
+            ("https", "example.org", None, None),
+            ("https", "example.org", None, None),
+            True,
+            True,
+        ],
+        [
+            ("https", "example.org", 314, None),
+            ("https", "example.org", 420, None),
+            False,
+            False,
+        ],
+        [
+            ("https", "example.org", 314, "example.org"),
+            ("https", "example.org", 420, "example.org"),
+            False,
+            True,
+        ],
+        [
+            ("https", "example.org", None, None),
+            ("https", "example.org", None, "example.org"),
+            True,
+            False,
+        ],
+        [
+            ("https", "example.org", None, "example.org"),
+            ("http", "example.org", None, "example.org"),
+            False,
+            False,
+        ],
+    ],
+)
+def test_origin_is_same_origin_domain(a, b, same_origin, same_origin_domain):
+    origin1 = Origin(*a)
+    origin2 = Origin(*b)
+    assert origin1.is_same_origin(origin2) is same_origin
+    assert origin2.is_same_origin(origin1) is same_origin
+    assert origin1.is_same_origin_domain(origin2) is same_origin_domain
+    assert origin2.is_same_origin_domain(origin1) is same_origin_domain
+
+
 def test_parse_url_basic():
     """parse_url()"""
     urlstring = "/some/path?b#c"
