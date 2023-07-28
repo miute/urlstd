@@ -1997,6 +1997,25 @@ class URL:
         """
         return self.href
 
+    @classmethod
+    def can_parse(cls, url: str, base: Optional[str] = None) -> bool:
+        """Returns *True* if *url* against a base URL *base* is parsable and valid.
+
+        Args:
+            url: An absolute-URL or a relative-URL.
+                If *url* is a relative-URL, *base* is required.
+            base: An absolute-URL for a relative-URL *url*.
+
+        Returns:
+            *True* if *url* against a base URL *base* is parsable and valid,
+            *False* otherwise.
+        """
+        try:
+            _ = parse_url(url, base=base)
+        except URLParseError:
+            return False
+        return True
+
     def equals(self, other: URL, exclude_fragments: bool = False) -> bool:
         """Returns *True* if *other* is equal to this object.
 
