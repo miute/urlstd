@@ -236,6 +236,16 @@ def parse_qsl(query: bytes) -> list[tuple[str, str]]:
     return output
 
 
+def potentially_rstrip_from_opaque_path(url: URLRecord) -> None:
+    if (
+        not url.has_opaque_path()
+        or url.fragment is not None
+        or url.query is not None
+    ):
+        return
+    url.path = url.path.rstrip()  # type: ignore
+
+
 def starts_with_windows_drive_letter(text: str) -> bool:
     return (
         len(text) >= 2
@@ -1987,6 +1997,7 @@ class URL:
         url = self._url
         if len(value) == 0:
             url.fragment = None
+            potentially_rstrip_from_opaque_path(url)
             return
         elif value.startswith("#"):
             value = value[1:]
@@ -2016,11 +2027,11 @@ class URL:
             >>> str(url)
             'http://example.com:8080/'
         """
-        host = self._url.host
-        if host is None:
+        url = self._url
+        if url.host is None:
             return ""
-        host = Host.serialize(host)
-        port = self._url.port
+        host = Host.serialize(url.host)
+        port = url.port
         if port is None:
             return host
         return f"{host}:{port}"
@@ -2256,6 +2267,7 @@ class URL:
         url = self._url
         if len(value) == 0:
             url.query = None
+            potentially_rstrip_from_opaque_path(url)
         else:
             if value.startswith("?"):
                 value = value[1:]
