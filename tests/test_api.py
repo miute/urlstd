@@ -66,7 +66,7 @@ def test_host_parse_ascii_domain_01(caplog):
     with pytest.raises(HostParseError) as exc_info:
         _ = Host.parse(host)
     assert exc_info.value.args[0] == (
-        f"input's host contains a forbidden domain code point: {host!r}"
+        f"input’s host contains a forbidden domain code point: {host!r}"
     )
 
     assert len(caplog.record_tuples) > 0
@@ -74,7 +74,7 @@ def test_host_parse_ascii_domain_01(caplog):
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2] == (
         "domain-invalid-code-point: "
-        f"input's host contains a forbidden domain code point: {host!r}"
+        f"input’s host contains a forbidden domain code point: {host!r}"
     )
 
 
@@ -129,7 +129,7 @@ def test_host_parse_ascii_domain_04(caplog):
         _ = Host.parse(host)
     host = "ho\x00st"
     assert exc_info.value.args[0] == (
-        f"input's host contains a forbidden domain code point: {host!r}"
+        f"input’s host contains a forbidden domain code point: {host!r}"
     )
 
     assert len(caplog.record_tuples) > 0
@@ -137,7 +137,7 @@ def test_host_parse_ascii_domain_04(caplog):
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2] == (
         "domain-invalid-code-point: "
-        f"input's host contains a forbidden domain code point: {host!r}"
+        f"input’s host contains a forbidden domain code point: {host!r}"
     )
 
 
@@ -1304,7 +1304,7 @@ def test_parse_url_file_state_02(caplog):
     assert caplog.record_tuples[-1][2] == (
         "file-invalid-Windows-drive-letter: "
         "input is a relative-URL string that starts with a Windows drive letter "
-        "and the base URL's scheme is 'file': "
+        "and the base URL’s scheme is 'file': "
         f"'c:' in {urlstring!r} at position 5"
     )
 
@@ -1322,7 +1322,7 @@ def test_parse_url_file_host_state(caplog):
     assert caplog.record_tuples[-1][1] == logging.INFO
     assert caplog.record_tuples[-1][2] == (
         "file-invalid-Windows-drive-letter-host: "
-        "'file:' URL's host is a Windows drive letter: "
+        "'file:' URL’s host is a Windows drive letter: "
         f"'c:' in {urlstring!r} at position 7"
     )
 
@@ -1640,14 +1640,14 @@ def test_parse_url_port_state_01(caplog):
     with pytest.raises(URLParseError) as exc_info:
         _ = parse_url(urlstring, base)
     assert exc_info.value.args[0] == (
-        f"input's port is too big: {port} in {urlstring!r}"
+        f"input’s port is too big: {port} in {urlstring!r}"
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2] == (
-        f"port-out-of-range: input's port is too big: {port} in {urlstring!r}"
+        f"port-out-of-range: input’s port is too big: {port} in {urlstring!r}"
     )
 
 
@@ -1660,14 +1660,14 @@ def test_parse_url_port_state_02(caplog):
     with pytest.raises(URLParseError) as exc_info:
         _ = parse_url(urlstring, base)
     assert exc_info.value.args[0] == (
-        f"input's port is invalid: {urlstring!r}"
+        f"input’s port is invalid: {urlstring!r}"
     )
 
     assert len(caplog.record_tuples) > 0
     assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[-1][1] == logging.ERROR
     assert caplog.record_tuples[-1][2] == (
-        f"port-invalid: input's port is invalid: {urlstring!r}"
+        f"port-invalid: input’s port is invalid: {urlstring!r}"
     )
 
 
@@ -1774,7 +1774,7 @@ def test_parse_url_scheme_start_state(caplog):
             state_override=URLParserState.SCHEME_START_STATE,
         )
     assert exc_info.value.args[0] == (
-        f"input's scheme does not begin with an ASCII alpha: {urlstring!r}"
+        f"input’s scheme does not begin with an ASCII alpha: {urlstring!r}"
     )
 
     assert len(caplog.record_tuples) == 0
@@ -1793,7 +1793,7 @@ def test_parse_url_scheme_state_01(caplog):
     assert caplog.record_tuples[0][1] == logging.INFO
     assert caplog.record_tuples[0][2] == (
         "special-scheme-missing-following-solidus: "
-        "input's scheme is not followed by '//': "
+        "input’s scheme is not followed by '//': "
         f"'\\\\c' in {urlstring!r} at position 5"
     )
 
@@ -1809,7 +1809,7 @@ def test_parse_url_scheme_state_02(caplog):
             state_override=URLParserState.SCHEME_START_STATE,
         )
     assert exc_info.value.args[0] == (
-        f"input's scheme does not end with U+003A (:): {urlstring!r}"
+        f"input’s scheme does not end with U+003A (:): {urlstring!r}"
     )
 
     assert len(caplog.record_tuples) == 0
@@ -1829,7 +1829,7 @@ def test_parse_url_special_authority_ignore_slashes_state(caplog):
     assert caplog.record_tuples[0][1] == logging.INFO
     assert caplog.record_tuples[0][2] == (
         "special-scheme-missing-following-solidus: "
-        "input's scheme is not followed by '//': "
+        "input’s scheme is not followed by '//': "
         f"U+002F (/) in {urlstring!r} at position 2"
     )
 
@@ -1847,7 +1847,7 @@ def test_parse_url_special_authority_slashes_state(caplog):
     assert caplog.record_tuples[0][1] == logging.INFO
     assert caplog.record_tuples[0][2] == (
         "special-scheme-missing-following-solidus: "
-        "input's scheme is not followed by '//': "
+        "input’s scheme is not followed by '//': "
         f"'\\\\x' in {urlstring!r} at position 5"
     )
 
@@ -1865,7 +1865,7 @@ def test_parse_url_special_relative_or_authority_state(caplog):
     assert caplog.record_tuples[0][1] == logging.INFO
     assert caplog.record_tuples[0][2] == (
         "special-scheme-missing-following-solidus: "
-        "input's scheme is not followed by '//': "
+        "input’s scheme is not followed by '//': "
         f"'\\\\x' in {urlstring!r} at position 5"
     )
 
