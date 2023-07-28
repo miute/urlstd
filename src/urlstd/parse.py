@@ -1709,7 +1709,7 @@ class URLSearchParams(Collection):
         name = utf8_decode(string_percent_decode(name))
         for i, name_value in reversed(list(enumerate(self._list))):
             if name_value[0] == name:
-                if value is not None and value != name_value[1]:
+                if value is not None and name_value[1] != value:
                     continue
                 self._list.pop(i)
         self._update()
@@ -1775,20 +1775,27 @@ class URLSearchParams(Collection):
             ]
         )
 
-    def has(self, name: str) -> bool:
-        """Returns *True* if a name-value pair with the specified *name* exists,
-        *False* otherwise.
-
-        This is equivalent to :meth:`.__contains__`.
+    def has(
+        self, name: str, value: Optional[str | int | float] = None
+    ) -> bool:
+        """Returns *True* if a name-value pair with the specified *name*
+        and *value* exists.
 
         Args:
             name: The name of parameter to find.
+            value: The value of parameter to find.
 
         Returns:
-            *True* if a name-value pair with the specified *name* exists,
+            *True* if a name-value pair with the specified *name* and *value* exists,
             *False* otherwise.
         """
-        return self.get(name) is not None
+        name = utf8_decode(string_percent_decode(name))
+        for name_value in self._list:
+            if name_value[0] == name:
+                if value is not None and name_value[1] != value:
+                    continue
+                return True
+        return False
 
     def keys(self) -> Iterator[str]:
         """Returns a new iterator of this object’s names.

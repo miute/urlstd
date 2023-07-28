@@ -29,3 +29,17 @@ def test_has_following_delete():
     assert not params.has("d"), 'Search params object has no name "d"'
     params.delete("first")
     assert not params.has("first"), 'Search params object has no name "first"'
+
+
+def test_two_argument_has():
+    """Two-argument has."""
+    params = URLSearchParams("a=b&a=d&c&e&")
+    assert params.has("a", "b")
+    assert not params.has("a", "c")
+    assert params.has("a", "d")
+    assert params.has("e", "")
+    params.append("first", "null")  # TODO: accept null/None.
+    assert not params.has("first", "")
+    assert params.has("first", "null")
+    params.delete("a", "b")
+    assert params.has("a", "d")
