@@ -1649,12 +1649,15 @@ class URLSearchParams(Collection):
         return urlencode(self._list)
 
     def _update(self) -> None:
-        if self._url is None:
+        url = self._url
+        if url is None:
             return
         serialized_query = self._serialize_query()
-        self._url.query = (
-            serialized_query if len(serialized_query) > 0 else None
-        )
+        if len(serialized_query) > 0:
+            url.query = serialized_query
+        else:
+            url.query = None
+            potentially_rstrip_from_opaque_path(url)
 
     def append(self, name: str, value: str | int | float) -> None:
         """Appends a new name-value pair as a new search parameter.
@@ -1686,11 +1689,14 @@ class URLSearchParams(Collection):
         self._list = parse_qsl(utf8_encode(query))
         self._url = init
 
-    def delete(self, name: str) -> None:
-        """Removes all name-value pairs whose name is *name*.
+    def delete(
+        self, name: str, value: Optional[str | int | float] = None
+    ) -> None:
+        """Removes all name-value pairs whose name is *name* and value is *value*.
 
         Args:
             name: The name of parameter to delete.
+            value: The value of parameter to delete.
 
         Examples:
             >>> params = URLSearchParams('a=1&b=2&a=3')
@@ -1703,6 +1709,8 @@ class URLSearchParams(Collection):
         name = utf8_decode(string_percent_decode(name))
         for i, name_value in reversed(list(enumerate(self._list))):
             if name_value[0] == name:
+                if value is not None and value != name_value[1]:
+                    continue
                 self._list.pop(i)
         self._update()
 

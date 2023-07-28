@@ -50,3 +50,35 @@ def test_removing_non_existent_param():
     url.search_params.delete("param1")
     assert url.href == "http://example.com/"
     assert len(url.search) == 0
+
+
+def test_changing_query_of_url_with_opaque_path():
+    """Changing the query of a URL with an opaque path can impact the path."""
+    url = URL("data:space    ?test")
+    assert url.search_params.has("test")
+    url.search_params.delete("test")
+    assert not url.search_params.has("test")
+    assert len(url.search) == 0
+    assert url.pathname == "space"
+    assert url.href == "data:space"
+
+
+def test_changing_query_of_url_with_opaque_path_no_fragment():
+    """Changing the query of a URL with an opaque path can impact the path
+    if the URL has no fragment.
+    """
+    url = URL("data:space    ?test#test")
+    url.search_params.delete("test")
+    assert len(url.search) == 0
+    assert url.pathname == "space    "
+    assert url.href == "data:space    #test"
+
+
+def test_two_argument_delete():
+    """Two-argument delete."""
+    params = URLSearchParams()
+    params.append("a", "b")
+    params.append("a", "c")
+    params.append("a", "d")
+    params.delete("a", "c")
+    assert str(params) == "a=b&a=d"
