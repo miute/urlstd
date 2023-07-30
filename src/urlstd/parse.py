@@ -3613,7 +3613,7 @@ class BasicURLParser:
 
 def parse_url(
     urlstring: str,
-    base: Optional[str] = None,
+    base: Optional[str | URLRecord] = None,
     encoding: str = "utf-8",
 ) -> URLRecord:
     """Parses a string *urlstring* against a base URL *base* using the basic
@@ -3632,9 +3632,12 @@ def parse_url(
     Raises:
         urlstd.error.URLParseError: Raised when URL parsing fails.
     """
-    parsed_base = (
-        BasicURLParser.parse(base, encoding=encoding) if base else None
-    )
+    parsed_base: Optional[URLRecord] = None
+    if base is not None:
+        if isinstance(base, URLRecord):
+            parsed_base = base
+        else:
+            parsed_base = BasicURLParser.parse(base, encoding=encoding)
     url = BasicURLParser.parse(urlstring, base=parsed_base, encoding=encoding)
     # TODO: Set url’s blob URL entry.
     #  https://url.spec.whatwg.org/#url-parsing

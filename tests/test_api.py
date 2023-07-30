@@ -1072,6 +1072,18 @@ def test_parse_url_basic():
     assert url.serialize_path() == "example.com/"
     assert url.serialize_url() == url.href == str(url)
 
+    # with base (URLRecord)
+    base2 = parse_url("file:///C:/demo")
+    assert isinstance(base2, URLRecord)
+    url2 = parse_url("..", base=base2)
+    assert isinstance(url2, URLRecord)
+    assert str(url2) == "file:///C:/"
+
+    # without base
+    url3 = parse_url("https://example.com/././foo")
+    assert isinstance(url3, URLRecord)
+    assert str(url3) == "https://example.com/foo"
+
 
 def test_parse_url_with_encoding():
     """parse_url() with encoding."""
