@@ -6,11 +6,9 @@
 [![CI](https://github.com/miute/urlstd/actions/workflows/main.yml/badge.svg)](https://github.com/miute/urlstd/actions/workflows/main.yml)
 [![codecov](https://codecov.io/gh/miute/urlstd/branch/main/graph/badge.svg?token=XJGM09H5TS)](https://codecov.io/gh/miute/urlstd)
 
-`urlstd` is a Python implementation of the WHATWG [URL Standard](https://url.spec.whatwg.org/).
+`urlstd` is a Python implementation of the WHATWG [URL Living Standard](https://url.spec.whatwg.org/).
 
 This library provides `URL` class, `URLSearchParams` class, and low-level APIs that comply with the URL specification.
-
-*Note: The latest release of urlstd is implemented based on the URL specification commit [f787850](https://github.com/whatwg/url/commit/f787850695969d51caaa5c290f2c2e050e083638).*
 
 ## Supported APIs
 
@@ -30,19 +28,19 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
     - [hash](https://url.spec.whatwg.org/#dom-url-hash): `property hash: str`
 
 - [URLSearchParams class](https://url.spec.whatwg.org/#interface-urlsearchparams)
-  - class urlstd.parse.`URLSearchParams(init: Optional[Union[str, Sequence[Sequence[Union[str, int, float]]], Dict[str, Union[str, int, float]], URLRecord, URLSearchParams]] = None)`
-    - [append](https://url.spec.whatwg.org/#dom-urlsearchparams-append): `append(name: str, value: Union[str, int, float]) -> None`
-    - [delete](https://url.spec.whatwg.org/#dom-urlsearchparams-delete): `delete(name: str) -> None`
-    - [get](https://url.spec.whatwg.org/#dom-urlsearchparams-get): `get(name: str) -> Optional[str]`
-    - [getAll](https://url.spec.whatwg.org/#dom-urlsearchparams-getall): `get_all(name: str) -> Tuple[str, ...]`
-    - [has](https://url.spec.whatwg.org/#dom-urlsearchparams-has): `has(name: str) -> bool`
-    - [set](https://url.spec.whatwg.org/#dom-urlsearchparams-set): `set(name: str, value: Union[str, int, float]) -> None`
+  - class urlstd.parse.`URLSearchParams(init: Optional[str | Sequence[Sequence[str | int | float]] | dict[str, str | int | float] | URLRecord | URLSearchParams] = None)`
+    - [append](https://url.spec.whatwg.org/#dom-urlsearchparams-append): `append(name: str, value: str | int | float) -> None`
+    - [delete](https://url.spec.whatwg.org/#dom-urlsearchparams-delete): `delete(name: str, value: Optional[str | int | float] = None) -> None`
+    - [get](https://url.spec.whatwg.org/#dom-urlsearchparams-get): `get(name: str) -> str | None`
+    - [getAll](https://url.spec.whatwg.org/#dom-urlsearchparams-getall): `get_all(name: str) -> tuple[str, ...]`
+    - [has](https://url.spec.whatwg.org/#dom-urlsearchparams-has): `has(name: str, value: Optional[str | int | float] = None) -> bool`
+    - [set](https://url.spec.whatwg.org/#dom-urlsearchparams-set): `set(name: str, value: str | int | float) -> None`
     - [sort](https://url.spec.whatwg.org/#dom-urlsearchparams-sort): `sort() -> None`
 
 - Low-level APIs
 
   - [URL parser](https://url.spec.whatwg.org/#concept-url-parser)
-    - urlstd.parse.`parse_url(urlstring: str, base: str = None, encoding: str = "utf-8") -> URLRecord`
+    - urlstd.parse.`parse_url(urlstring: str, base: Optional[str | URLRecord] = None, encoding: str = "utf-8") -> URLRecord`
 
   - [basic URL parser](https://url.spec.whatwg.org/#concept-basic-url-parser)
     - class urlstd.parse.`BasicURLParser`
@@ -53,12 +51,12 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
       - [scheme](https://url.spec.whatwg.org/#concept-url-scheme): `property scheme: str = ""`
       - [username](https://url.spec.whatwg.org/#concept-url-username): `property username: str = ""`
       - [password](https://url.spec.whatwg.org/#concept-url-password): `property password: str = ""`
-      - [host](https://url.spec.whatwg.org/#concept-url-host): `property host: Optional[Union[str, int, Tuple[int, ...]]] = None`
+      - [host](https://url.spec.whatwg.org/#concept-url-host): `property host: Optional[str | int | tuple[int, ...]] = None`
       - [port](https://url.spec.whatwg.org/#concept-url-port): `property port: Optional[int] = None`
-      - [path](https://url.spec.whatwg.org/#concept-url-path): `property path: Union[List[str], str] = []`
+      - [path](https://url.spec.whatwg.org/#concept-url-path): `property path: list[str] | str = []`
       - [query](https://url.spec.whatwg.org/#concept-url-query): `property query: Optional[str] = None`
       - [fragment](https://url.spec.whatwg.org/#concept-url-fragment): `property fragment: Optional[str] = None`
-      - [origin](https://url.spec.whatwg.org/#concept-url-origin): `readonly property origin: Optional[Origin]`
+      - [origin](https://url.spec.whatwg.org/#concept-url-origin): `readonly property origin: Origin | None`
       - [is special](https://url.spec.whatwg.org/#is-special): `is_special() -> bool`
       - [is not special](https://url.spec.whatwg.org/#is-not-special): `is_not_special() -> bool`
       - [includes credentials](https://url.spec.whatwg.org/#include-credentials): `includes_credentials() -> bool`
@@ -68,14 +66,12 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
       - [host serializer](https://url.spec.whatwg.org/#concept-host-serializer): `serialize_host() -> str`
       - [URL path serializer](https://url.spec.whatwg.org/#url-path-serializer): `serialize_path() -> str`
 
-  - [domain to ASCII](https://url.spec.whatwg.org/#concept-domain-to-ascii)
-    - urlstd.parse.IDNA.`domain_to_ascii(domain: str, be_strict: bool = False) -> str`
-
-  - [host parser](https://url.spec.whatwg.org/#concept-host-parser)
-    - urlstd.parse.Host.`parse(host: str, is_not_special: bool = False) -> Union[str, int, Tuple[int, ...]]`
-
-  - [host serializer](https://url.spec.whatwg.org/#concept-host-serializer)
-    - urlstd.parse.Host.`serialize(host: Union[str, int, Sequence[int]]) -> str`
+  - [Hosts (domains and IP addresses)](https://url.spec.whatwg.org/#hosts-(domains-and-ip-addresses))
+    - class urlstd.parse.`IDNA`
+      - [domain to ASCII](https://url.spec.whatwg.org/#concept-domain-to-ascii): classmethod `domain_to_ascii(domain: str, be_strict: bool = False) -> str`
+    - class urlstd.parse.`Host`
+      - [host parser](https://url.spec.whatwg.org/#concept-host-parser): classmethod `parse(host: str, is_not_special: bool = False) -> str | int | tuple[int, ...]`
+      - [host serializer](https://url.spec.whatwg.org/#concept-host-serializer): classmethod `serialize(host: str | int | Sequence[int]) -> str`
 
   - [percent-decode a string](https://url.spec.whatwg.org/#string-percent-decode)
     - urlstd.parse.`string_percent_decode(s: str) -> bytes`
@@ -84,10 +80,10 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
     - urlstd.parse.`string_percent_encode(s: str, safe: str, encoding: str = "utf-8", space_as_plus: bool = False) -> str`
 
   - [application/x-www-form-urlencoded parser](https://url.spec.whatwg.org/#concept-urlencoded-parser)
-    - urlstd.parse.`parse_qsl(query: bytes) -> List[Tuple[str, str]]`
+    - urlstd.parse.`parse_qsl(query: bytes) -> list[tuple[str, str]]`
 
   - [application/x-www-form-urlencoded serializer](https://url.spec.whatwg.org/#concept-urlencoded-serializer)
-    - urlstd.parse.`urlencode(query: Sequence[Tuple[str, str]], encoding: str = "utf-8") -> str`
+    - urlstd.parse.`urlencode(query: Sequence[tuple[str, str]], encoding: str = "utf-8") -> str`
 
 - Compatibility with standard library `urllib`
   - urlstd.parse.`urlparse(urlstring: str, base: str = None, encoding: str = "utf-8", allow_fragments: bool = True) -> urllib.parse.ParseResult`
@@ -101,8 +97,8 @@ To parse a string into a `URL` with using a base URL:
 
 ```python
 from urlstd.parse import URL
-url = URL('?ﬃ&🌈', 'http://example.org')
-url  # → URL(href='http://example.org/?%EF%AC%83&%F0%9F%8C%88', origin='http://example.org', protocol='http:', username='', password='', host='example.org', hostname='example.org', port='', pathname='/', search='?%EF%AC%83&%F0%9F%8C%88', hash='')
+url = URL('?ﬃ&🌈', base='http://example.org')
+url  # → <URL(href='http://example.org/?%EF%AC%83&%F0%9F%8C%88', origin='http://example.org', protocol='http:', username='', password='', host='example.org', hostname='example.org', port='', pathname='/', search='?%EF%AC%83&%F0%9F%8C%88', hash='')>
 url.search  # → '?%EF%AC%83&%F0%9F%8C%88'
 params = url.search_params
 params  # → URLSearchParams([('ﬃ', ''), ('🌈', '')])
@@ -118,22 +114,22 @@ To parse a string into a `urllib.parse.ParseResult` with using a base URL:
 import html
 from urllib.parse import unquote
 from urlstd.parse import urlparse
-pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='utf-8')
+pr = urlparse('?aÿb', base='http://example.org/foo/', encoding='utf-8')
 pr  # → ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%C3%BFb', fragment='')
 unquote(pr.query)  # → 'aÿb'
-pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='windows-1251')
+pr = urlparse('?aÿb', base='http://example.org/foo/', encoding='windows-1251')
 pr  # → ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%26%23255%3Bb', fragment='')
 unquote(pr.query, encoding='windows-1251')  # → 'a&#255;b'
 html.unescape('a&#255;b')  # → 'aÿb'
-pr = urlparse('?aÿb', 'http://example.org/foo/', encoding='windows-1252')
+pr = urlparse('?aÿb', base='http://example.org/foo/', encoding='windows-1252')
 pr  # → ParseResult(scheme='http', netloc='example.org', path='/foo/', params='', query='a%FFb', fragment='')
 unquote(pr.query, encoding='windows-1252')  # → 'aÿb'
 ```
 
 ## Logging
 
-`urlstd` uses standard library `logging` for [validation error](https://url.spec.whatwg.org/#validation-error).
-Change the logger log level of urlstd if needed:
+`urlstd` uses standard library [logging](https://docs.python.org/3/library/logging.html) for [validation error](https://url.spec.whatwg.org/#validation-error).
+Change the logger log level of `urlstd` if needed:
 
 ```python
 logging.getLogger('urlstd').setLevel(logging.ERROR)
@@ -141,8 +137,8 @@ logging.getLogger('urlstd').setLevel(logging.ERROR)
 
 ## Dependencies
 
-- [icupy](https://pypi.org/project/icupy/) >= 0.11.0 (pre-built packages are [available](https://github.com/miute/icupy/releases))
-  - icupy requirements:
+- [icupy](https://pypi.org/project/icupy/) >= 0.11.0 ([pre-built packages](https://github.com/miute/icupy/releases) are available)
+  - `icupy` requirements:
     - [ICU4C](https://github.com/unicode-org/icu/releases) ([ICU - International Components for Unicode](https://icu.unicode.org/)) - latest version recommended
     - C++17 compatible compiler (see [supported compilers](https://github.com/pybind/pybind11#supported-compilers))
     - [CMake](https://cmake.org/) >= 3.7
@@ -203,7 +199,9 @@ logging.getLogger('urlstd').setLevel(logging.ERROR)
 Install dependencies:
 
 ```bash
-pip install tox
+pipx install tox
+# or
+pip install --user tox
 ```
 
 To run tests and generate a report:
