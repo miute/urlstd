@@ -1388,8 +1388,9 @@ class URLRecord:
                 try:
                     url = self.serialize_path()
                     path_url = BasicURLParser.parse(url)
-                    return path_url.origin
-                except ValueError:
+                    if path_url.scheme in ["http", "https", "file"]:
+                        return path_url.origin
+                except URLParseError:
                     pass
             return None
         elif self.scheme in ["ftp", "http", "https", "ws", "wss"]:
