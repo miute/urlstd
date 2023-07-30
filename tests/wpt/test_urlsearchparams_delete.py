@@ -1,5 +1,5 @@
 # References:
-#  https://github.com/web-platform-tests/wpt/blob/master/url/urlsearchparams-delete.any.js
+#  https://github.com/web-platform-tests/wpt/blob/dcf353e2846063d4b9e62ec75545d0ea857ef765/url/urlsearchparams-delete.any.js
 
 from urlstd.parse import URL, URLSearchParams
 
@@ -17,6 +17,8 @@ def test_delete_basics():
     params = URLSearchParams("a=a&=&b=b&c=c")
     params.delete("")
     assert params + "" == "a=a&b=b&c=c"
+
+    # TODO: Add support for null (URLSearchParams.delete()).
 
 
 def test_deleting_appended_multiple():
@@ -75,7 +77,7 @@ def test_changing_query_of_url_with_opaque_path_no_fragment():
 
 
 def test_two_argument_delete():
-    """Two-argument delete."""
+    """Two-argument delete()."""
     params = URLSearchParams()
     params.append("a", "b")
     params.append("a", "c")

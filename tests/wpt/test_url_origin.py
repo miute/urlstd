@@ -1,5 +1,5 @@
 # References:
-#  https://github.com/web-platform-tests/wpt/blob/master/url/url-origin.any.js
+#  https://github.com/web-platform-tests/wpt/blob/dcf353e2846063d4b9e62ec75545d0ea857ef765/url/url-origin.any.js
 
 import logging
 
@@ -9,16 +9,16 @@ from urlstd.parse import URL
 
 from . import urltestdata
 
-urltests = [x for x in urltestdata if "origin" in x]
+url_tests = [x for x in urltestdata if "origin" in x]
 
 
-@pytest.mark.parametrize("expected", urltests)
+@pytest.mark.parametrize("expected", url_tests)
 def test_origin(expected, caplog):
     caplog.set_level(logging.INFO)
-    test_origin.__doc__ = (
-        msg
-    ) = "Origin parsing: <{input}> against <{base}>".format(
-        input=expected["input"], base=expected["base"]
-    )
-    url = URL(expected["input"], expected["base"])
+    base = expected.get("base")
+    msg = f'Origin parsing: <{expected["input"]}> '
+    msg += f"against <{base}>" if base is not None else "without base"
+    test_origin.__doc__ = msg
+
+    url = URL(expected["input"], base)
     assert url.origin == expected["origin"], msg

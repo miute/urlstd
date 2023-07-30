@@ -1,5 +1,5 @@
 # References:
-#  https://github.com/web-platform-tests/wpt/blob/master/url/urlsearchparams-append.any.js
+#  https://github.com/web-platform-tests/wpt/blob/dcf353e2846063d4b9e62ec75545d0ea857ef765/url/urlsearchparams-append.any.js
 
 from urlstd.parse import URLSearchParams
 
@@ -24,6 +24,9 @@ def test_append_empty_strings():
     assert params + "" == "=&="
 
 
+# TODO: Add support for null (URLSearchParams.append()).
+
+
 def test_append_multiple():
     """Append multiple."""
     params = URLSearchParams()
@@ -31,18 +34,10 @@ def test_append_multiple():
     params.append("second", 2)
     params.append("third", "")
     params.append("first", 10)
-    assert params.has("first"), 'Search params object has name "first"'
-    assert (
-        params.get("first") == "1"
-    ), 'Search params object has name "first" with value "1"'
-    assert (
-        params.get("second") == "2"
-    ), 'Search params object has name "second" with value "2"'
+    assert params.has("first")
+    assert params.get("first") == "1"
+    assert params.get("second") == "2"
     result = params.get("third")
-    assert (
-        isinstance(result, str) and len(result) == 0
-    ), 'Search params object has name "third" with value ""'
+    assert isinstance(result, str) and len(result) == 0
     params.append("first", 10)
-    assert (
-        params.get("first") == "1"
-    ), 'Search params object has name "first" with value "1"'
+    assert params.get("first") == "1"

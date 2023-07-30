@@ -1,5 +1,5 @@
 # References:
-#  https://github.com/web-platform-tests/wpt/blob/master/url/urlsearchparams-stringifier.any.js
+#  https://github.com/web-platform-tests/wpt/blob/dcf353e2846063d4b9e62ec75545d0ea857ef765/url/urlsearchparams-stringifier.any.js
 
 from urlstd.parse import URL, URLSearchParams
 

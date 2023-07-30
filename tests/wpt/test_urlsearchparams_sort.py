@@ -1,5 +1,5 @@
 # References:
-#  https://github.com/web-platform-tests/wpt/blob/master/url/urlsearchparams-sort.any.js
+#  https://github.com/web-platform-tests/wpt/blob/dcf353e2846063d4b9e62ec75545d0ea857ef765/url/urlsearchparams-sort.any.js
 
 import pytest
 
@@ -62,7 +62,8 @@ tests = [
 
 @pytest.mark.parametrize("val", tests)
 def test_parse_and_sort(val):
-    test_parse_and_sort.__doc__ = msg = "Parse and sort: " + val["input"]
+    test_parse_and_sort.__doc__ = msg = f"Parse and sort: {val['input']!r}"
+
     params = URLSearchParams(val["input"])
     params.sort()
     assert list(params) == [tuple(x) for x in val["output"]], msg
@@ -70,9 +71,9 @@ def test_parse_and_sort(val):
 
 @pytest.mark.parametrize("val", tests)
 def test_url_parse_and_sort(val):
-    test_url_parse_and_sort.__doc__ = msg = (
-        "URL parse and sort: " + val["input"]
-    )
+    msg = f"URL parse and sort: {val['input']!r}"
+    test_url_parse_and_sort.__doc__ = msg
+
     url = URL("?" + val["input"], "https://example/")
     url.search_params.sort()
     params = URLSearchParams(url.search)

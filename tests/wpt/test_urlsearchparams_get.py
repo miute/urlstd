@@ -1,5 +1,5 @@
 # References:
-#  https://github.com/web-platform-tests/wpt/blob/master/url/urlsearchparams-get.any.js
+#  https://github.com/web-platform-tests/wpt/blob/dcf353e2846063d4b9e62ec75545d0ea857ef765/url/urlsearchparams-get.any.js
 
 from urlstd.parse import URLSearchParams
 
@@ -22,14 +22,8 @@ def test_get_basics():
 def test_more_get_basics():
     """More get() basics."""
     params = URLSearchParams("first=second&third&&")
-    assert params.has("first"), 'Search params object has name "first"'
-    assert (
-        params.get("first") == "second"
-    ), 'Search params object has name "first" with value "second"'
+    assert params.has("first")
+    assert params.get("first") == "second"
     value = params.get("third")
-    assert (
-        isinstance(value, str) and len(value) == 0
-    ), 'Search params object has name "third" with the empty value.'
-    assert (
-        params.get("fourth") is None
-    ), 'Search params object has no "fourth" name and value.'
+    assert isinstance(value, str) and len(value) == 0
+    assert params.get("fourth") is None

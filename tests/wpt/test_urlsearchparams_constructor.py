@@ -1,5 +1,5 @@
 # References:
-#  https://github.com/web-platform-tests/wpt/blob/master/url/urlsearchparams-constructor.any.js
+#  https://github.com/web-platform-tests/wpt/blob/dcf353e2846063d4b9e62ec75545d0ea857ef765/url/urlsearchparams-constructor.any.js
 
 import pytest
 
@@ -228,6 +228,7 @@ def test_sequences_of_strings():
     ],
 )
 def test_construct_with(val):
-    test_construct_with.__doc__ = msg = "Construct with " + val["name"]
+    test_construct_with.__doc__ = msg = f"Construct with {val['name']}"
+
     params = URLSearchParams(val["input"])
     assert list(params) == [tuple(x) for x in val["output"]], msg

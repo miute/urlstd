@@ -1,5 +1,5 @@
 # References:
-#  https://github.com/web-platform-tests/wpt/blob/master/url/urlsearchparams-getall.any.js
+#  https://github.com/web-platform-tests/wpt/blob/dcf353e2846063d4b9e62ec75545d0ea857ef765/url/urlsearchparams-getall.any.js
 
 from urlstd.parse import URLSearchParams
 
@@ -21,21 +21,17 @@ def test_get_all_basics():
 def test_get_all_multiples():
     """getAll() multiples."""
     params = URLSearchParams("a=1&a=2&a=3&a")
-    assert params.has("a"), 'Search params object has name "a"'
+    assert params.has("a")
     matches = params.get_all("a")
-    assert len(matches) == 4, 'Search params object has values for name "a"'
+    assert len(matches) == 4
     assert matches == (
         "1",
         "2",
         "3",
         "",
-    ), 'Search params object has expected name "a" values'
+    )
     params.set("a", "one")
-    assert (
-        params.get("a") == "one"
-    ), 'Search params object has name "a" with value "one"'
+    assert params.get("a") == "one"
     matches = params.get_all("a")
-    assert len(matches) == 1, 'Search params object has values for name "a"'
-    assert matches == (
-        "one",
-    ), 'Search params object has expected name "a" values'
+    assert len(matches) == 1
+    assert matches == ("one",)

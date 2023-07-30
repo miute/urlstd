@@ -1,5 +1,5 @@
 # References:
-#  https://github.com/web-platform-tests/wpt/blob/master/url/urlsearchparams-set.any.js
+#  https://github.com/web-platform-tests/wpt/blob/dcf353e2846063d4b9e62ec75545d0ea857ef765/url/urlsearchparams-set.any.js
 
 from urlstd.parse import URLSearchParams
 
@@ -19,17 +19,11 @@ def test_set_basics():
 def test_url_search_params_set():
     """URLSearchParams.set."""
     params = URLSearchParams("a=1&a=2&a=3")
-    assert params.has("a"), 'Search params object has name "a"'
-    assert (
-        params.get("a") == "1"
-    ), 'Search params object has name "a" with value "1"'
+    assert params.has("a")
+    assert params.get("a") == "1"
     params.set("first", 4)
-    assert params.has("a"), 'Search params object has name "a"'
-    assert (
-        params.get("a") == "1"
-    ), 'Search params object has name "a" with value "1"'
+    assert params.has("a")
+    assert params.get("a") == "1"
     params.set("a", 4)
-    assert params.has("a"), 'Search params object has name "a"'
-    assert (
-        params.get("a") == "4"
-    ), 'Search params object has name "a" with value "4"'
+    assert params.has("a")
+    assert params.get("a") == "4"

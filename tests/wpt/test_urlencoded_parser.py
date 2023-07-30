@@ -1,5 +1,5 @@
 # References:
-#  https://github.com/web-platform-tests/wpt/blob/master/url/urlencoded-parser.any.js
+#  https://github.com/web-platform-tests/wpt/blob/dcf353e2846063d4b9e62ec75545d0ea857ef765/url/urlencoded-parser.any.js
 
 import pytest
 
@@ -15,6 +15,7 @@ from urlstd.parse import URLSearchParams
             "input": "%EF%BB%BFtest=%EF%BB%BF",
             "output": [["\uFEFFtest", "\uFEFF"]],
         },
+        {"input": "%EF%BF%BF=%EF%BF%BF", "output": [["\uFFFF", "\uFFFF"]]},
         {"input": "%FE%FF", "output": [["\uFFFD\uFFFD", ""]]},
         {"input": "%FF%FE", "output": [["\uFFFD\uFFFD", ""]]},
         {"input": "†&†=x", "output": [["†", ""], ["†", "x"]]},
@@ -55,9 +56,9 @@ from urlstd.parse import URLSearchParams
     ],
 )
 def test_params(val):
-    test_params.__doc__ = msg = (
-        "URLSearchParams constructed with: " + val["input"]
-    )
+    msg = f'URLSearchParams constructed with: {val["input"]!r}'
+    test_params.__doc__ = msg
+
     sp = URLSearchParams(val["input"])
     for i, item in enumerate(sp):
         assert item == tuple(val["output"][i]), msg
