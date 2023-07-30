@@ -332,6 +332,10 @@ def string_percent_encode(
     return output
 
 
+def u16len(s: str) -> int:
+    return sum([1 if c <= "\uffff" else 2 for c in s])
+
+
 def urlencode(
     query: Sequence[tuple[str, str]], encoding: str = "utf-8"
 ) -> str:
@@ -732,7 +736,9 @@ class IDNA:
             uts46 = cls._create_instance(options)
             dest = icu.UnicodeString()
             uts46.name_to_ascii(
-                icu.UnicodeString(domain, len(domain)), dest, info
+                icu.UnicodeString(domain, u16len(domain)),
+                dest,
+                info,
             )
             errors = info.get_errors()
             if errors & ~cls._ALLOWED_NAME_TO_ASCII_ERRORS:
@@ -1884,7 +1890,7 @@ class URLSearchParams(Collection):
         self._list.sort(
             key=lambda x: icu.UnicodeString(  # type: ignore
                 x[0],
-                len(x[0]),
+                u16len(x[0]),
             )
         )
         self._update()

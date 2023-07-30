@@ -141,6 +141,11 @@ def test_host_parse_ascii_domain_04(caplog):
     )
 
 
+def test_host_parse_emoji_domain():
+    assert Host.parse("😉") == "xn--n28h"
+    assert Host.parse("👍.example.org") == "xn--yp8h.example.org"
+
+
 def test_host_parse_ipv4_basic(caplog):
     """IPv4 tests."""
     address = Host.parse("192.168.0.1")
