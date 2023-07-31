@@ -3,6 +3,10 @@ from pathlib import Path
 
 parent = Path(__file__).parent
 
+with open(parent / "resources" / "IdnaTestV2.json", "rb") as fp:
+    res = json.load(fp)
+    idna_tests = [x for x in res if isinstance(x, dict)]
+
 with open(parent / "resources" / "setters_tests.json", "rb") as fp:
     setters_tests = json.load(fp)
     del setters_tests["comment"]
