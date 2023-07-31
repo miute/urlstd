@@ -787,6 +787,29 @@ def test_host_parse_opaque_host_02b(caplog):
     )
 
 
+def test_idna_domain_to_ascii_check_hyphens(caplog):
+    """Unicode ToASCII: CheckHyphens=false"""
+    caplog.set_level(logging.INFO)
+
+    # UIDNA_ERROR_HYPHEN_3_4
+    assert IDNA.domain_to_ascii("ab--c") == "ab--c"
+    assert IDNA.domain_to_ascii("ab--c", True) == "ab--c"
+
+    # UIDNA_ERROR_LEADING_HYPHEN
+    assert IDNA.domain_to_ascii("-a") == "-a"
+    assert IDNA.domain_to_ascii("-a", True) == "-a"
+
+    # UIDNA_ERROR_TRAILING_HYPHEN
+    assert IDNA.domain_to_ascii("a-") == "a-"
+    assert IDNA.domain_to_ascii("a-", True) == "a-"
+
+    # UIDNA_ERROR_HYPHEN_3_4 | UIDNA_ERROR_LEADING_HYPHEN | UIDNA_ERROR_TRAILING_HYPHEN
+    assert IDNA.domain_to_ascii("-a--b-") == "-a--b-"
+    assert IDNA.domain_to_ascii("-a--b-", True) == "-a--b-"
+
+    assert len(caplog.record_tuples) == 0
+
+
 def test_idna_domain_to_ascii_empty_string(caplog):
     """Unicode ToASCII: The empty host after the domain to ASCII."""
     caplog.set_level(logging.INFO)
@@ -870,6 +893,82 @@ def test_idna_domain_to_ascii_use_std3_rules(caplog):
     assert caplog.record_tuples[-1][2] == (
         "domain-to-ASCII: Unicode ToASCII records an error: "
         f"domain={domain!r} errors=UIDNA_ERROR_DISALLOWED (0x0080)"
+    )
+
+
+def test_idna_domain_to_ascii_verify_dns_length_01(caplog):
+    """Unicode ToASCII: VerifyDnsLength=true: empty label."""
+    caplog.set_level(logging.INFO)
+
+    domain = "a..b"
+    assert IDNA.domain_to_ascii(domain) == "a..b"
+    assert len(caplog.record_tuples) == 0
+
+    with pytest.raises(HostParseError) as exc_info:
+        _ = IDNA.domain_to_ascii(domain, True)
+    assert exc_info.value.args[0] == (
+        "Unicode ToASCII records an error: "
+        f"domain={domain!r} errors=UIDNA_ERROR_EMPTY_LABEL (0x0001)"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2] == (
+        "domain-to-ASCII: Unicode ToASCII records an error: "
+        f"domain={domain!r} errors=UIDNA_ERROR_EMPTY_LABEL (0x0001)"
+    )
+
+
+def test_idna_domain_to_ascii_verify_dns_length_02(caplog):
+    """Unicode ToASCII: VerifyDnsLength=true: label is longer than 63."""
+    caplog.set_level(logging.INFO)
+
+    domain = "a" * 63
+    assert IDNA.domain_to_ascii(domain) == "a" * 63
+    assert IDNA.domain_to_ascii(domain, True) == "a" * 63
+
+    domain = "a" * 64
+    assert IDNA.domain_to_ascii(domain) == "a" * 64
+    assert len(caplog.record_tuples) == 0
+
+    with pytest.raises(HostParseError) as exc_info:
+        _ = IDNA.domain_to_ascii(domain, True)
+    assert exc_info.value.args[0] == (
+        "Unicode ToASCII records an error: "
+        f"domain={domain!r} errors=UIDNA_ERROR_LABEL_TOO_LONG (0x0002)"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2] == (
+        "domain-to-ASCII: Unicode ToASCII records an error: "
+        f"domain={domain!r} errors=UIDNA_ERROR_LABEL_TOO_LONG (0x0002)"
+    )
+
+
+def test_idna_domain_to_ascii_verify_dns_length_03(caplog):
+    """Unicode ToASCII: VerifyDnsLength=true: domain name is longer than 255."""
+    caplog.set_level(logging.INFO)
+
+    domain = ".".join(["a" * 63, "b" * 63, "c" * 63, "d" * 63])
+    assert IDNA.domain_to_ascii(domain) == domain
+    assert len(caplog.record_tuples) == 0
+
+    with pytest.raises(HostParseError) as exc_info:
+        _ = IDNA.domain_to_ascii(domain, True)
+    assert exc_info.value.args[0] == (
+        "Unicode ToASCII records an error: "
+        f"domain={domain!r} errors=UIDNA_ERROR_DOMAIN_NAME_TOO_LONG (0x0004)"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2] == (
+        "domain-to-ASCII: Unicode ToASCII records an error: "
+        f"domain={domain!r} errors=UIDNA_ERROR_DOMAIN_NAME_TOO_LONG (0x0004)"
     )
 
 

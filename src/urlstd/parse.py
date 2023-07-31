@@ -654,11 +654,14 @@ class IDNA:
     #  https://chromium.googlesource.com/chromium/src/+/refs/tags/99.0.4761.0/url/url_idna_icu.cc
     #  https://svn.webkit.org/repository/webkit/tags/Safari-613.1.9.2/Source/WTF/wtf/URLParser.h
 
-    _ALLOWED_NAME_TO_ASCII_ERRORS = (
+    _CHECK_HYPHENS_ERRORS = (
         icu.UIDNA_ERROR_HYPHEN_3_4
         | icu.UIDNA_ERROR_LEADING_HYPHEN
         | icu.UIDNA_ERROR_TRAILING_HYPHEN
-        | icu.UIDNA_ERROR_EMPTY_LABEL
+    )
+
+    _VERIFY_DNS_LENGTH_ERRORS = (
+        icu.UIDNA_ERROR_EMPTY_LABEL
         | icu.UIDNA_ERROR_LABEL_TOO_LONG
         | icu.UIDNA_ERROR_DOMAIN_NAME_TOO_LONG
     )
@@ -709,7 +712,8 @@ class IDNA:
 
         Args:
             domain: A domain name.
-            be_strict: If *True*, set the UseSTD3ASCIIRules flag.
+            be_strict: If *True*, set ``UseSTD3ASCIIRules`` flag and
+                ``VerifyDnsLength`` flag to true.
                 See :rfc:`3490` for more details.
 
         Returns:
@@ -731,8 +735,11 @@ class IDNA:
                 | icu.UIDNA_CHECK_CONTEXTJ
                 | icu.UIDNA_NONTRANSITIONAL_TO_ASCII
             )
+            allowed_errors = cls._CHECK_HYPHENS_ERRORS
             if be_strict:
                 options |= icu.UIDNA_USE_STD3_RULES
+            else:
+                allowed_errors |= cls._VERIFY_DNS_LENGTH_ERRORS
             uts46 = cls._create_instance(options)
             dest = icu.UnicodeString()
             uts46.name_to_ascii(
@@ -740,8 +747,8 @@ class IDNA:
                 dest,
                 info,
             )
-            errors = info.get_errors()
-            if errors & ~cls._ALLOWED_NAME_TO_ASCII_ERRORS:
+            errors = info.get_errors() & ~allowed_errors
+            if errors:
                 error_names = cls._errors_to_string(errors)
                 log.error(
                     "domain-to-ASCII: Unicode ToASCII records an error: "
