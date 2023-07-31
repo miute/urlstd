@@ -787,15 +787,34 @@ def test_host_parse_opaque_host_02b(caplog):
     )
 
 
-def test_idna_domain_to_ascii_errors_string():
+def test_idna_domain_to_ascii_empty_string(caplog):
+    """Unicode ToASCII: The empty host after the domain to ASCII."""
+    caplog.set_level(logging.INFO)
+
+    domain = "\u00ad"
+    with pytest.raises(HostParseError) as exc_info:
+        _ = IDNA.domain_to_ascii(domain)
+    assert exc_info.value.args[0] == (
+        f"Unicode ToASCII returns the empty string: {domain!r}"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2] == (
+        f"domain-to-ASCII: Unicode ToASCII returns the empty string: {domain!r}"
+    )
+
+
+def test_idna_domain_to_ascii_errors_to_string():
     errors = IDNA._errors_to_string(0x80003)
     assert (
         errors == "UIDNA_ERROR_EMPTY_LABEL|UIDNA_ERROR_LABEL_TOO_LONG|0x80000"
     )
 
 
-def test_idna_domain_to_ascii_exceptions(caplog, mocker):
-    """domain to ASCII test."""
+def test_idna_domain_to_ascii_raise_icuerror(caplog, mocker):
+    """Unicode ToASCII: raise ICUError."""
     caplog.set_level(logging.INFO)
     error_code = icu.ErrorCode()
     error_code.set(icu.U_MEMORY_ALLOCATION_ERROR)
@@ -827,27 +846,8 @@ def test_idna_domain_to_ascii_exceptions(caplog, mocker):
     )
 
 
-def test_idna_domain_to_ascii_empty_string(caplog, mocker):
-    """domain to ASCII: The empty host after the domain to ASCII."""
-    caplog.set_level(logging.INFO)
-
-    domain = "\u00ad"
-    with pytest.raises(HostParseError) as exc_info:
-        _ = IDNA.domain_to_ascii(domain)
-    assert exc_info.value.args[0] == (
-        f"Unicode ToASCII returns the empty string: {domain!r}"
-    )
-
-    assert len(caplog.record_tuples) > 0
-    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
-    assert caplog.record_tuples[-1][1] == logging.ERROR
-    assert caplog.record_tuples[-1][2] == (
-        f"domain-to-ASCII: Unicode ToASCII returns the empty string: {domain!r}"
-    )
-
-
 def test_idna_domain_to_ascii_use_std3_rules(caplog):
-    """domain to ASCII: A domain contains non-LDH ASCII."""
+    """Unicode ToASCII: UseSTD3ASCIIRules=true: A domain contains non-LDH ASCII."""
     caplog.set_level(logging.INFO)
     domain = "a\u2260b\u226Ec\u226Fd"
 
