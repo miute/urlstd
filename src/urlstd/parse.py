@@ -786,6 +786,76 @@ class IDNA:
                 e.args[0],
             ) from None
 
+    @classmethod
+    def domain_to_unicode(cls, domain: str, be_strict: bool = False) -> str:
+        """Converts a domain name to IDNA Unicode form.
+
+        Args:
+            domain: A domain name.
+            be_strict: If *True*, set ``UseSTD3ASCIIRules`` flag to true.
+                See :rfc:`3490` for more details.
+
+        Returns:
+            A domain name in IDNA Unicode form.
+
+        Raises:
+            urlstd.error.HostParseError: Raised when a domain name is not valid.
+                See UIDNA_ERROR_* constants in `uidna.h
+                <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/uidna_8h.html>`_
+                for more details on IDNA processing errors.
+
+            urlstd.error.IDNAError: Raised when IDNA processing fails.
+        """
+        log = get_logger(cls)
+        info = icu.IDNAInfo()
+        try:
+            options = (
+                icu.UIDNA_CHECK_BIDI
+                | icu.UIDNA_CHECK_CONTEXTJ
+                | icu.UIDNA_NONTRANSITIONAL_TO_UNICODE
+            )
+            allowed_errors = (
+                cls._CHECK_HYPHENS_ERRORS | cls._VERIFY_DNS_LENGTH_ERRORS
+            )
+            if be_strict:
+                options |= icu.UIDNA_USE_STD3_RULES
+            uts46 = cls._create_instance(options)
+            dest = icu.UnicodeString()
+            uts46.name_to_unicode(
+                icu.UnicodeString(domain, u16len(domain)),
+                dest,
+                info,
+            )
+            errors = info.get_errors() & ~allowed_errors
+            if errors:
+                error_names = cls._errors_to_string(errors)
+                log.error(
+                    "domain-to-Unicode: Unicode ToUnicode records an error: "
+                    "domain=%r errors=%s (0x%04X)",
+                    domain,
+                    error_names,
+                    errors,
+                )
+                raise HostParseError(
+                    f"Unicode ToUnicode records an error: "
+                    f"domain={domain!r} errors={error_names!s} (0x{errors:04X})"
+                )
+            return str(dest)
+        except icu.ICUError as e:
+            errors = info.get_errors()
+            log.error(
+                "domain-to-Unicode: Unicode ToUnicode failed: "
+                "domain=%r errors=0x%04X error_code=%r",
+                domain,
+                errors,
+                e.args[0],
+            )
+            raise IDNAError(
+                f"Unicode ToUnicode failed: "
+                f"domain={domain!r} errors=0x{errors:04X}",
+                e.args[0],
+            ) from None
+
 
 class IPv4Address:
     @classmethod

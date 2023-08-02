@@ -972,6 +972,159 @@ def test_idna_domain_to_ascii_verify_dns_length_03(caplog):
     )
 
 
+def test_idna_domain_to_unicode_basic(caplog):
+    """Unicode ToUnicode tests."""
+    caplog.set_level(logging.INFO)
+
+    ascii_domain = "xn--53h.example"
+    domain = "☕.example"
+    assert IDNA.domain_to_unicode(ascii_domain) == domain
+
+    assert len(IDNA.domain_to_unicode("")) == 0
+
+    assert len(caplog.record_tuples) == 0
+
+    ascii_domain = "xn--53h/"
+    with pytest.raises(HostParseError) as exc_info:
+        _ = IDNA.domain_to_unicode(ascii_domain)
+    assert exc_info.value.args[0] == (
+        "Unicode ToUnicode records an error: "
+        f"domain={ascii_domain!r} errors=UIDNA_ERROR_PUNYCODE (0x0100)"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2] == (
+        "domain-to-Unicode: Unicode ToUnicode records an error: "
+        f"domain={ascii_domain!r} errors=UIDNA_ERROR_PUNYCODE (0x0100)"
+    )
+
+
+def test_idna_domain_to_unicode_check_hyphens(caplog):
+    """Unicode ToUnicode: CheckHyphens=false"""
+    caplog.set_level(logging.INFO)
+
+    # UIDNA_ERROR_HYPHEN_3_4
+    assert IDNA.domain_to_unicode("ab--c") == "ab--c"
+    assert IDNA.domain_to_unicode("ab--c", True) == "ab--c"
+
+    # UIDNA_ERROR_LEADING_HYPHEN
+    assert IDNA.domain_to_unicode("-a") == "-a"
+    assert IDNA.domain_to_unicode("-a", True) == "-a"
+
+    # UIDNA_ERROR_TRAILING_HYPHEN
+    assert IDNA.domain_to_unicode("a-") == "a-"
+    assert IDNA.domain_to_unicode("a-", True) == "a-"
+
+    # UIDNA_ERROR_HYPHEN_3_4 | UIDNA_ERROR_LEADING_HYPHEN | UIDNA_ERROR_TRAILING_HYPHEN
+    assert IDNA.domain_to_unicode("-a--b-") == "-a--b-"
+    assert IDNA.domain_to_unicode("-a--b-", True) == "-a--b-"
+
+    assert len(caplog.record_tuples) == 0
+
+
+def test_idna_domain_to_unicode_raise_icuerror(caplog, mocker):
+    """Unicode ToUnicode: raise ICUError."""
+    caplog.set_level(logging.INFO)
+    error_code = icu.ErrorCode()
+    error_code.set(icu.U_MEMORY_ALLOCATION_ERROR)
+    mocker.patch(
+        "icupy.icu.IDNA.name_to_unicode",
+        side_effect=icu.ICUError(error_code),
+    )
+
+    ascii_domain = "a.b"
+    with pytest.raises(IDNAError) as exc_info:
+        _ = IDNA.domain_to_unicode(ascii_domain)
+    assert exc_info.value.args[0] == (
+        f"Unicode ToUnicode failed: domain={ascii_domain!r} errors=0x0000 "
+        "error_code=<ErrorCode(<U_MEMORY_ALLOCATION_ERROR: 7>)>"
+    )
+    ex = exc_info.value
+    assert isinstance(ex, IDNAError)
+    ec = ex.error_code
+    assert isinstance(ec, icu.ErrorCode)
+    assert ec == icu.U_MEMORY_ALLOCATION_ERROR
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2] == (
+        "domain-to-Unicode: "
+        f"Unicode ToUnicode failed: domain={ascii_domain!r} errors=0x0000 "
+        "error_code=<ErrorCode(<U_MEMORY_ALLOCATION_ERROR: 7>)>"
+    )
+
+
+def test_idna_domain_to_unicode_use_std3_rules(caplog):
+    """Unicode ToUnicode: UseSTD3ASCIIRules=true: A domain contains non-LDH ASCII."""
+    caplog.set_level(logging.INFO)
+
+    ascii_domain = "xn--abcd-5n9aqdi"
+    domain = "a\u2260b\u226Ec\u226Fd"
+    assert IDNA.domain_to_unicode(ascii_domain) == domain
+    assert len(caplog.record_tuples) == 0
+
+    with pytest.raises(HostParseError) as exc_info:
+        _ = IDNA.domain_to_unicode(ascii_domain, True)
+    assert exc_info.value.args[0] == (
+        "Unicode ToUnicode records an error: "
+        f"domain={ascii_domain!r} errors=UIDNA_ERROR_DISALLOWED"
+        "|UIDNA_ERROR_INVALID_ACE_LABEL (0x0480)"
+    )
+
+    assert len(caplog.record_tuples) > 0
+    assert caplog.record_tuples[-1][0].startswith(_MODULE_NAME)
+    assert caplog.record_tuples[-1][1] == logging.ERROR
+    assert caplog.record_tuples[-1][2] == (
+        "domain-to-Unicode: Unicode ToUnicode records an error: "
+        f"domain={ascii_domain!r} errors=UIDNA_ERROR_DISALLOWED"
+        "|UIDNA_ERROR_INVALID_ACE_LABEL (0x0480)"
+    )
+
+
+def test_idna_domain_to_unicode_verify_dns_length_01(caplog):
+    """Unicode ToUnicode: empty label."""
+    caplog.set_level(logging.INFO)
+
+    domain = ascii_domain = "a..b"
+    assert IDNA.domain_to_unicode(ascii_domain) == domain
+
+    assert IDNA.domain_to_unicode(ascii_domain, True) == domain
+
+    assert len(caplog.record_tuples) == 0
+
+
+def test_idna_domain_to_unicode_verify_dns_length_02(caplog):
+    """Unicode ToUnicode: label is longer than 63."""
+    caplog.set_level(logging.INFO)
+
+    domain = ascii_domain = "a" * 63
+    assert IDNA.domain_to_unicode(ascii_domain) == domain
+
+    assert IDNA.domain_to_unicode(ascii_domain, True) == domain
+
+    domain = ascii_domain = "a" * 64
+    assert IDNA.domain_to_unicode(ascii_domain) == domain
+
+    assert IDNA.domain_to_unicode(ascii_domain, True) == domain
+
+    assert len(caplog.record_tuples) == 0
+
+
+def test_idna_domain_to_unicode_verify_dns_length_03(caplog):
+    """Unicode ToUnicode: domain name is longer than 255."""
+    caplog.set_level(logging.INFO)
+
+    domain = ascii_domain = ".".join(["a" * 63, "b" * 63, "c" * 63, "d" * 63])
+    assert IDNA.domain_to_unicode(ascii_domain) == domain
+
+    assert IDNA.domain_to_unicode(ascii_domain, True) == domain
+
+    assert len(caplog.record_tuples) == 0
+
+
 @pytest.mark.parametrize(
     ("text", "extra", "valid", "error"),
     [
