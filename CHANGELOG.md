@@ -9,6 +9,7 @@ Implement latest specifications of the [URL Living Standard](https://url.spec.wh
   - Add `URL.__eq__()` and `URL.equals()`
   - Add `URLRecord.__eq__()` and `URLRecord.equals()`
   - Add `URLSearchParams.__eq__()`
+  - Add `URLSearchParams.__getitem__()`
   - Add `IDNA.domain_to_unicode()`
 - FIXED
   - Fix improper handling of the `VerifyDnsLength` flag in `IDNA.domain_to_ascii()`

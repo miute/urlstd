@@ -2420,6 +2420,20 @@ def test_urlsearchparams_eq():
     assert params3 == params1
 
 
+def test_urlsearchparams_getitem():
+    params = URLSearchParams("a=1&b=2&a=3&c=4")
+    assert params[0] == ("a", "1")
+    assert params[1] == ("b", "2")
+    assert params[2] == ("a", "3")
+    assert params[3] == ("c", "4")
+
+    assert params[1:3] == [("b", "2"), ("a", "3")]
+    assert params[2:] == [("a", "3"), ("c", "4")]
+
+    with pytest.raises(IndexError):
+        _ = params[4]
+
+
 def test_urlsearchparams_repr():
     params1 = URLSearchParams("?a=1&b=\U0001f338")
     str1 = repr(params1)

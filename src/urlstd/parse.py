@@ -1708,6 +1708,20 @@ class URLSearchParams(Collection):
             return False
         return self._list == other._list
 
+    def __getitem__(
+        self, key: int | slice
+    ) -> tuple[str, str] | list[tuple[str, str]]:
+        """Returns the name-value pair(s) specified by *key*.
+
+        Args:
+            key: An index that specifies the position to return,
+                or a slice object that specifies the range to return.
+
+        Returns:
+            A name-value pair or a list of name-value pairs.
+        """
+        return self._list[key]
+
     def __iter__(self) -> Iterator[tuple[str, str]]:
         """Returns a new iterator of this object’s items
         ((name, value) pairs).
