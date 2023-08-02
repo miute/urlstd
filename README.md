@@ -14,6 +14,8 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
 
 - [URL class](https://url.spec.whatwg.org/#url-class)
   - class urlstd.parse.`URL(url: str, base: Optional[str] = None)`
+    - [canParse](https://url.spec.whatwg.org/#dom-url-canparse): `classmethod can_parse(url: str, base: Optional[str] = None) -> bool`
+    - stringifier: `__str__() -> str`
     - [href](https://url.spec.whatwg.org/#dom-url-href): `readonly property href: str`
     - [origin](https://url.spec.whatwg.org/#dom-url-origin): `readonly property origin: str`
     - [protocol](https://url.spec.whatwg.org/#dom-url-protocol): `property protocol: str`
@@ -26,9 +28,11 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
     - [search](https://url.spec.whatwg.org/#dom-url-search): `property search: str`
     - [searchParams](https://url.spec.whatwg.org/#dom-url-searchparams): `readonly property search_params: URLSearchParams`
     - [hash](https://url.spec.whatwg.org/#dom-url-hash): `property hash: str`
+    - [URL equivalence](https://url.spec.whatwg.org/#url-equivalence): `__eq__(other: Any) -> bool` and `equals(other: URL, exclude_fragments: bool = False) → bool`
 
 - [URLSearchParams class](https://url.spec.whatwg.org/#interface-urlsearchparams)
   - class urlstd.parse.`URLSearchParams(init: Optional[str | Sequence[Sequence[str | int | float]] | dict[str, str | int | float] | URLRecord | URLSearchParams] = None)`
+    - [size](https://url.spec.whatwg.org/#dom-urlsearchparams-size): `__len__() -> int`
     - [append](https://url.spec.whatwg.org/#dom-urlsearchparams-append): `append(name: str, value: str | int | float) -> None`
     - [delete](https://url.spec.whatwg.org/#dom-urlsearchparams-delete): `delete(name: str, value: Optional[str | int | float] = None) -> None`
     - [get](https://url.spec.whatwg.org/#dom-urlsearchparams-get): `get(name: str) -> str | None`
@@ -36,6 +40,8 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
     - [has](https://url.spec.whatwg.org/#dom-urlsearchparams-has): `has(name: str, value: Optional[str | int | float] = None) -> bool`
     - [set](https://url.spec.whatwg.org/#dom-urlsearchparams-set): `set(name: str, value: str | int | float) -> None`
     - [sort](https://url.spec.whatwg.org/#dom-urlsearchparams-sort): `sort() -> None`
+    - iterable<USVString, USVString>: `__iter__() -> Iterator[tuple[str, str]]`
+    - [stringifier](https://url.spec.whatwg.org/#urlsearchparams-stringification-behavior): `__str__() -> str`
 
 - Low-level APIs
 
@@ -65,10 +71,12 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
       - [URL serializer](https://url.spec.whatwg.org/#concept-url-serializer): `serialize_url(exclude_fragment: bool = False) -> str`
       - [host serializer](https://url.spec.whatwg.org/#concept-host-serializer): `serialize_host() -> str`
       - [URL path serializer](https://url.spec.whatwg.org/#url-path-serializer): `serialize_path() -> str`
+      - [URL equivalence](https://url.spec.whatwg.org/#url-equivalence): `__eq__(other: Any) -> bool` and `equals(other: URLRecord, exclude_fragments: bool = False) → bool`
 
   - [Hosts (domains and IP addresses)](https://url.spec.whatwg.org/#hosts-(domains-and-ip-addresses))
     - class urlstd.parse.`IDNA`
       - [domain to ASCII](https://url.spec.whatwg.org/#concept-domain-to-ascii): classmethod `domain_to_ascii(domain: str, be_strict: bool = False) -> str`
+      - [domain to Unicode](https://url.spec.whatwg.org/#concept-domain-to-unicode): classmethod `domain_to_unicode(domain: str, be_strict: bool = False) -> str`
     - class urlstd.parse.`Host`
       - [host parser](https://url.spec.whatwg.org/#concept-host-parser): classmethod `parse(host: str, is_not_special: bool = False) -> str | int | tuple[int, ...]`
       - [host serializer](https://url.spec.whatwg.org/#concept-host-serializer): classmethod `serialize(host: str | int | Sequence[int]) -> str`
