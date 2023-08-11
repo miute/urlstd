@@ -799,11 +799,6 @@ class IDNA:
             A domain name in IDNA Unicode form.
 
         Raises:
-            urlstd.error.HostParseError: Raised when a domain name is not valid.
-                See UIDNA_ERROR_* constants in `uidna.h
-                <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/uidna_8h.html>`_
-                for more details on IDNA processing errors.
-
             urlstd.error.IDNAError: Raised when IDNA processing fails.
         """
         log = get_logger(cls)
@@ -829,16 +824,12 @@ class IDNA:
             errors = info.get_errors() & ~allowed_errors
             if errors:
                 error_names = cls._errors_to_string(errors)
-                log.error(
+                log.info(
                     "domain-to-Unicode: Unicode ToUnicode records an error: "
                     "domain=%r errors=%s (0x%04X)",
                     domain,
                     error_names,
                     errors,
-                )
-                raise HostParseError(
-                    f"Unicode ToUnicode records an error: "
-                    f"domain={domain!r} errors={error_names!s} (0x{errors:04X})"
                 )
             return str(dest)
         except icu.ICUError as e:
