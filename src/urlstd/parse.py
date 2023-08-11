@@ -7,12 +7,12 @@ from __future__ import annotations
 import codecs
 import copy
 import enum
+import logging
 import re
 import string
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
-from logging import Logger, getLogger
-from typing import Any, NamedTuple, Optional, overload
+from typing import Any, NamedTuple, Optional, Self, overload
 from urllib.parse import ParseResult, quote, quote_plus
 from urllib.parse import unquote_to_bytes as percent_decode
 
@@ -29,6 +29,7 @@ from .error import (
 __all__ = [
     "BasicURLParser",
     "Host",
+    "HostValidator",
     "IDNA",
     "Origin",
     "URL",
@@ -53,6 +54,8 @@ LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE_RE = re.compile(
 )
 
 PERCENT_RE = re.compile(r"%[^%]*")
+
+VALIDATION_ERROR_TYPE_RE = re.compile(r"((\w+-)+(\w+)):")
 
 C0_CONTROL = "".join([chr(x) for x in range(0, 0x20)])
 
@@ -141,7 +144,7 @@ def cpstream(s: str) -> Iterable[str]:
         yield ""  # EOF
 
 
-def get_logger(context: Any) -> Logger:
+def get_logger(context: Any) -> logging.Logger:
     name = None
     if isinstance(context, str):
         name = context
@@ -149,7 +152,7 @@ def get_logger(context: Any) -> Logger:
         name = f"{context.__module__}.{context.__name__}"
     elif hasattr(context, "__module__") and hasattr(context, "__class__"):
         name = f"{context.__module__}.{context.__class__.__name__}"
-    return getLogger(name)
+    return logging.getLogger(name)
 
 
 def iscp(c: str, target: str) -> bool:
@@ -520,6 +523,43 @@ def utf8_percent_encode(s: str, safe: str, space_as_plus: bool = False) -> str:
     )
 
 
+class _Logger(logging.getLoggerClass()):  # type: ignore [misc]
+    def debug(self, msg, *args, **kwargs) -> None:
+        kwargs.setdefault("stacklevel", 2)
+        validity: ValidityState | None = kwargs.pop("validity", None)
+        if validity and validity.disable_logging:
+            return
+        super().debug(msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs) -> None:
+        kwargs.setdefault("stacklevel", 2)
+        validity: ValidityState | None = kwargs.pop("validity", None)
+        if validity:
+            validity.valid = False
+            matched = VALIDATION_ERROR_TYPE_RE.search(msg)
+            validity.error_types.insert(
+                0, matched.group(1) if matched else "undefined"
+            )
+            validity.validation_errors += 1
+            if validity.disable_logging:
+                return
+        super().error(msg, *args, **kwargs)
+
+    def info(self, msg, *args, **kwargs) -> None:
+        kwargs.setdefault("stacklevel", 2)
+        validity: ValidityState | None = kwargs.pop("validity", None)
+        if validity:
+            validity.valid = False
+            matched = VALIDATION_ERROR_TYPE_RE.search(msg)
+            validity.error_types.insert(
+                0, matched.group(1) if matched else "undefined"
+            )
+            validity.validation_errors += 1
+            if validity.disable_logging:
+                return
+        super().info(msg, *args, **kwargs)
+
+
 class Host:
     """Utility class for hosts (domains and IP addresses)."""
 
@@ -647,6 +687,153 @@ class Host:
         return host  # type: ignore  # domain, opaque host, or empty host
 
 
+class HostValidator:
+    """Validates a host string."""
+
+    @classmethod
+    def is_valid(cls, host: str, **kwargs) -> bool:
+        """Returns *True* if *host* is a valid host string
+        (a domain string and an IP address string).
+
+        Args:
+            host: A host string (a domain string and an IP address string) to verify.
+
+        Returns:
+            *True* if *host* is a valid host, *False* otherwise.
+        """
+        validity: ValidityState | None = kwargs.get("validity")
+        if validity is None:
+            validity = kwargs["validity"] = ValidityState()
+        else:
+            validity.reset()
+
+        # validate an IPv6-address string
+        if (
+            host.startswith("[")
+            and host.endswith("]")
+            and cls.is_valid_ipv6_address(host[1:-1], **kwargs)
+        ):
+            return True
+        old = copy.deepcopy(validity)
+
+        # validate an IPv4-address string
+        if cls.is_valid_ipv4_address(host, **kwargs):
+            return True
+        validity += old
+        old = copy.deepcopy(validity)
+
+        # validate a domain string
+        if cls.is_valid_domain(host, **kwargs):
+            return True
+        validity += old
+
+        return False
+
+    @classmethod
+    def is_valid_domain(cls, domain: str, **kwargs) -> bool:
+        """Returns *True* if *domain* is a valid domain string.
+
+        Args:
+            domain: A domain string to verify.
+
+        Returns:
+            *True* if *domain* is a valid domain, *False* otherwise.
+        """
+        try:
+            validity: ValidityState | None = kwargs.get("validity")
+            if validity is None:
+                validity = kwargs["validity"] = ValidityState()
+            else:
+                validity.reset()
+
+            _ = IDNA.domain_to_ascii(domain, True, **kwargs)
+            _ = IDNA.domain_to_unicode(domain, True, **kwargs)
+            return validity.validation_errors == 0
+        except URLParseError:
+            pass
+        return False
+
+    @classmethod
+    def is_valid_ipv4_address(cls, address: str, **kwargs) -> bool:
+        """Returns *True* if *address* is a valid IPv4-address string.
+
+        Args:
+            address: An IPv4-address string to verify.
+
+        Returns:
+            *True* if *address* is a valid IPv4-address, *False* otherwise.
+        """
+        validity: ValidityState | None = kwargs.get("validity")
+        if validity:
+            validity.reset()
+
+        parts = address.split(".")
+        if len(parts[-1]) == 0:
+            if validity:
+                validity.valid = False
+                validity.error_types.append("IPv4-empty-part")
+                validity.validation_errors += 1
+            return False
+        elif len(parts) > 4:
+            if validity:
+                validity.valid = False
+                validity.error_types.append("IPv4-too-many-parts")
+                validity.validation_errors += 1
+            return False
+        elif len(parts) < 4:
+            if validity:
+                validity.valid = False
+                validity.error_types.append("undefined")
+                validity.validation_errors += 1
+            return False
+
+        for part in parts:
+            result = IPv4Address._parse_ipv4_number(part)
+            if result[0] < 0:
+                if validity:
+                    validity.valid = False
+                    validity.error_types.append("IPv4-non-numeric-part")
+                    validity.validation_errors += 1
+                return False
+            elif result[1]:
+                if validity:
+                    validity.valid = False
+                    validity.error_types.append("IPv4-non-decimal-part")
+                    validity.validation_errors += 1
+                return False
+
+            if not (0 <= int(part) <= 255):
+                if validity:
+                    validity.valid = False
+                    validity.error_types.append("IPv4-out-of-range-part")
+                    validity.validation_errors += 1
+                return False
+        return True
+
+    @classmethod
+    def is_valid_ipv6_address(cls, address: str, **kwargs) -> bool:
+        """Returns *True* if *address* is a valid IPv6-address string.
+
+        Args:
+            address: An IPv6-address string to verify.
+
+        Returns:
+            *True* if *address* is a valid IPv6-address, *False* otherwise.
+        """
+        try:
+            validity: ValidityState | None = kwargs.get("validity")
+            if validity is None:
+                validity = kwargs["validity"] = ValidityState()
+            else:
+                validity.reset()
+
+            _ = IPv6Address.parse(address, **kwargs)
+            return validity.validation_errors == 0
+        except IPv6AddressParseError:
+            pass
+        return False
+
+
 class IDNA:
     """Utility class for IDNA processing."""
 
@@ -707,7 +894,9 @@ class IDNA:
         return "|".join(names)
 
     @classmethod
-    def domain_to_ascii(cls, domain: str, be_strict: bool = False) -> str:
+    def domain_to_ascii(
+        cls, domain: str, be_strict: bool = False, **kwargs
+    ) -> str:
         """Converts a domain name to IDNA ASCII form.
 
         Args:
@@ -756,6 +945,7 @@ class IDNA:
                     domain,
                     error_names,
                     errors,
+                    **kwargs,
                 )
                 raise HostParseError(
                     f"Unicode ToASCII records an error: "
@@ -766,6 +956,7 @@ class IDNA:
                 log.error(
                     "domain-to-ASCII: Unicode ToASCII returns the empty string: %r",
                     domain,
+                    **kwargs,
                 )
                 raise HostParseError(
                     f"Unicode ToASCII returns the empty string: {domain!r}"
@@ -779,6 +970,7 @@ class IDNA:
                 domain,
                 errors,
                 e.args[0],
+                **kwargs,
             )
             raise IDNAError(
                 f"Unicode ToASCII failed: "
@@ -787,7 +979,9 @@ class IDNA:
             ) from None
 
     @classmethod
-    def domain_to_unicode(cls, domain: str, be_strict: bool = False) -> str:
+    def domain_to_unicode(
+        cls, domain: str, be_strict: bool = False, **kwargs
+    ) -> str:
         """Converts a domain name to IDNA Unicode form.
 
         Args:
@@ -830,6 +1024,7 @@ class IDNA:
                     domain,
                     error_names,
                     errors,
+                    **kwargs,
                 )
             return str(dest)
         except icu.ICUError as e:
@@ -840,6 +1035,7 @@ class IDNA:
                 domain,
                 errors,
                 e.args[0],
+                **kwargs,
             )
             raise IDNAError(
                 f"Unicode ToUnicode failed: "
@@ -985,7 +1181,7 @@ class IPv4Address:
 
 class IPv6Address:
     @classmethod
-    def parse(cls, address: str) -> tuple[int, ...]:
+    def parse(cls, address: str, **kwargs) -> tuple[int, ...]:
         log = get_logger(cls)
         piece_index = 0
         compress: Optional[int] = None
@@ -1000,6 +1196,7 @@ class IPv6Address:
                     "IPv6-invalid-compression: "
                     "IPv6 address begins with improper compression: %r",
                     address,
+                    **kwargs,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address begins with improper compression: {address!r}"
@@ -1014,6 +1211,7 @@ class IPv6Address:
                     "IPv6-too-many-pieces: "
                     "IPv6 address contains more than 8 pieces: %r",
                     address,
+                    **kwargs,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address contains more than 8 pieces: {address!r}"
@@ -1029,6 +1227,7 @@ class IPv6Address:
                         "IPv6-multiple-compression: "
                         "IPv6 address is compressed in more than one spot: %r",
                         address,
+                        **kwargs,
                     )
                     raise IPv6AddressParseError(
                         f"IPv6 address is compressed in more than one spot: "
@@ -1044,6 +1243,7 @@ class IPv6Address:
                     "IPv6-invalid-code-point: "
                     "IPv6 address unexpectedly ends: %r",
                     address,
+                    **kwargs,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address unexpectedly ends: {address!r}"
@@ -1066,6 +1266,7 @@ class IPv6Address:
                         "%r in %r",
                         piece,
                         address,
+                        **kwargs,
                     )
                     raise IPv6AddressParseError(
                         f"IPv6 address contains a code point that is neither "
@@ -1085,6 +1286,7 @@ class IPv6Address:
                     "IPv6 address with IPv4 address syntax: "
                     "IPv6 address has more than 6 pieces: %r",
                     address,
+                    **kwargs,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address with IPv4 address syntax: "
@@ -1107,6 +1309,7 @@ class IPv6Address:
                     "there are too many IPv4 parts: %r in %r",
                     piece,
                     address,
+                    **kwargs,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address with IPv4 address syntax: "
@@ -1121,6 +1324,7 @@ class IPv6Address:
                     "IPv4 part exceeds 255: %r in %r",
                     piece,
                     address,
+                    **kwargs,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address with IPv4 address syntax: "
@@ -1133,6 +1337,7 @@ class IPv6Address:
                     "IPv4 address contains too few parts: %r in %r",
                     piece,
                     address,
+                    **kwargs,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address with IPv4 address syntax: "
@@ -1167,6 +1372,7 @@ class IPv6Address:
                 "IPv6-too-few-pieces: "
                 "uncompressed IPv6 address contains fewer than 8 pieces: %r",
                 address,
+                **kwargs,
             )
             raise IPv6AddressParseError(
                 f"uncompressed IPv6 address contains fewer than 8 pieces: {address!r}"
@@ -2503,6 +2709,37 @@ class URLParserState(enum.IntEnum):
     SPECIAL_RELATIVE_OR_AUTHORITY_STATE = enum.auto()
 
 
+@dataclass
+class ValidityState:
+    valid: bool = True
+    error_types: list[str] = field(default_factory=list)
+    validation_errors: int = 0
+    disable_logging: bool = True
+
+    def __add__(self, other: Any) -> ValidityState:
+        if not isinstance(other, ValidityState):
+            return NotImplemented
+        return ValidityState(
+            self.valid & other.valid,
+            self.error_types + other.error_types,
+            self.validation_errors + other.validation_errors,
+            self.disable_logging,
+        )
+
+    def __iadd__(self, other: Any) -> Self:
+        if not isinstance(other, ValidityState):
+            return NotImplemented
+        self.valid &= other.valid
+        self.error_types += other.error_types
+        self.validation_errors += other.validation_errors
+        return self
+
+    def reset(self) -> None:
+        self.valid = True
+        self.error_types.clear()
+        self.validation_errors = 0
+
+
 class BasicURLParser:
     """An implementation of the
     `basic URL parser <https://url.spec.whatwg.org/#concept-basic-url-parser>`_
@@ -3732,3 +3969,6 @@ def parse_url(
     #  https://url.spec.whatwg.org/#url-parsing
     #  https://w3c.github.io/FileAPI/#blob-url-resolve
     return url
+
+
+logging.setLoggerClass(_Logger)

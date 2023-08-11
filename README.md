@@ -93,6 +93,13 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
   - [application/x-www-form-urlencoded serializer](https://url.spec.whatwg.org/#concept-urlencoded-serializer)
     - urlstd.parse.`urlencode(query: Sequence[tuple[str, str]], encoding: str = "utf-8") -> str`
 
+  - Validation
+    - class urlstd.parse.`HostValidator`
+      - [valid host string](https://url.spec.whatwg.org/#valid-host-string): classmethod `is_valid(host: str) -> bool`
+      - [valid domain string](https://url.spec.whatwg.org/#valid-domain-string): classmethod `is_valid_domain(domain: str) -> bool`
+      - [valid IPv4-address string](https://url.spec.whatwg.org/#valid-ipv4-address-string): classmethod `is_valid_ipv4_address(address: str) -> bool`
+      - [valid IPv6-address string](https://url.spec.whatwg.org/#valid-ipv6-address-string): classmethod `is_valid_ipv6_address(address: str) -> bool`
+
 - Compatibility with standard library `urllib`
   - urlstd.parse.`urlparse(urlstring: str, base: str = None, encoding: str = "utf-8", allow_fragments: bool = True) -> urllib.parse.ParseResult`
 
