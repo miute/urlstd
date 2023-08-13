@@ -22,7 +22,9 @@ from urlstd.parse import URL
         ["a", "https://b/", True],
     ],
 )
-def test_setter(url, base, expected):
+def test_setter(url, base, expected, caplog):
     test_setter.__doc__ = msg = f"URL.canParse({url!r}, {base!r})"
 
     assert URL.can_parse(url, base) is expected, msg
+
+    assert len(caplog.record_tuples) == 0

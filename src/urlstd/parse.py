@@ -564,7 +564,7 @@ class Host:
     """Utility class for hosts (domains and IP addresses)."""
 
     @classmethod
-    def _parse_opaque_host(cls, host: str) -> str:
+    def _parse_opaque_host(cls, host: str, **kwargs) -> str:
         log = get_logger(cls)
         if any(c in FORBIDDEN_HOST_CODE_POINT for c in host):
             log.error(
@@ -572,6 +572,7 @@ class Host:
                 "opaque host (in a URL that is not special) contains "
                 "a forbidden host code point: %r",
                 host,
+                **kwargs,
             )
             raise HostParseError(
                 f"opaque host (in a URL that is not special) contains "
@@ -587,6 +588,7 @@ class Host:
                 ord(c),
                 _c,
                 host,
+                **kwargs,
             )
 
         parts = [m.group() for m in PERCENT_RE.finditer(host)]
@@ -599,13 +601,14 @@ class Host:
                     "incorrect percent encoding is found: %r in %r",
                     part[:3],
                     host,
+                    **kwargs,
                 )
                 break
         return utf8_percent_encode(host, SAFE_C0_CONTROL_PERCENT_ENCODE_SET)
 
     @classmethod
     def parse(
-        cls, host: str, is_not_special: bool = False
+        cls, host: str, is_not_special: bool = False, **kwargs
     ) -> str | int | tuple[int, ...]:
         """Parses a string *host*, and returns a domain, IP address, opaque
         host, or empty host.
@@ -641,22 +644,24 @@ class Host:
                 log.error(
                     "IPv6-unclosed: IPv6 address is missing the closing U+005D (]): %r",
                     host,
+                    **kwargs,
                 )
                 raise IPv6AddressParseError(
                     f"IPv6 address is missing the closing U+005D (]): {host!r}"
                 )
-            return IPv6Address.parse(host[1:-1])
+            return IPv6Address.parse(host[1:-1], **kwargs)
         elif is_not_special:
             # opaque host
-            return cls._parse_opaque_host(host)
+            return cls._parse_opaque_host(host, **kwargs)
 
         domain = utf8_decode(string_percent_decode(host))
-        ascii_domain = IDNA.domain_to_ascii(domain)
+        ascii_domain = IDNA.domain_to_ascii(domain, **kwargs)
         if any(c in FORBIDDEN_DOMAIN_CODE_POINT for c in ascii_domain):
             log.error(
                 "domain-invalid-code-point: "
                 "input’s host contains a forbidden domain code point: %r",
                 ascii_domain,
+                **kwargs,
             )
             raise HostParseError(
                 f"input’s host contains a forbidden domain code point: "
@@ -665,7 +670,7 @@ class Host:
 
         if IPv4Address.is_ends_in_a_number(ascii_domain):
             # IPv4 address
-            return IPv4Address.parse(ascii_domain)
+            return IPv4Address.parse(ascii_domain, **kwargs)
         return ascii_domain  # ASCII domain
 
     @classmethod
@@ -1089,13 +1094,14 @@ class IPv4Address:
         return False
 
     @classmethod
-    def parse(cls, address: str) -> int:
+    def parse(cls, address: str, **kwargs) -> int:
         log = get_logger(cls)
         parts = address.split(".")
         if len(parts[-1]) == 0:
             log.info(
                 "IPv4-empty-part: IPv4 address ends with a U+002E (.): %r",
                 address,
+                **kwargs,
             )
             if len(parts) > 1:
                 del parts[-1]
@@ -1105,6 +1111,7 @@ class IPv4Address:
                 "IPv4-too-many-parts: "
                 "IPv4 address does not consist of exactly 4 parts: %r",
                 address,
+                **kwargs,
             )
             raise IPv4AddressParseError(
                 f"IPv4 address does not consist of exactly 4 parts: {address!r}"
@@ -1118,6 +1125,7 @@ class IPv4Address:
                     "IPv4-non-numeric-part: IPv4 address part is not numeric: %r in %r",
                     part,
                     address,
+                    **kwargs,
                 )
                 raise IPv4AddressParseError(
                     f"IPv4 address part is not numeric: {part!r} in {address!r}"
@@ -1129,6 +1137,7 @@ class IPv4Address:
                     "hexadecimal or octal digits: %r in %r",
                     part,
                     address,
+                    **kwargs,
                 )
             numbers.append(result[0])
 
@@ -1138,6 +1147,7 @@ class IPv4Address:
                 "IPv4 address part exceeds 255: %r (%r)",
                 address,
                 numbers,
+                **kwargs,
             )
         if any(x > 255 for x in numbers[:-1]) and numbers[-1] <= 255:
             log.error(
@@ -1145,6 +1155,7 @@ class IPv4Address:
                 "%r (%r)",
                 address,
                 numbers,
+                **kwargs,
             )
             raise IPv4AddressParseError(
                 f"any part but the last part of the IPv4 address is greater than 255: "
@@ -1158,6 +1169,7 @@ class IPv4Address:
                 limit,
                 address,
                 numbers,
+                **kwargs,
             )
             raise IPv4AddressParseError(
                 f"last part of the IPv4 address is greater than or equal to {limit}: "
@@ -2293,7 +2305,7 @@ class URL:
         return self.href
 
     @classmethod
-    def can_parse(cls, url: str, base: Optional[str] = None) -> bool:
+    def can_parse(cls, url: str, base: Optional[str] = None, **kwargs) -> bool:
         """Returns *True* if *url* against a base URL *base* is parsable and valid.
 
         Args:
@@ -2305,8 +2317,14 @@ class URL:
             *True* if *url* against a base URL *base* is parsable and valid,
             *False* otherwise.
         """
+        validity: ValidityState | None = kwargs.get("validity")
+        if validity is None:
+            validity = kwargs["validity"] = ValidityState()
+        else:
+            validity.reset()
+
         try:
-            _ = parse_url(url, base=base)
+            _ = parse_url(url, base=base, **kwargs)
         except URLParseError:
             return False
         return True
@@ -2753,6 +2771,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **authority state**
         _ = base
@@ -2769,6 +2788,7 @@ class BasicURLParser:
                     "%r at position %d",
                     urlstring,
                     index - 1,
+                    **kwargs,
                 )
                 if at_sign_seen:
                     buffer = "%40" + buffer
@@ -2798,6 +2818,7 @@ class BasicURLParser:
                     log.error(
                         "invalid-credentials: credentials are empty: %r",
                         urlstring,
+                        **kwargs,
                     )
                     raise URLParseError(
                         f"credentials are empty: {urlstring!r}"
@@ -2816,6 +2837,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **file state**
         log = get_logger(cls)
@@ -2832,6 +2854,7 @@ class BasicURLParser:
                     "instead of U+002F (/): %r at position %d",
                     urlstring,
                     index - 1,
+                    **kwargs,
                 )
             return URLParserState.FILE_SLASH_STATE, index
         elif base and base.scheme == "file":
@@ -2859,6 +2882,7 @@ class BasicURLParser:
                         urlstring[index - 1 : index + 1],
                         urlstring,
                         index - 1,
+                        **kwargs,
                     )
                     url.path = []
                 return URLParserState.PATH_STATE, index - 1
@@ -2872,6 +2896,7 @@ class BasicURLParser:
         base: URLRecord | None,
         url: URLRecord,
         state_override: URLParserState | None,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **file host state**
         _ = base
@@ -2890,6 +2915,7 @@ class BasicURLParser:
                         buffer,
                         urlstring,
                         index - len(buffer),
+                        **kwargs,
                     )
                     return URLParserState.PATH_STATE, index - len(buffer)
                 elif len(buffer) == 0:
@@ -2898,7 +2924,7 @@ class BasicURLParser:
                         return URLParserState.EOF, index
                     return URLParserState.PATH_START_STATE, index
                 else:
-                    host = Host.parse(buffer, url.is_not_special())
+                    host = Host.parse(buffer, url.is_not_special(), **kwargs)
                     if host == "localhost":
                         host = ""
                     url.host = host
@@ -2917,6 +2943,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **file slash state**
         log = get_logger(cls)
@@ -2931,6 +2958,7 @@ class BasicURLParser:
                     "instead of U+002F (/): %r at position %d",
                     urlstring,
                     index - 1,
+                    **kwargs,
                 )
             return URLParserState.FILE_HOST_STATE, index
         else:
@@ -2953,6 +2981,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **fragment state**
         _ = base
@@ -2973,6 +3002,7 @@ class BasicURLParser:
                         _c,
                         urlstring,
                         index - 1,
+                        **kwargs,
                     )
                 if c == "%" and (
                     len(urlstring[index:]) < 2
@@ -2987,6 +3017,7 @@ class BasicURLParser:
                         urlstring[index - 1 : index + 2],
                         urlstring,
                         index - 1,
+                        **kwargs,
                     )
                 buffer += c
             else:
@@ -3006,6 +3037,7 @@ class BasicURLParser:
         base: URLRecord | None,
         url: URLRecord,
         state_override: URLParserState | None,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **host state**
         # **hostname state**
@@ -3024,13 +3056,14 @@ class BasicURLParser:
                     log.error(
                         "host-missing: input does not contain a host: %r",
                         urlstring,
+                        **kwargs,
                     )
                     raise URLParseError(
                         f"input does not contain a host: {urlstring!r}"
                     )
                 if state_override == URLParserState.HOSTNAME_STATE:
                     return URLParserState.EOF, index - 1
-                url.host = Host.parse(buffer, url.is_not_special())
+                url.host = Host.parse(buffer, url.is_not_special(), **kwargs)
                 return URLParserState.PORT_STATE, index
             elif (
                 iseof(c) or iscp(c, "/?#") or (url.is_special() and c == "\\")
@@ -3041,6 +3074,7 @@ class BasicURLParser:
                         "host-missing: "
                         "input has a special scheme, but does not contain a host: %r",
                         urlstring,
+                        **kwargs,
                     )
                     raise URLParseError(
                         f"input has a special scheme, but does not contain a host: "
@@ -3052,7 +3086,7 @@ class BasicURLParser:
                     and (url.includes_credentials() or url.port)
                 ):
                     return URLParserState.EOF, index
-                url.host = Host.parse(buffer, url.is_not_special())
+                url.host = Host.parse(buffer, url.is_not_special(), **kwargs)
                 if state_override:
                     return URLParserState.EOF, index
                 # return URLParserState.PATH_START_STATE, index
@@ -3072,6 +3106,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **no scheme state**
         log = get_logger(cls)
@@ -3088,6 +3123,7 @@ class BasicURLParser:
                 "it has an opaque path: input=%r base=%r",
                 urlstring,
                 _base,
+                **kwargs,
             )
             raise URLParseError(
                 f"input is missing a scheme, because it does not begin with "
@@ -3112,6 +3148,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **opaque path state**
         _ = base
@@ -3138,6 +3175,7 @@ class BasicURLParser:
                         _c,
                         urlstring,
                         index - 1,
+                        **kwargs,
                     )
                 if c == "%" and (
                     len(urlstring[index:]) < 2
@@ -3152,6 +3190,7 @@ class BasicURLParser:
                         urlstring[index - 1 : index + 2],
                         urlstring,
                         index - 1,
+                        **kwargs,
                     )
                 if iseof(c):
                     # return URLParserState.EOF, index - 1
@@ -3170,6 +3209,7 @@ class BasicURLParser:
         base: URLRecord | None,
         url: URLRecord,
         state_override: URLParserState | None,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **path state**
         _ = base
@@ -3190,6 +3230,7 @@ class BasicURLParser:
                         "instead of U+002F (/): %r at position %d",
                         urlstring,
                         index - 1,
+                        **kwargs,
                     )
 
                 buffer = utf8_percent_encode(
@@ -3235,6 +3276,7 @@ class BasicURLParser:
                         _c,
                         urlstring,
                         index - 1,
+                        **kwargs,
                     )
                 if c == "%" and (
                     len(urlstring[index:]) < 2
@@ -3249,6 +3291,7 @@ class BasicURLParser:
                         urlstring[index - 1 : index + 2],
                         urlstring,
                         index - 1,
+                        **kwargs,
                     )
                 buffer += c
         return URLParserState.OPAQUE_PATH_STATE, index - 1
@@ -3260,9 +3303,11 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **path or authority state**
         _ = base, url
+        del kwargs
         index = start
         c = urlstring[index : index + 1]
         index += 1
@@ -3278,6 +3323,7 @@ class BasicURLParser:
         base: URLRecord | None,
         url: URLRecord,
         state_override: URLParserState | None,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **path start state**
         _ = base
@@ -3293,6 +3339,7 @@ class BasicURLParser:
                     "instead of U+002F (/): %r at position %d",
                     urlstring,
                     index - 1,
+                    **kwargs,
                 )
             if not iscp(c, "/\\"):
                 index -= 1
@@ -3319,6 +3366,7 @@ class BasicURLParser:
         base: URLRecord | None,
         url: URLRecord,
         state_override: URLParserState | None,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **port state**
         _ = base
@@ -3341,6 +3389,7 @@ class BasicURLParser:
                             "port-out-of-range: input’s port is too big: %d in %r",
                             port,
                             urlstring,
+                            **kwargs,
                         )
                         raise URLParseError(
                             f"input’s port is too big: {port} in {urlstring!r}"
@@ -3355,7 +3404,9 @@ class BasicURLParser:
                 break
             else:
                 log.error(
-                    "port-invalid: input’s port is invalid: %r", urlstring
+                    "port-invalid: input’s port is invalid: %r",
+                    urlstring,
+                    **kwargs,
                 )
                 raise URLParseError(f"input’s port is invalid: {urlstring!r}")
         return URLParserState.PATH_START_STATE, index - 1
@@ -3369,6 +3420,7 @@ class BasicURLParser:
         url: URLRecord,
         state_override: URLParserState | None,
         encoding: str,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **query state**
         _ = base
@@ -3411,6 +3463,7 @@ class BasicURLParser:
                         _c,
                         urlstring,
                         index - 1,
+                        **kwargs,
                     )
                 if c == "%" and (
                     len(urlstring[index:]) < 2
@@ -3425,6 +3478,7 @@ class BasicURLParser:
                         urlstring[index - 1 : index + 2],
                         urlstring,
                         index - 1,
+                        **kwargs,
                     )
                 buffer += c
         return URLParserState.FRAGMENT_STATE, index
@@ -3436,6 +3490,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **relative state**
         log = get_logger(cls)
@@ -3453,6 +3508,7 @@ class BasicURLParser:
                 "instead of U+002F (/): %r at position %d",
                 urlstring,
                 index - 1,
+                **kwargs,
             )
             return URLParserState.RELATIVE_SLASH_STATE, index
         assert base is not None
@@ -3481,6 +3537,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **relative slash state**
         log = get_logger(cls)
@@ -3495,6 +3552,7 @@ class BasicURLParser:
                     "instead of U+002F (/): %r at position %d",
                     urlstring,
                     index - 1,
+                    **kwargs,
                 )
             return (
                 URLParserState.SPECIAL_AUTHORITY_IGNORE_SLASHES_STATE,
@@ -3517,6 +3575,7 @@ class BasicURLParser:
         base: URLRecord | None,
         url: URLRecord,
         state_override: URLParserState | None,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **scheme start state**
         log = get_logger(cls)
@@ -3575,6 +3634,7 @@ class BasicURLParser:
                             urlstring[index : index + 2],
                             urlstring,
                             index,
+                            **kwargs,
                         )
                     return URLParserState.FILE_STATE, index
                 elif url.is_special() and base and base.scheme == url.scheme:
@@ -3608,6 +3668,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **special authority ignore slashes state**
         _ = base, url
@@ -3628,6 +3689,7 @@ class BasicURLParser:
                 c,
                 urlstring,
                 index - 1,
+                **kwargs,
             )
         return URLParserState.AUTHORITY_STATE, index
 
@@ -3638,6 +3700,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **special authority slashes state**
         _ = base, url
@@ -3653,8 +3716,11 @@ class BasicURLParser:
         log.info(
             "special-scheme-missing-following-solidus: "
             "input’s scheme is not followed by '//': "
-            "%r in %r at position %d"
-            % (urlstring[start : start + 2], urlstring, start)
+            "%r in %r at position %d",
+            urlstring[start : start + 2],
+            urlstring,
+            start,
+            **kwargs,
         )
         return URLParserState.SPECIAL_AUTHORITY_IGNORE_SLASHES_STATE, index - 1
 
@@ -3665,6 +3731,7 @@ class BasicURLParser:
         start: int,
         base: URLRecord | None,
         url: URLRecord,
+        **kwargs,
     ) -> tuple[URLParserState, int]:
         # **special relative or authority state**
         _ = base, url
@@ -3680,8 +3747,11 @@ class BasicURLParser:
         log.info(
             "special-scheme-missing-following-solidus: "
             "input’s scheme is not followed by '//': "
-            "%r in %r at position %d"
-            % (urlstring[start : start + 2], urlstring, start)
+            "%r in %r at position %d",
+            urlstring[start : start + 2],
+            urlstring,
+            start,
+            **kwargs,
         )
         return URLParserState.RELATIVE_STATE, index - 1
 
@@ -3693,6 +3763,7 @@ class BasicURLParser:
         encoding: str = "utf-8",
         url: Optional[URLRecord] = None,
         state_override: Optional[URLParserState] = None,
+        **kwargs,
     ) -> URLRecord:
         """Parses a string *urlstring* against a base URL *base*.
 
@@ -3805,6 +3876,7 @@ class BasicURLParser:
                     "invalid-URL-unit: "
                     "remove any leading and trailing C0 control or space from %r",
                     urlstring,
+                    **kwargs,
                 )
                 urlstring = LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE_RE.sub(
                     "", urlstring
@@ -3814,6 +3886,7 @@ class BasicURLParser:
             log.info(
                 "invalid-URL-unit: remove all ASCII tab or newline from %r",
                 urlstring,
+                **kwargs,
             )
             urlstring = ASCII_TAB_OR_NEWLINE_RE.sub("", urlstring)
 
@@ -3828,47 +3901,49 @@ class BasicURLParser:
                 # **scheme start state**
                 # **scheme state**
                 state, index = cls._parse_scheme(
-                    urlstring, index, base, url, state_override
+                    urlstring, index, base, url, state_override, **kwargs
                 )
             elif state == URLParserState.NO_SCHEME_STATE:
                 # **no scheme state**
                 state, index = cls._parse_no_scheme(
-                    urlstring, index, base, url
+                    urlstring, index, base, url, **kwargs
                 )
             elif state == URLParserState.SPECIAL_RELATIVE_OR_AUTHORITY_STATE:
                 # **special relative or authority state**
                 state, index = cls._parse_special_relative_or_authority(
-                    urlstring, index, base, url
+                    urlstring, index, base, url, **kwargs
                 )
             elif state == URLParserState.PATH_OR_AUTHORITY_STATE:
                 # **path or authority state**
                 state, index = cls._parse_path_or_authority(
-                    urlstring, index, base, url
+                    urlstring, index, base, url, **kwargs
                 )
             elif state == URLParserState.RELATIVE_STATE:
                 # **relative state**
-                state, index = cls._parse_relative(urlstring, index, base, url)
+                state, index = cls._parse_relative(
+                    urlstring, index, base, url, **kwargs
+                )
             elif state == URLParserState.RELATIVE_SLASH_STATE:
                 # **relative slash state**
                 state, index = cls._parse_relative_slash(
-                    urlstring, index, base, url
+                    urlstring, index, base, url, **kwargs
                 )
             elif state == URLParserState.SPECIAL_AUTHORITY_SLASHES_STATE:
                 # **special authority slashes state**
                 state, index = cls._parse_special_authority_slashes(
-                    urlstring, index, base, url
+                    urlstring, index, base, url, **kwargs
                 )
             elif (
                 state == URLParserState.SPECIAL_AUTHORITY_IGNORE_SLASHES_STATE
             ):
                 # **special authority ignore slashes state**
                 state, index = cls._parse_special_authority_ignore_slashes(
-                    urlstring, index, base, url
+                    urlstring, index, base, url, **kwargs
                 )
             elif state == URLParserState.AUTHORITY_STATE:
                 # **authority state**
                 state, index = cls._parse_authority(
-                    urlstring, index, base, url
+                    urlstring, index, base, url, **kwargs
                 )
             elif state in (
                 URLParserState.HOST_STATE,
@@ -3877,49 +3952,59 @@ class BasicURLParser:
                 # **host state**
                 # **hostname state**
                 state, index = cls._parse_host(
-                    urlstring, index, base, url, state_override
+                    urlstring, index, base, url, state_override, **kwargs
                 )
             elif state == URLParserState.PORT_STATE:
                 # **port state**
                 state, index = cls._parse_port(
-                    urlstring, index, base, url, state_override
+                    urlstring, index, base, url, state_override, **kwargs
                 )
             elif state == URLParserState.FILE_STATE:
                 # **file state**
-                state, index = cls._parse_file(urlstring, index, base, url)
+                state, index = cls._parse_file(
+                    urlstring, index, base, url, **kwargs
+                )
             elif state == URLParserState.FILE_SLASH_STATE:
                 # **file slash state**
                 state, index = cls._parse_file_slash(
-                    urlstring, index, base, url
+                    urlstring, index, base, url, **kwargs
                 )
             elif state == URLParserState.FILE_HOST_STATE:
                 # **file host state**
                 state, index = cls._parse_file_host(
-                    urlstring, index, base, url, state_override
+                    urlstring, index, base, url, state_override, **kwargs
                 )
             elif state == URLParserState.PATH_START_STATE:
                 # **path start state**
                 state, index = cls._parse_path_start(
-                    urlstring, index, base, url, state_override
+                    urlstring, index, base, url, state_override, **kwargs
                 )
             elif state == URLParserState.PATH_STATE:
                 # **path state**
                 state, index = cls._parse_path(
-                    urlstring, index, base, url, state_override
+                    urlstring, index, base, url, state_override, **kwargs
                 )
             elif state == URLParserState.OPAQUE_PATH_STATE:
                 # **opaque path state**
                 state, index = cls._parse_opaque_path(
-                    urlstring, index, base, url
+                    urlstring, index, base, url, **kwargs
                 )
             elif state == URLParserState.QUERY_STATE:
                 # **query state**
                 state, index = cls._parse_query(
-                    urlstring, index, base, url, state_override, encoding
+                    urlstring,
+                    index,
+                    base,
+                    url,
+                    state_override,
+                    encoding,
+                    **kwargs,
                 )
             elif state == URLParserState.FRAGMENT_STATE:
                 # **fragment state**
-                state, index = cls._parse_fragment(urlstring, index, base, url)
+                state, index = cls._parse_fragment(
+                    urlstring, index, base, url, **kwargs
+                )
             else:
                 raise NotImplementedError(state)
 
@@ -3933,6 +4018,7 @@ class BasicURLParser:
                 state,
                 index,
                 url,
+                **kwargs,
             )
         return url
 
@@ -3941,6 +4027,7 @@ def parse_url(
     urlstring: str,
     base: Optional[str | URLRecord] = None,
     encoding: str = "utf-8",
+    **kwargs,
 ) -> URLRecord:
     """Parses a string *urlstring* against a base URL *base* using the basic
     URL parser, and returns :class:`.URLRecord`.
@@ -3963,8 +4050,12 @@ def parse_url(
         if isinstance(base, URLRecord):
             parsed_base = base
         else:
-            parsed_base = BasicURLParser.parse(base, encoding=encoding)
-    url = BasicURLParser.parse(urlstring, base=parsed_base, encoding=encoding)
+            parsed_base = BasicURLParser.parse(
+                base, encoding=encoding, **kwargs
+            )
+    url = BasicURLParser.parse(
+        urlstring, base=parsed_base, encoding=encoding, **kwargs
+    )
     # TODO: Set url’s blob URL entry.
     #  https://url.spec.whatwg.org/#url-parsing
     #  https://w3c.github.io/FileAPI/#blob-url-resolve

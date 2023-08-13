@@ -2626,6 +2626,153 @@ def test_parse_url_special_relative_or_authority_state(caplog):
     )
 
 
+def test_url_can_parse_01(caplog):
+    caplog.set_level(logging.INFO)
+
+    # invalid-URL-unit
+    assert URL.can_parse("ht\ntps://www.\r\nexample.com\n\r/\n\n")
+    assert URL.can_parse("https://www.example.com/ \x00  \x1e\x1f")
+    assert URL.can_parse("http://example.org/test?a\ud800b")
+    assert URL.can_parse("http://example.org/test?a#%GH")
+    assert URL.can_parse("http://example.org/test?a#%F")
+    assert URL.can_parse("sc:\\../\U0010fffe%AA/")
+    assert URL.can_parse("sc:\\../%GH")
+    assert URL.can_parse("sc:\\../%A")
+    assert URL.can_parse("http://foo.com/%GH", "http://example.org/foo/bar")
+    assert URL.can_parse("http://foo.com/%A", "http://example.org/foo/bar")
+    assert URL.can_parse(
+        "http://foo.com/a\ud800b", "http://example.org/foo/bar"
+    )
+    assert URL.can_parse("http://example.org/test?a\udfffb")
+    assert URL.can_parse("http://example.org/test?%GH")
+    assert URL.can_parse("http://example.org/test?%F")
+
+    # invalid-credentials
+    assert URL.can_parse(
+        "https://@test@test@example:800/", "http://doesnotmatter/"
+    )
+    assert not URL.can_parse("http://user:pass@/")
+
+    # invalid-reverse-solidus
+    assert URL.can_parse("file:\\c:")
+    assert URL.can_parse("file:\\\\//")
+    assert URL.can_parse("http://foo.com/\\@", "http://example.org/foo/bar")
+    assert URL.can_parse("\\\\server\\file", "file:///tmp/mock/path")
+    assert URL.can_parse("\\x", "http://example.org/foo/bar")
+    assert URL.can_parse("/\\server/file", "http://example.org/foo/bar")
+
+    # file-invalid-Windows-drive-letter
+    assert URL.can_parse("file:c://foo/bar.html", "file:///tmp/mock/path")
+
+    # file-invalid-Windows-drive-letter-host
+    assert URL.can_parse("file://c://foo/bar", "file:///c:/baz/qux")
+
+    # host-missing
+    assert not URL.can_parse("sc://:/")
+    assert not URL.can_parse("http://")
+
+    # missing-scheme-non-relative-URL
+    assert not URL.can_parse("////c:/")
+    assert not URL.can_parse("////c:/", "mailto:user@example.org")
+
+    # port-out-of-range
+    assert not URL.can_parse("http://f:999999/c")
+
+    # port-invalid
+    assert not URL.can_parse("http://foo:-80/")
+
+    # special-scheme-missing-following-solidus
+    assert URL.can_parse("file:\\c:\\foo\\bar")
+    assert URL.can_parse("///x/", "http://example.org/")
+    assert URL.can_parse("http:\\x")
+    assert URL.can_parse("http:\\x", "http://example.org/")
+
+    assert len(caplog.record_tuples) == 0
+
+
+def test_url_can_parse_02(caplog):
+    caplog.set_level(logging.INFO)
+    validity = ValidityState()
+
+    # invalid-URL-unit
+    assert URL.can_parse(
+        "ht\ntps://www.\r\nexample.com\n\r/\n\n", validity=validity
+    )
+    assert validity.valid is False
+    assert "invalid-URL-unit" in validity.error_types
+    assert validity.validation_errors > 0
+
+    # invalid-credentials
+    assert URL.can_parse(
+        "https://@test@test@example:800/",
+        "http://doesnotmatter/",
+        validity=validity,
+    )
+    assert validity.valid is False
+    assert "invalid-credentials" in validity.error_types
+    assert validity.validation_errors > 0
+
+    # invalid-reverse-solidus
+    assert URL.can_parse("file:\\c:", validity=validity)
+    assert validity.valid is False
+    assert "invalid-reverse-solidus" in validity.error_types
+    assert validity.validation_errors > 0
+
+    # file-invalid-Windows-drive-letter
+    assert URL.can_parse(
+        "file:c://foo/bar.html", "file:///tmp/mock/path", validity=validity
+    )
+    assert validity.valid is False
+    assert "file-invalid-Windows-drive-letter" in validity.error_types
+    assert validity.validation_errors > 0
+
+    # file-invalid-Windows-drive-letter-host
+    assert URL.can_parse(
+        "file://c://foo/bar", "file:///c:/baz/qux", validity=validity
+    )
+    assert validity.valid is False
+    assert "file-invalid-Windows-drive-letter-host" in validity.error_types
+    assert validity.validation_errors > 0
+
+    # host-missing
+    assert not URL.can_parse("sc://:/", validity=validity)
+    assert validity.valid is False
+    assert "host-missing" in validity.error_types
+    assert validity.validation_errors > 0
+
+    # missing-scheme-non-relative-URL
+    assert not URL.can_parse("////c:/", validity=validity)
+    assert validity.valid is False
+    assert "missing-scheme-non-relative-URL" in validity.error_types
+    assert validity.validation_errors > 0
+
+    # port-out-of-range
+    assert not URL.can_parse("http://f:999999/c", validity=validity)
+    assert validity.valid is False
+    assert "port-out-of-range" in validity.error_types
+    assert validity.validation_errors > 0
+
+    # port-invalid
+    assert not URL.can_parse("http://foo:-80/", validity=validity)
+    assert validity.valid is False
+    assert "port-invalid" in validity.error_types
+    assert validity.validation_errors > 0
+
+    # special-scheme-missing-following-solidus
+    assert URL.can_parse("file:\\c:\\foo\\bar", validity=validity)
+    assert validity.valid is False
+    assert "special-scheme-missing-following-solidus" in validity.error_types
+    assert validity.validation_errors > 0
+
+    # normal
+    assert URL.can_parse("https://example.org/", validity=validity)
+    assert validity.valid is True
+    assert validity.error_types == []
+    assert validity.validation_errors == 0
+
+    assert len(caplog.record_tuples) == 0
+
+
 def test_url_equals():
     url1 = URL("https://example.org:314/path?a=1&b=2#c")
     url2 = URL("https://example.org:314/path?a=1&b=2#d")
