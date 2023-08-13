@@ -2580,7 +2580,6 @@ def test_parse_url_special_authority_ignore_slashes_state(caplog):
     _ = parse_url(urlstring, base)
 
     assert len(caplog.record_tuples) > 0
-    print(caplog.record_tuples[0][0])
     assert caplog.record_tuples[0][0].startswith(_MODULE_NAME)
     assert caplog.record_tuples[0][1] == logging.INFO
     assert caplog.record_tuples[0][2] == (
