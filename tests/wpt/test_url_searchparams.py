@@ -40,7 +40,7 @@ def test_setter_invalid_values():
     url = _b_url(urlstring)
     with pytest.raises(AttributeError):
         # readonly property
-        url.search_params = URLSearchParams(urlstring)  # type: ignore  # noqa
+        url.search_params = URLSearchParams(urlstring)  # type: ignore
 
 
 def test_setters_update_propagation():

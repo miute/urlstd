@@ -462,7 +462,7 @@ def urlparse(
         params=params,
         query=query,
         fragment=fragment,
-    )  # noqa
+    )
 
 
 def utf8_decode(b: bytes) -> str:

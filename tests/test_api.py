@@ -12,7 +12,6 @@ from urlstd.error import (
     IPv6AddressParseError,
     URLParseError,
 )
-from urlstd.parse import get_logger  # noqa
 from urlstd.parse import (
     IDNA,
     URL,
@@ -25,6 +24,7 @@ from urlstd.parse import (
     URLRecord,
     URLSearchParams,
     ValidityState,
+    get_logger,
     is_url_code_points,
     parse_url,
     urlparse,
@@ -3019,10 +3019,10 @@ def test_urlsearchparams_collections_abc():
 
 def test_urlsearchparams_construct_raise_exception():
     with pytest.raises(TypeError):
-        _ = URLSearchParams(1)  # type: ignore  # noqa
+        _ = URLSearchParams(1)  # type: ignore
 
     with pytest.raises(TypeError):
-        _ = URLSearchParams("a", "1")  # type: ignore  # noqa
+        _ = URLSearchParams("a", "1")  # type: ignore
 
 
 def test_urlsearchparams_construct_with_surrogates():

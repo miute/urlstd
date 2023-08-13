@@ -187,9 +187,9 @@ def test_sequences_of_strings():
     assert params.get("a") == "b", list(params)
     assert params.get("c") == "d", list(params)
     with pytest.raises(ValueError):
-        _ = URLSearchParams([[1]])  # noqa
+        _ = URLSearchParams([[1]])
     with pytest.raises(ValueError):
-        _ = URLSearchParams([[1, 2, 3]])  # noqa
+        _ = URLSearchParams([[1, 2, 3]])
 
 
 @pytest.mark.parametrize(
