@@ -5,7 +5,7 @@ from importlib.metadata import metadata
 project = "urlstd"
 md = metadata(project)
 author = md["Author"]
-copyright = f"2022, {author}"
+copyright = f"2022, {author}"  # noqa: A001
 version = release = md["Version"]
 
 

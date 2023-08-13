@@ -2135,7 +2135,7 @@ class URLSearchParams(Collection):
         """
         return iter([name_value[0] for name_value in self._list])
 
-    def set(self, name: str, value: str | int | float) -> None:
+    def set(self, name: str, value: str | int | float) -> None:  # noqa: A003
         """If name-value pair with the specified name exists, sets the value of
         the first name-value pair whose name is *name* to *value* and remove
         the other values. Otherwise, appends a new name-value pair.
@@ -2342,7 +2342,7 @@ class URL:
         return self._url.equals(other._url, exclude_fragments)
 
     @property
-    def hash(self) -> str:
+    def hash(self) -> str:  # noqa: A003
         """A URL’s fragment (includes leading U+0023 (#) if non-empty).
 
         Examples:
@@ -2363,7 +2363,7 @@ class URL:
         return "#" + fragment
 
     @hash.setter
-    def hash(self, value: str) -> None:
+    def hash(self, value: str) -> None:  # noqa: A003
         url = self._url
         if len(value) == 0:
             url.fragment = None
