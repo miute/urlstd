@@ -148,7 +148,7 @@ def test_host_parse_emoji_domain():
     assert Host.parse("👍.example.org") == "xn--yp8h.example.org"
 
 
-def test_host_parse_ipv4_basic(caplog):
+def test_host_parse_ipv4_basic():
     """IPv4 tests."""
     address = Host.parse("192.168.0.1")
     assert isinstance(address, int)
@@ -341,7 +341,7 @@ def test_host_parse_ipv4_06b(caplog):
     assert Host.serialize(address) == "192.168.0.1"
 
 
-def test_host_parse_ipv6_basic(caplog):
+def test_host_parse_ipv6_basic():
     """IPv6 tests."""
     address = Host.parse("[::]")
     assert isinstance(address, tuple)

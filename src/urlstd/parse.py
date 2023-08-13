@@ -2774,7 +2774,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **authority state**
-        _ = base
+        del base
         log = get_logger(cls)
         index = start
         buffer = ""
@@ -2899,7 +2899,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **file host state**
-        _ = base
+        del base
         log = get_logger(cls)
         buffer = ""
         index = start
@@ -2984,7 +2984,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **fragment state**
-        _ = base
+        del base
         log = get_logger(cls)
         buffer = ""
         index = start
@@ -3041,7 +3041,7 @@ class BasicURLParser:
     ) -> tuple[URLParserState, int]:
         # **host state**
         # **hostname state**
-        _ = base
+        del base
         if state_override and url.scheme == "file":
             return URLParserState.FILE_HOST_STATE, start
 
@@ -3151,7 +3151,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **opaque path state**
-        _ = base
+        del base
         log = get_logger(cls)
         index = start
         # TODO: Use buffer.
@@ -3212,7 +3212,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **path state**
-        _ = base
+        del base
         log = get_logger(cls)
         buffer = ""
         index = start
@@ -3306,8 +3306,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **path or authority state**
-        _ = base, url
-        del kwargs
+        del base, url, kwargs
         index = start
         c = urlstring[index : index + 1]
         index += 1
@@ -3326,7 +3325,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **path start state**
-        _ = base
+        del base
         log = get_logger(cls)
         index = start
         c = urlstring[index : index + 1]
@@ -3369,7 +3368,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **port state**
-        _ = base
+        del base
         log = get_logger(cls)
         buffer = ""
         index = start
@@ -3423,7 +3422,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **query state**
-        _ = base
+        del base
         log = get_logger(cls)
         if encoding != "utf-8":
             if url.is_not_special() or url.scheme in ["ws", "wss"]:
@@ -3671,7 +3670,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **special authority ignore slashes state**
-        _ = base, url
+        del base, url
         log = get_logger(cls)
         index = start
         for c in cpstream(urlstring[index:]):
@@ -3703,7 +3702,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **special authority slashes state**
-        _ = base, url
+        del base, url
         log = get_logger(cls)
         index = start
         c = urlstring[index : index + 1]
@@ -3734,7 +3733,7 @@ class BasicURLParser:
         **kwargs,
     ) -> tuple[URLParserState, int]:
         # **special relative or authority state**
-        _ = base, url
+        del base, url
         log = get_logger(cls)
         index = start
         c = urlstring[index : index + 1]

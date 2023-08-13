@@ -28,6 +28,7 @@ def pytest_html_results_table_row(report, cells):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
+    del call
     outcome = yield
     report = outcome.get_result()
     report.description = item.function.__doc__ or ""
