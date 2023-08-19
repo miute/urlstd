@@ -26,6 +26,7 @@ from urlstd.parse import (
     ValidityState,
     get_logger,
     is_url_code_points,
+    is_url_units,
     parse_url,
     urlparse,
 )
@@ -1514,14 +1515,27 @@ def test_idna_domain_to_unicode_verify_dns_length_03(caplog):
 
 
 @pytest.mark.parametrize(
-    ("text", "extra", "valid", "error"),
+    ("text", "including", "excluding", "valid", "error"),
     [
-        ["", None, True, ""],  # empty string
-        ["0123456789", None, True, ""],  # ASCII digit
-        ["ABCDEFGHIJKLMNOPQRSTUVWXYZ", None, True, ""],  # ASCII upper alpha
-        ["abcdefghijklmnopqrstuvwxyz", None, True, ""],  # ASCII lower alpha
+        ["", None, None, True, ""],  # empty string
+        ["0123456789", None, None, True, ""],  # ASCII digit
+        [
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            None,
+            None,
+            True,
+            "",
+        ],  # ASCII upper alpha
+        [
+            "abcdefghijklmnopqrstuvwxyz",
+            None,
+            None,
+            True,
+            "",
+        ],  # ASCII lower alpha
         [
             "!$&'()*+,-./:;=?@_~",
+            None,
             None,
             True,
             "",
@@ -1529,22 +1543,31 @@ def test_idna_domain_to_unicode_verify_dns_length_03(caplog):
         [
             "!$&'()*+,-./:;=?@_~%",
             None,
+            None,
             False,
             "%",
         ],
         [
-            "!$&'()*+,-./:;=?@_~",
+            "!$&'()*+,-./:;=?@_~%",
             "%",
+            None,
             True,
             "",
         ],
-        ["\x9f", None, False, "\x9f"],  # U+00A0 to U+10FFFD
-        ["\xa0", None, True, ""],  # U+00A0 to U+10FFFD
-        ["\U0010fffd", None, True, ""],  # U+00A0 to U+10FFFD
-        ["\U0010fffe", None, False, "\U0010fffe"],  # U+00A0 to U+10FFFD
-        ["\ud7ff", None, True, ""],  # leading surrogate: U+D800 to U+DBFF
+        ["\x9f", None, None, False, "\x9f"],  # U+00A0 to U+10FFFD
+        ["\xa0", None, None, True, ""],  # U+00A0 to U+10FFFD
+        ["\U0010fffd", None, None, True, ""],  # U+00A0 to U+10FFFD
+        ["\U0010fffe", None, None, False, "\U0010fffe"],  # U+00A0 to U+10FFFD
+        [
+            "\ud7ff",
+            None,
+            None,
+            True,
+            "",
+        ],  # leading surrogate: U+D800 to U+DBFF
         [
             "a\ud800",
+            None,
             None,
             False,
             "\ud800",
@@ -1552,11 +1575,13 @@ def test_idna_domain_to_unicode_verify_dns_length_03(caplog):
         [
             "a\udbff",
             None,
+            None,
             False,
             "\udbff",
         ],  # leading surrogate: U+D800 to U+DBFF
         [
             "a\udc00",
+            None,
             None,
             False,
             "\udc00",
@@ -1564,27 +1589,79 @@ def test_idna_domain_to_unicode_verify_dns_length_03(caplog):
         [
             "a\udfff",
             None,
+            None,
             False,
             "\udfff",
         ],  # trailing surrogate: U+DC00 to U+DFFF
         [
             "a\ue000",
             None,
+            None,
             True,
             "",
         ],  # trailing surrogate: U+DC00 to U+DFFF
-        ["a\ufdcf", None, True, ""],  # noncharacter: U+FDD0 to U+FDEF
-        ["a\ufdd0", None, False, "\ufdd0"],  # noncharacter: U+FDD0 to U+FDEF
-        ["a\ufdef", None, False, "\ufdef"],  # noncharacter: U+FDD0 to U+FDEF
-        ["a\ufdf0", None, True, ""],  # noncharacter: U+FDD0 to U+FDEF
-        ["a\ufffd", None, True, ""],  # noncharacter: U+FFFE
-        ["a\ufffe", None, False, "\ufffe"],  # noncharacter: U+FFFE
-        ["a\uffff", None, False, "\uffff"],  # noncharacter: U+FFFF
-        ["a\U00010000", None, True, ""],  # noncharacter: U+FFFF
+        ["a\ufdcf", None, None, True, ""],  # noncharacter: U+FDD0 to U+FDEF
+        [
+            "a\ufdd0",
+            None,
+            None,
+            False,
+            "\ufdd0",
+        ],  # noncharacter: U+FDD0 to U+FDEF
+        [
+            "a\ufdef",
+            None,
+            None,
+            False,
+            "\ufdef",
+        ],  # noncharacter: U+FDD0 to U+FDEF
+        ["a\ufdf0", None, None, True, ""],  # noncharacter: U+FDD0 to U+FDEF
+        ["a\ufffd", None, None, True, ""],  # noncharacter: U+FFFE
+        ["a\ufffe", None, None, False, "\ufffe"],  # noncharacter: U+FFFE
+        ["a\uffff", None, None, False, "\uffff"],  # noncharacter: U+FFFF
+        ["a\U00010000", None, None, True, ""],  # noncharacter: U+FFFF
+        ["a2b", None, "0123456789", False, "2"],
+        ["a%2b", "%", "0123456789", False, "2"],
     ],
 )
-def test_is_url_code_points(text, extra, valid, error):
-    result = is_url_code_points(text, extra=extra)
+def test_is_url_code_points(text, including, excluding, valid, error):
+    result = is_url_code_points(text, including=including, excluding=excluding)
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    assert isinstance(result[0], bool)
+    assert isinstance(result[1], str)
+    assert result[0] is valid
+    if not valid:
+        assert result[1] == error
+
+
+@pytest.mark.parametrize(
+    ("text", "excluding", "valid", "error"),
+    [
+        ["", None, True, ""],  # empty string
+        [
+            "0123456789"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "abcdefghijklmnopqrstuvwxyz"
+            "!$&'()*+,-./:;=?@_~"
+            "%00",
+            None,
+            True,
+            "",
+        ],
+        ["a<>b", None, False, "<"],
+        ["a\ud800\udc00b", None, False, "\ud800"],
+        ["a%FGb", None, False, "%FG"],
+        ["a%gfb", None, False, "%gf"],
+        ["a%GHb", None, False, "%GH"],
+        ["a%f", None, False, "%f"],
+        ["a%g", None, False, "%g"],
+        ["a%", None, False, "%"],
+        ["a/b", "\x00\t\x0a\x0d #/:<>?@[\\]^|", False, "/"],
+    ],
+)
+def test_is_url_units(text, excluding, valid, error):
+    result = is_url_units(text, excluding=excluding)
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert isinstance(result[0], bool)

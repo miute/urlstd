@@ -168,12 +168,13 @@ def is_normalized_windows_drive_letter(text: str) -> bool:
 
 
 def is_url_code_points(
-    url: str, extra: Optional[str] = None
+    s: str, including: Optional[str] = None, excluding: Optional[str] = None
 ) -> tuple[bool, str]:
-    for c in url:
-        if not (
+    for c in s:
+        if (excluding and c in excluding) or not (
             c in ASCII_ALPHANUMERIC
             or c in "!$&'()*+,-./:;=?@_~"
+            or (including and c in including)
             or (
                 "\u00a0" <= c <= "\U0010fffd"
                 and not ("\ud800" <= c <= "\udbff")  # leading surrogate
@@ -189,9 +190,21 @@ def is_url_code_points(
                     "\U000ffffe\U000fffff\U0010fffe\U0010ffff"
                 )  # noncharacter
             )
-            or (extra and c in extra)
         ):
             return False, c
+    return True, ""
+
+
+def is_url_units(
+    s: str, including: str = "%", excluding: Optional[str] = None
+) -> tuple[bool, str]:
+    valid, c = is_url_code_points(s, including=including, excluding=excluding)
+    if not valid:
+        return False, c
+    parts = [m.group() for m in PERCENT_RE.finditer(s)]
+    for part in parts:
+        if len(part) < 3 or any(c not in ASCII_HEX_DIGITS for c in part[1:3]):
+            return False, part[:3]
     return True, ""
 
 
@@ -579,31 +592,26 @@ class Host:
                 f"a forbidden host code point: {host!r}"
             )
 
-        valid, c = is_url_code_points(host, extra="%")
+        valid, c = is_url_units(host)
         if not valid:
-            _c = utf8_encode(c).decode()
-            log.info(
-                "invalid-URL-unit: "
-                "code point is found that is not a URL unit: U+%04X (%s) in %r",
-                ord(c),
-                _c,
-                host,
-                **kwargs,
-            )
-
-        parts = [m.group() for m in PERCENT_RE.finditer(host)]
-        for part in parts:
-            if len(part) < 3 or any(
-                c not in ASCII_HEX_DIGITS for c in part[1:3]
-            ):
+            if len(c) == 1 and c != "%":
+                _c = utf8_encode(c).decode()
                 log.info(
                     "invalid-URL-unit: "
-                    "incorrect percent encoding is found: %r in %r",
-                    part[:3],
+                    "code point is found that is not a URL unit: U+%04X (%s) in %r",
+                    ord(c),
+                    _c,
                     host,
                     **kwargs,
                 )
-                break
+            else:
+                log.info(
+                    "invalid-URL-unit: "
+                    "incorrect percent encoding is found: %r in %r",
+                    c,
+                    host,
+                    **kwargs,
+                )
         return utf8_percent_encode(host, SAFE_C0_CONTROL_PERCENT_ENCODE_SET)
 
     @classmethod
