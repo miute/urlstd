@@ -795,13 +795,13 @@ def test_host_validator_is_valid_01(caplog):
     caplog.set_level(logging.INFO)
 
     # invalid domain string
+    assert HostValidator.is_valid("") is False  # empty label
     assert HostValidator.is_valid("a..b") is False  # empty label
     assert HostValidator.is_valid("a.b/") is False  # disallowed characters
     assert HostValidator.is_valid("a" * 64) is False  # too long label
     long_domain = ".".join(["a" * 63, "b" * 63, "c" * 63, "d" * 63])
     assert len(long_domain) >= 255
     assert HostValidator.is_valid(long_domain) is False  # too long domain name
-    assert HostValidator.is_valid("") is False  # empty label
     assert HostValidator.is_valid("\u00ad") is False  # empty ASCII-domain
 
     # valid domain string
@@ -812,6 +812,11 @@ def test_host_validator_is_valid_01(caplog):
 
     # invalid domain string
     validity = ValidityState()
+    assert HostValidator.is_valid("", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["domain-to-ASCII", "IPv4-empty-part"]
+    assert validity.validation_errors == 2
+
     assert HostValidator.is_valid("a..b", validity=validity) is False
     assert validity.valid is False
     assert validity.error_types == ["domain-to-ASCII", "undefined"]
@@ -823,7 +828,6 @@ def test_host_validator_is_valid_01(caplog):
     assert validity.validation_errors == 2
 
     # valid domain string
-    validity = ValidityState()
     assert HostValidator.is_valid("a.b", validity=validity) is True
     assert validity.valid is True
     assert validity.error_types == []
@@ -858,7 +862,6 @@ def test_host_validator_is_valid_02(caplog):
     assert validity.validation_errors == 0
 
     # valid IPv4-address string
-    validity = ValidityState()
     assert HostValidator.is_valid("127.0.0.1", validity=validity) is True
     assert validity.valid is True
     assert validity.error_types == []
@@ -874,6 +877,7 @@ def test_host_validator_is_valid_03(caplog):
     # invalid IPv6-address string
     assert HostValidator.is_valid("::1") is False  # disallowed characters
     assert HostValidator.is_valid("[::1") is False  # disallowed characters
+    assert HostValidator.is_valid("[]") is False
     assert HostValidator.is_valid("[:1]") is False
     assert HostValidator.is_valid("[1:2:3:4:5:6:7:8:9]") is False
     assert HostValidator.is_valid("[1::1::1]") is False
@@ -895,56 +899,43 @@ def test_host_validator_is_valid_03(caplog):
     assert validity.error_types == ["domain-to-ASCII", "undefined"]
     assert validity.validation_errors == 2
 
-    validity = ValidityState()
     assert HostValidator.is_valid("[::1", validity=validity) is False
     assert validity.valid is False
     assert validity.error_types == ["domain-to-ASCII", "undefined"]
     assert validity.validation_errors == 2
 
-    validity = ValidityState()
+    assert HostValidator.is_valid("[]", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["IPv6-too-few-pieces"]
+    assert validity.validation_errors == 1
+
     assert HostValidator.is_valid("[:1]", validity=validity) is False
     assert validity.valid is False
-    assert validity.error_types == [
-        "domain-to-ASCII",
-        "undefined",
-        "IPv6-invalid-compression",
-    ]
-    assert validity.validation_errors == 3
+    assert validity.error_types == ["IPv6-invalid-compression"]
+    assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid("[1:2:3:4:5:6:7:8:9]", validity=validity)
         is False
     )
     assert validity.valid is False
-    assert validity.error_types == [
-        "domain-to-ASCII",
-        "undefined",
-        "IPv6-too-many-pieces",
-    ]
-    assert validity.validation_errors == 3
+    assert validity.error_types == ["IPv6-too-many-pieces"]
+    assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid("[1:1:1:1:1:1:1:127.0.0.1]", validity=validity)
         is False
     )
     assert validity.valid is False
-    assert validity.error_types == [
-        "domain-to-ASCII",
-        "IPv4-non-numeric-part",
-        "IPv4-in-IPv6-too-many-pieces",
-    ]
-    assert validity.validation_errors == 3
+    assert validity.error_types == ["IPv4-in-IPv6-too-many-pieces"]
+    assert validity.validation_errors == 1
 
     # valid IPv6-address string
-    validity = ValidityState()
     assert HostValidator.is_valid("[::1]", validity=validity) is True
     assert validity.valid is True
     assert validity.error_types == []
     assert validity.validation_errors == 0
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid("[ffff::127.0.0.1]", validity=validity) is True
     )
@@ -960,6 +951,7 @@ def test_host_validator_is_valid_domain(caplog, mocker):
     caplog.set_level(logging.INFO)
 
     # invalid domain string
+    assert HostValidator.is_valid_domain("") is False  # empty label
     assert HostValidator.is_valid_domain("a..b") is False  # empty label
     # disallowed characters
     assert HostValidator.is_valid_domain("a.b/") is False
@@ -968,7 +960,6 @@ def test_host_validator_is_valid_domain(caplog, mocker):
     assert len(long_domain) >= 255
     # too long domain name
     assert HostValidator.is_valid_domain(long_domain) is False
-    assert HostValidator.is_valid_domain("") is False  # empty label
     # empty ASCII-domain
     assert HostValidator.is_valid_domain("\u00ad") is False
 
@@ -980,19 +971,22 @@ def test_host_validator_is_valid_domain(caplog, mocker):
 
     # invalid domain string
     validity = ValidityState()
+    assert HostValidator.is_valid_domain("", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["domain-to-ASCII"]
+    assert validity.validation_errors == 1
+
     assert HostValidator.is_valid_domain("a..b", validity=validity) is False
     assert validity.valid is False
     assert validity.error_types == ["domain-to-ASCII"]
     assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert HostValidator.is_valid_domain("\u00ad", validity=validity) is False
     assert validity.valid is False
     assert validity.error_types == ["domain-to-ASCII"]
     assert validity.validation_errors == 1
 
     # valid domain string
-    validity = ValidityState()
     assert HostValidator.is_valid_domain("a.b", validity=validity) is True
     assert validity.valid is True
     assert validity.error_types == []
@@ -1016,6 +1010,7 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     caplog.set_level(logging.INFO)
 
     # invalid IPv4-address string
+    assert HostValidator.is_valid_ipv4_address("") is False
     assert HostValidator.is_valid_ipv4_address("127.0.0.1.") is False
     assert HostValidator.is_valid_ipv4_address("127.0.0.0.1") is False
     assert HostValidator.is_valid_ipv4_address("127.0.1") is False
@@ -1031,6 +1026,11 @@ def test_host_validator_is_valid_ipv4_address(caplog):
 
     # invalid IPv4-address string
     validity = ValidityState()
+    assert HostValidator.is_valid_ipv4_address("", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["IPv4-empty-part"]
+    assert validity.validation_errors == 1
+
     assert (
         HostValidator.is_valid_ipv4_address("127.0.0.1.", validity=validity)
         is False
@@ -1039,7 +1039,6 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     assert validity.error_types == ["IPv4-empty-part"]
     assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid_ipv4_address("127.0.0.0.1", validity=validity)
         is False
@@ -1048,7 +1047,6 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     assert validity.error_types == ["IPv4-too-many-parts"]
     assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid_ipv4_address("127.0.1", validity=validity)
         is False
@@ -1057,7 +1055,6 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     assert validity.error_types == ["undefined"]
     assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid_ipv4_address("127.0..1", validity=validity)
         is False
@@ -1066,7 +1063,6 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     assert validity.error_types == ["IPv4-non-numeric-part"]
     assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid_ipv4_address("127.0.AB.1", validity=validity)
         is False
@@ -1075,7 +1071,6 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     assert validity.error_types == ["IPv4-non-numeric-part"]
     assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid_ipv4_address("127.0.08.1", validity=validity)
         is False
@@ -1084,7 +1079,6 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     assert validity.error_types == ["IPv4-non-numeric-part"]
     assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid_ipv4_address("127.0.0xGH.1", validity=validity)
         is False
@@ -1093,7 +1087,6 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     assert validity.error_types == ["IPv4-non-numeric-part"]
     assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid_ipv4_address("127.0.00.1", validity=validity)
         is False
@@ -1102,7 +1095,6 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     assert validity.error_types == ["IPv4-non-decimal-part"]
     assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid_ipv4_address("127.0.0x0.1", validity=validity)
         is False
@@ -1111,7 +1103,6 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     assert validity.error_types == ["IPv4-non-decimal-part"]
     assert validity.validation_errors == 1
 
-    validity = ValidityState()
     assert (
         HostValidator.is_valid_ipv4_address(
             "255.255.4000.1", validity=validity
@@ -1123,7 +1114,6 @@ def test_host_validator_is_valid_ipv4_address(caplog):
     assert validity.validation_errors == 1
 
     # valid IPv4-address string
-    validity = ValidityState()
     assert (
         HostValidator.is_valid_ipv4_address("127.0.0.1", validity=validity)
         is True
@@ -1139,6 +1129,7 @@ def test_host_validator_is_valid_ipv6_address(caplog):
     caplog.set_level(logging.INFO)
 
     # invalid IPv6-address string
+    assert HostValidator.is_valid_ipv6_address("") is False
     assert HostValidator.is_valid_ipv6_address(":1") is False
     assert HostValidator.is_valid_ipv6_address("1:2:3:4:5:6:7:8:9") is False
     assert HostValidator.is_valid_ipv6_address("1::1::1") is False
@@ -1168,6 +1159,11 @@ def test_host_validator_is_valid_ipv6_address(caplog):
 
     # invalid IPv6-address string
     validity = ValidityState()
+    assert HostValidator.is_valid_ipv6_address("", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["IPv6-too-few-pieces"]
+    assert validity.validation_errors == 1
+
     assert (
         HostValidator.is_valid_ipv6_address(":1", validity=validity) is False
     )
@@ -1176,7 +1172,6 @@ def test_host_validator_is_valid_ipv6_address(caplog):
     assert validity.validation_errors == 1
 
     # valid IPv6-address string
-    validity = ValidityState()
     assert HostValidator.is_valid_ipv6_address("::", validity=validity) is True
     assert validity.valid is True
     assert validity.error_types == []

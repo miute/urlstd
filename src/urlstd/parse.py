@@ -136,6 +136,8 @@ UTF16BE_CODECS = frozenset(["utf_16_be", "utf-16be", "utf-16-be"])
 
 UTF16LE_CODECS = frozenset(["utf_16_le", "utf-16le", "utf-16-le"])
 
+ERROR_TYPE_UNDEFINED = "undefined"
+
 
 def cpstream(s: str) -> Iterable[str]:
     for c in s:
@@ -551,7 +553,7 @@ class _Logger(logging.getLoggerClass()):  # type: ignore [misc]
             validity.valid = False
             matched = VALIDATION_ERROR_TYPE_RE.search(msg)
             validity.error_types.insert(
-                0, matched.group(1) if matched else "undefined"
+                0, matched.group(1) if matched else ERROR_TYPE_UNDEFINED
             )
             validity.validation_errors += 1
             if validity.disable_logging:
@@ -565,7 +567,7 @@ class _Logger(logging.getLoggerClass()):  # type: ignore [misc]
             validity.valid = False
             matched = VALIDATION_ERROR_TYPE_RE.search(msg)
             validity.error_types.insert(
-                0, matched.group(1) if matched else "undefined"
+                0, matched.group(1) if matched else ERROR_TYPE_UNDEFINED
             )
             validity.validation_errors += 1
             if validity.disable_logging:
@@ -721,12 +723,8 @@ class HostValidator:
             validity.reset()
 
         # validate an IPv6-address string
-        if (
-            host.startswith("[")
-            and host.endswith("]")
-            and cls.is_valid_ipv6_address(host[1:-1], **kwargs)
-        ):
-            return True
+        if host.startswith("[") and host.endswith("]"):
+            return cls.is_valid_ipv6_address(host[1:-1], **kwargs)
         old = copy.deepcopy(validity)
 
         # validate an IPv4-address string
@@ -784,19 +782,19 @@ class HostValidator:
         if len(parts[-1]) == 0:
             if validity:
                 validity.valid = False
-                validity.error_types.append("IPv4-empty-part")
+                validity.error_types.insert(0, "IPv4-empty-part")
                 validity.validation_errors += 1
             return False
         elif len(parts) > 4:
             if validity:
                 validity.valid = False
-                validity.error_types.append("IPv4-too-many-parts")
+                validity.error_types.insert(0, "IPv4-too-many-parts")
                 validity.validation_errors += 1
             return False
         elif len(parts) < 4:
             if validity:
                 validity.valid = False
-                validity.error_types.append("undefined")
+                validity.error_types.insert(0, ERROR_TYPE_UNDEFINED)
                 validity.validation_errors += 1
             return False
 
@@ -805,20 +803,20 @@ class HostValidator:
             if result[0] < 0:
                 if validity:
                     validity.valid = False
-                    validity.error_types.append("IPv4-non-numeric-part")
+                    validity.error_types.insert(0, "IPv4-non-numeric-part")
                     validity.validation_errors += 1
                 return False
             elif result[1]:
                 if validity:
                     validity.valid = False
-                    validity.error_types.append("IPv4-non-decimal-part")
+                    validity.error_types.insert(0, "IPv4-non-decimal-part")
                     validity.validation_errors += 1
                 return False
 
             if not (0 <= int(part) <= 255):
                 if validity:
                     validity.valid = False
-                    validity.error_types.append("IPv4-out-of-range-part")
+                    validity.error_types.insert(0, "IPv4-out-of-range-part")
                     validity.validation_errors += 1
                 return False
         return True
