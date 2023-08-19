@@ -1180,6 +1180,131 @@ def test_host_validator_is_valid_ipv6_address(caplog):
     assert len(caplog.record_tuples) == 0
 
 
+def test_host_validator_is_valid_opaque_host_01(caplog):
+    """Validate an opaque-host string: An IPv6-address string."""
+    caplog.set_level(logging.INFO)
+
+    # invalid IPv6-address string
+    assert HostValidator.is_valid_opaque_host("[]") is False
+    assert HostValidator.is_valid_opaque_host("[:1]") is False
+    assert HostValidator.is_valid_opaque_host("[1:2:3:4:5:6:7:8:9]") is False
+    assert HostValidator.is_valid_opaque_host("[1::1::1]") is False
+    assert HostValidator.is_valid_opaque_host("[1:2:3!:4]") is False
+    assert HostValidator.is_valid_opaque_host("[1:2:3:]") is False
+    assert HostValidator.is_valid_opaque_host("[1:2:3]") is False
+    assert (
+        HostValidator.is_valid_opaque_host("[1:1:1:1:1:1:1:127.0.0.1]")
+        is False
+    )
+    assert HostValidator.is_valid_opaque_host("[ffff::.0.0.1]") is False
+    assert HostValidator.is_valid_opaque_host("[ffff::127.0.xyz.1]") is False
+    assert HostValidator.is_valid_opaque_host("[ffff::127.0.0.1.2]") is False
+    assert HostValidator.is_valid_opaque_host("[ffff::127.0.0.4000]") is False
+    assert HostValidator.is_valid_opaque_host("[ffff::127.0.0]") is False
+
+    # valid IPv6-address string
+    assert HostValidator.is_valid_opaque_host("[::]") is True
+    assert HostValidator.is_valid_opaque_host("[1:0::]") is True
+    assert HostValidator.is_valid_opaque_host("[1:2::3]") is True
+    assert (
+        HostValidator.is_valid_opaque_host(
+            "[2001:0DB8:85A3:0000:0000:8A2E:0370:7334]"
+        )
+        is True
+    )
+    assert HostValidator.is_valid_opaque_host("[::ffff:192.0.2.128]") is True
+
+    # invalid IPv6-address string
+    validity = ValidityState()
+    assert HostValidator.is_valid_opaque_host("[]", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["IPv6-too-few-pieces"]
+    assert validity.validation_errors == 1
+
+    assert (
+        HostValidator.is_valid_opaque_host("[:1]", validity=validity) is False
+    )
+    assert validity.valid is False
+    assert validity.error_types == ["IPv6-invalid-compression"]
+    assert validity.validation_errors == 1
+
+    # valid IPv6-address string
+    assert (
+        HostValidator.is_valid_opaque_host("[::]", validity=validity) is True
+    )
+    assert validity.valid is True
+    assert validity.error_types == []
+    assert validity.validation_errors == 0
+
+    assert len(caplog.record_tuples) == 0
+
+
+def test_host_validator_is_valid_opaque_host_02(caplog):
+    """Validate an opaque-host string:
+    One or more URL units excluding forbidden host code points.
+    """
+    caplog.set_level(logging.INFO)
+
+    # forbidden host code point
+    assert HostValidator.is_valid_opaque_host("") is False
+    assert HostValidator.is_valid_opaque_host("\x00") is False
+    assert HostValidator.is_valid_opaque_host("\t") is False
+    assert HostValidator.is_valid_opaque_host("\x0a") is False
+    assert HostValidator.is_valid_opaque_host("\x0d") is False
+    assert HostValidator.is_valid_opaque_host(" ") is False
+    assert HostValidator.is_valid_opaque_host("#") is False
+    assert HostValidator.is_valid_opaque_host("/") is False
+    assert HostValidator.is_valid_opaque_host(":") is False
+    assert HostValidator.is_valid_opaque_host("<") is False
+    assert HostValidator.is_valid_opaque_host(">") is False
+    assert HostValidator.is_valid_opaque_host("?") is False
+    assert HostValidator.is_valid_opaque_host("@") is False
+    assert HostValidator.is_valid_opaque_host("[") is False
+    assert HostValidator.is_valid_opaque_host("\\") is False
+    assert HostValidator.is_valid_opaque_host("]") is False
+    assert HostValidator.is_valid_opaque_host("^") is False
+    assert HostValidator.is_valid_opaque_host("|") is False
+
+    # invalid percent encoding
+    assert HostValidator.is_valid_opaque_host("%") is False
+    assert HostValidator.is_valid_opaque_host("%f") is False
+    assert HostValidator.is_valid_opaque_host("%fg") is False
+    assert HostValidator.is_valid_opaque_host("%gh") is False
+
+    # valid opaque-host string
+    assert HostValidator.is_valid_opaque_host("a" * 64) is True
+    assert HostValidator.is_valid_opaque_host("%ef") is True
+
+    # invalid opaque-host string
+    validity = ValidityState()
+    assert HostValidator.is_valid_opaque_host("", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["undefined"]
+    assert validity.validation_errors == 1
+
+    assert HostValidator.is_valid_opaque_host("%", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["host-invalid-code-point"]
+    assert validity.validation_errors == 1
+
+    assert (
+        HostValidator.is_valid_opaque_host("%gh", validity=validity) is False
+    )
+    assert validity.valid is False
+    assert validity.error_types == ["host-invalid-code-point"]
+    assert validity.validation_errors == 1
+
+    # valid opaque-host string
+    assert (
+        HostValidator.is_valid_opaque_host("a" * 64, validity=validity) is True
+    )
+    assert validity.valid is True
+    assert validity.error_types == []
+    assert validity.validation_errors == 0
+
+    assert len(caplog.record_tuples) == 0
+
+
 def test_idna_domain_to_ascii_check_hyphens(caplog):
     """Unicode ToASCII: CheckHyphens=false"""
     caplog.set_level(logging.INFO)

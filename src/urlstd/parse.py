@@ -844,6 +844,39 @@ class HostValidator:
             pass
         return False
 
+    @classmethod
+    def is_valid_opaque_host(cls, host: str, **kwargs) -> bool:
+        """Returns *True* if *host* is a valid opaque-host string.
+
+        Args:
+            host: A opaque-host string to verify.
+
+        Returns:
+            *True* if *host* is a valid opaque-host, *False* otherwise.
+        """
+        validity: ValidityState | None = kwargs.get("validity")
+        if validity is None:
+            validity = kwargs["validity"] = ValidityState()
+        else:
+            validity.reset()
+
+        if len(host) == 0:
+            validity.valid = False
+            validity.error_types.insert(0, ERROR_TYPE_UNDEFINED)
+            validity.validation_errors += 1
+            return False
+        elif host.startswith("[") and host.endswith("]"):
+            return cls.is_valid_ipv6_address(host[1:-1], **kwargs)
+
+        valid, _ = is_url_units(host, excluding=FORBIDDEN_HOST_CODE_POINT)
+        if valid:
+            validity.reset()
+            return True
+        validity.valid = False
+        validity.error_types.insert(0, "host-invalid-code-point")
+        validity.validation_errors += 1
+        return False
+
 
 class IDNA:
     """Utility class for IDNA processing."""
