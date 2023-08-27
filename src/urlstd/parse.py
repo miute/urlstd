@@ -550,12 +550,7 @@ class _Logger(logging.getLoggerClass()):  # type: ignore [misc]
         kwargs.setdefault("stacklevel", 2)
         validity: ValidityState | None = kwargs.pop("validity", None)
         if validity:
-            validity.valid = False
-            matched = VALIDATION_ERROR_TYPE_RE.search(msg)
-            validity.error_types.insert(
-                0, matched.group(1) if matched else ERROR_TYPE_UNDEFINED
-            )
-            validity.validation_errors += 1
+            validity.prepend(msg, *args)
             if validity.disable_logging:
                 return
         super().error(msg, *args, **kwargs)
@@ -564,12 +559,7 @@ class _Logger(logging.getLoggerClass()):  # type: ignore [misc]
         kwargs.setdefault("stacklevel", 2)
         validity: ValidityState | None = kwargs.pop("validity", None)
         if validity:
-            validity.valid = False
-            matched = VALIDATION_ERROR_TYPE_RE.search(msg)
-            validity.error_types.insert(
-                0, matched.group(1) if matched else ERROR_TYPE_UNDEFINED
-            )
-            validity.validation_errors += 1
+            validity.prepend(msg, *args)
             if validity.disable_logging:
                 return
         super().info(msg, *args, **kwargs)
@@ -725,20 +715,13 @@ class HostValidator:
         # validate an IPv6-address string
         if host.startswith("[") and host.endswith("]"):
             return cls.is_valid_ipv6_address(host[1:-1], **kwargs)
-        old = copy.deepcopy(validity)
 
         # validate an IPv4-address string
-        if cls.is_valid_ipv4_address(host, **kwargs):
-            return True
-        validity += old
-        old = copy.deepcopy(validity)
+        if IPv4Address.is_ends_in_a_number(host):
+            return cls.is_valid_ipv4_address(host, **kwargs)
 
         # validate a domain string
-        if cls.is_valid_domain(host, **kwargs):
-            return True
-        validity += old
-
-        return False
+        return cls.is_valid_domain(host, **kwargs)
 
     @classmethod
     def is_valid_domain(cls, domain: str, **kwargs) -> bool:
@@ -781,43 +764,57 @@ class HostValidator:
         parts = address.split(".")
         if len(parts[-1]) == 0:
             if validity:
-                validity.valid = False
-                validity.error_types.insert(0, "IPv4-empty-part")
-                validity.validation_errors += 1
+                validity.prepend(
+                    "IPv4-empty-part: IPv4 address ends with a U+002E (.): %r",
+                    address,
+                )
             return False
         elif len(parts) > 4:
             if validity:
-                validity.valid = False
-                validity.error_types.insert(0, "IPv4-too-many-parts")
-                validity.validation_errors += 1
+                validity.prepend(
+                    "IPv4-too-many-parts: "
+                    "IPv4 address does not consist of exactly 4 parts: %r",
+                    address,
+                )
             return False
         elif len(parts) < 4:
             if validity:
-                validity.valid = False
-                validity.error_types.insert(0, ERROR_TYPE_UNDEFINED)
-                validity.validation_errors += 1
+                validity.prepend(
+                    "IPv4 address does not consist of exactly 4 parts: %r",
+                    address,
+                )
             return False
 
         for part in parts:
             result = IPv4Address._parse_ipv4_number(part)
             if result[0] < 0:
                 if validity:
-                    validity.valid = False
-                    validity.error_types.insert(0, "IPv4-non-numeric-part")
-                    validity.validation_errors += 1
+                    validity.prepend(
+                        "IPv4-non-numeric-part: "
+                        "IPv4 address part is not numeric: %r in %r",
+                        part,
+                        address,
+                    )
                 return False
             elif result[1]:
                 if validity:
-                    validity.valid = False
-                    validity.error_types.insert(0, "IPv4-non-decimal-part")
-                    validity.validation_errors += 1
+                    validity.prepend(
+                        "IPv4-non-decimal-part: "
+                        "IPv4 address contains numbers expressed using "
+                        "hexadecimal or octal digits: %r in %r",
+                        part,
+                        address,
+                    )
                 return False
 
             if not (0 <= int(part) <= 255):
                 if validity:
-                    validity.valid = False
-                    validity.error_types.insert(0, "IPv4-out-of-range-part")
-                    validity.validation_errors += 1
+                    validity.prepend(
+                        "IPv4-out-of-range-part: "
+                        "IPv4 address part exceeds 255: %r in %r",
+                        part,
+                        address,
+                    )
                 return False
         return True
 
@@ -861,20 +858,37 @@ class HostValidator:
             validity.reset()
 
         if len(host) == 0:
-            validity.valid = False
-            validity.error_types.insert(0, ERROR_TYPE_UNDEFINED)
-            validity.validation_errors += 1
+            validity.prepend("opaque host string is empty")
             return False
         elif host.startswith("[") and host.endswith("]"):
             return cls.is_valid_ipv6_address(host[1:-1], **kwargs)
 
-        valid, _ = is_url_units(host, excluding=FORBIDDEN_HOST_CODE_POINT)
+        valid, c = is_url_units(host, excluding=FORBIDDEN_HOST_CODE_POINT)
         if valid:
-            validity.reset()
             return True
-        validity.valid = False
-        validity.error_types.insert(0, "host-invalid-code-point")
-        validity.validation_errors += 1
+        if c in FORBIDDEN_HOST_CODE_POINT:
+            validity.prepend(
+                "host-invalid-code-point: "
+                "opaque host (in a URL that is not special) contains "
+                "a forbidden host code point: %r",
+                host,
+            )
+        elif len(c) == 1 and c != "%":
+            _c = utf8_encode(c).decode()
+            validity.prepend(
+                "invalid-URL-unit: "
+                "code point is found that is not a URL unit: U+%04X (%s) in %r",
+                ord(c),
+                _c,
+                host,
+            )
+        else:
+            validity.prepend(
+                "invalid-URL-unit: "
+                "incorrect percent encoding is found: %r in %r",
+                c,
+                host,
+            )
         return False
 
 
@@ -2770,6 +2784,7 @@ class URLParserState(enum.IntEnum):
 class ValidityState:
     valid: bool = True
     error_types: list[str] = field(default_factory=list)
+    descriptions: list[str] = field(default_factory=list)
     validation_errors: int = 0
     disable_logging: bool = True
 
@@ -2779,6 +2794,7 @@ class ValidityState:
         return ValidityState(
             self.valid & other.valid,
             self.error_types + other.error_types,
+            self.descriptions + other.descriptions,
             self.validation_errors + other.validation_errors,
             self.disable_logging,
         )
@@ -2788,12 +2804,23 @@ class ValidityState:
             return NotImplemented
         self.valid &= other.valid
         self.error_types += other.error_types
+        self.descriptions += other.descriptions
         self.validation_errors += other.validation_errors
         return self
+
+    def prepend(self, msg: str, *args) -> None:
+        self.valid = False
+        matched = VALIDATION_ERROR_TYPE_RE.search(msg)
+        self.error_types.insert(
+            0, matched.group(1) if matched else ERROR_TYPE_UNDEFINED
+        )
+        self.descriptions.insert(0, msg % args if len(args) > 0 else msg)
+        self.validation_errors += 1
 
     def reset(self) -> None:
         self.valid = True
         self.error_types.clear()
+        self.descriptions.clear()
         self.validation_errors = 0
 
 

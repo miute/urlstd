@@ -814,18 +814,18 @@ def test_host_validator_is_valid_01(caplog):
     validity = ValidityState()
     assert HostValidator.is_valid("", validity=validity) is False
     assert validity.valid is False
-    assert validity.error_types == ["domain-to-ASCII", "IPv4-empty-part"]
-    assert validity.validation_errors == 2
+    assert validity.error_types == ["domain-to-ASCII"]
+    assert validity.validation_errors == 1
 
     assert HostValidator.is_valid("a..b", validity=validity) is False
     assert validity.valid is False
-    assert validity.error_types == ["domain-to-ASCII", "undefined"]
-    assert validity.validation_errors == 2
+    assert validity.error_types == ["domain-to-ASCII"]
+    assert validity.validation_errors == 1
 
     assert HostValidator.is_valid("\u00ad", validity=validity) is False
     assert validity.valid is False
-    assert validity.error_types == ["domain-to-ASCII", "undefined"]
-    assert validity.validation_errors == 2
+    assert validity.error_types == ["domain-to-ASCII"]
+    assert validity.validation_errors == 1
 
     # valid domain string
     assert HostValidator.is_valid("a.b", validity=validity) is True
@@ -840,26 +840,26 @@ def test_host_validator_is_valid_02(caplog):
     """Validate a host string: an IPv4-address string."""
     caplog.set_level(logging.INFO)
 
-    # invalid IPv4-address string, but treated as a valid domain string
-    assert HostValidator.is_valid("127.0.0.1.") is True  # IPv4-empty-part
-    assert HostValidator.is_valid("1.2.3.4.5") is True  # IPv4-too-many-parts
-    assert HostValidator.is_valid("test.42") is True  # IPv4-non-numeric-part
+    # invalid IPv4-address string
+    assert HostValidator.is_valid("127.0.0.1.") is False  # IPv4-empty-part
+    assert HostValidator.is_valid("1.2.3.4.5") is False  # IPv4-too-many-parts
+    assert HostValidator.is_valid("test.42") is False  # IPv4-non-numeric-part
     # IPv4-non-decimal-part
-    assert HostValidator.is_valid("127.0.0x0.1") is True
+    assert HostValidator.is_valid("127.0.0x0.1") is False
     # IPv4-non-decimal-part
-    assert HostValidator.is_valid("127.0.00.1") is True
+    assert HostValidator.is_valid("127.0.00.1") is False
     # IPv4-out-of-range-part
-    assert HostValidator.is_valid("255.255.4000.1") is True
+    assert HostValidator.is_valid("255.255.4000.1") is False
 
     # valid IPv4-address string
     assert HostValidator.is_valid("127.0.0.1") is True
 
-    # invalid IPv4-address string, but treated as a valid domain string
+    # invalid IPv4-address string
     validity = ValidityState()
-    assert HostValidator.is_valid("127.0.0.1.", validity=validity) is True
-    assert validity.valid is True
-    assert validity.error_types == []
-    assert validity.validation_errors == 0
+    assert HostValidator.is_valid("127.0.0.1.", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["IPv4-empty-part"]
+    assert validity.validation_errors == 1
 
     # valid IPv4-address string
     assert HostValidator.is_valid("127.0.0.1", validity=validity) is True
@@ -896,13 +896,13 @@ def test_host_validator_is_valid_03(caplog):
     validity = ValidityState()
     assert HostValidator.is_valid("::1", validity=validity) is False
     assert validity.valid is False
-    assert validity.error_types == ["domain-to-ASCII", "undefined"]
-    assert validity.validation_errors == 2
+    assert validity.error_types == ["domain-to-ASCII"]
+    assert validity.validation_errors == 1
 
     assert HostValidator.is_valid("[::1", validity=validity) is False
     assert validity.valid is False
-    assert validity.error_types == ["domain-to-ASCII", "undefined"]
-    assert validity.validation_errors == 2
+    assert validity.error_types == ["domain-to-ASCII"]
+    assert validity.validation_errors == 1
 
     assert HostValidator.is_valid("[]", validity=validity) is False
     assert validity.valid is False
@@ -1265,6 +1265,9 @@ def test_host_validator_is_valid_opaque_host_02(caplog):
     assert HostValidator.is_valid_opaque_host("^") is False
     assert HostValidator.is_valid_opaque_host("|") is False
 
+    # invalid URL unit
+    assert HostValidator.is_valid_opaque_host("\ud800") is False
+
     # invalid percent encoding
     assert HostValidator.is_valid_opaque_host("%") is False
     assert HostValidator.is_valid_opaque_host("%f") is False
@@ -1282,16 +1285,31 @@ def test_host_validator_is_valid_opaque_host_02(caplog):
     assert validity.error_types == ["undefined"]
     assert validity.validation_errors == 1
 
-    assert HostValidator.is_valid_opaque_host("%", validity=validity) is False
+    assert (
+        HostValidator.is_valid_opaque_host("\x00", validity=validity) is False
+    )
     assert validity.valid is False
     assert validity.error_types == ["host-invalid-code-point"]
+    assert validity.validation_errors == 1
+
+    assert (
+        HostValidator.is_valid_opaque_host("\ud800", validity=validity)
+        is False
+    )
+    assert validity.valid is False
+    assert validity.error_types == ["invalid-URL-unit"]
+    assert validity.validation_errors == 1
+
+    assert HostValidator.is_valid_opaque_host("%", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["invalid-URL-unit"]
     assert validity.validation_errors == 1
 
     assert (
         HostValidator.is_valid_opaque_host("%gh", validity=validity) is False
     )
     assert validity.valid is False
-    assert validity.error_types == ["host-invalid-code-point"]
+    assert validity.error_types == ["invalid-URL-unit"]
     assert validity.validation_errors == 1
 
     # valid opaque-host string
@@ -3279,6 +3297,7 @@ def test_validity_state_add():
     a = ValidityState()
     assert a.valid is True
     assert a.error_types == []
+    assert a.descriptions == []
     assert a.validation_errors == 0
     assert a.disable_logging is True
 
@@ -3286,20 +3305,33 @@ def test_validity_state_add():
     c = a + b
     assert c.valid is True
     assert c.error_types == []
+    assert c.descriptions == []
     assert c.validation_errors == 0
     assert c.disable_logging is True
 
-    d = ValidityState(valid=False, error_types=["a", "b"], validation_errors=2)
+    d = ValidityState(
+        valid=False,
+        error_types=["a", "b"],
+        descriptions=["A", "B"],
+        validation_errors=2,
+    )
     e = c + d
     assert e.valid is False
     assert e.error_types == ["a", "b"]
+    assert e.descriptions == ["A", "B"]
     assert e.validation_errors == 2
     assert e.disable_logging is True
 
-    f = ValidityState(valid=False, error_types=["c", "d"], validation_errors=2)
+    f = ValidityState(
+        valid=False,
+        error_types=["c", "d"],
+        descriptions=["C", "D"],
+        validation_errors=2,
+    )
     g = e + f
     assert g.valid is False
     assert g.error_types == ["a", "b", "c", "d"]
+    assert g.descriptions == ["A", "B", "C", "D"]
     assert g.validation_errors == 4
     assert g.disable_logging is True
 
@@ -3307,6 +3339,7 @@ def test_validity_state_add():
     i = g + h
     assert i.valid is False
     assert i.error_types == ["a", "b", "c", "d"]
+    assert i.descriptions == ["A", "B", "C", "D"]
     assert i.validation_errors == 4
     assert i.disable_logging is True
 
@@ -3315,6 +3348,7 @@ def test_validity_state_iadd():
     a = ValidityState()
     assert a.valid is True
     assert a.error_types == []
+    assert a.descriptions == []
     assert a.validation_errors == 0
     assert a.disable_logging is True
 
@@ -3322,20 +3356,33 @@ def test_validity_state_iadd():
     a += b
     assert a.valid is True
     assert a.error_types == []
+    assert a.descriptions == []
     assert a.validation_errors == 0
     assert a.disable_logging is True
 
-    c = ValidityState(valid=False, error_types=["a", "b"], validation_errors=2)
+    c = ValidityState(
+        valid=False,
+        error_types=["a", "b"],
+        descriptions=["A", "B"],
+        validation_errors=2,
+    )
     a += c
     assert a.valid is False
     assert a.error_types == ["a", "b"]
+    assert a.descriptions == ["A", "B"]
     assert a.validation_errors == 2
     assert a.disable_logging is True
 
-    d = ValidityState(valid=False, error_types=["c", "d"], validation_errors=2)
+    d = ValidityState(
+        valid=False,
+        error_types=["c", "d"],
+        descriptions=["C", "D"],
+        validation_errors=2,
+    )
     a += d
     assert a.valid is False
     assert a.error_types == ["a", "b", "c", "d"]
+    assert a.descriptions == ["A", "B", "C", "D"]
     assert a.validation_errors == 4
     assert a.disable_logging is True
 
@@ -3343,6 +3390,49 @@ def test_validity_state_iadd():
     a += e
     assert a.valid is False
     assert a.error_types == ["a", "b", "c", "d"]
+    assert a.descriptions == ["A", "B", "C", "D"]
+    assert a.validation_errors == 4
+    assert a.disable_logging is True
+
+
+def test_validity_state_prepend():
+    a = ValidityState()
+    assert a.valid is True
+    assert a.error_types == []
+    assert a.descriptions == []
+    assert a.validation_errors == 0
+    assert a.disable_logging is True
+
+    a.prepend("a-b: cc ddd")
+    assert a.valid is False
+    assert a.error_types == ["a-b"]
+    assert a.descriptions == ["a-b: cc ddd"]
+    assert a.validation_errors == 1
+    assert a.disable_logging is True
+
+    a.prepend("e: %s %s", "ff", "ggg")
+    assert a.valid is False
+    assert a.error_types == ["undefined", "a-b"]
+    assert a.descriptions == ["e: ff ggg", "a-b: cc ddd"]
+    assert a.validation_errors == 2
+    assert a.disable_logging is True
+
+    a.prepend("h ii %s", "jjj")
+    assert a.valid is False
+    assert a.error_types == ["undefined", "undefined", "a-b"]
+    assert a.descriptions == ["h ii jjj", "e: ff ggg", "a-b: cc ddd"]
+    assert a.validation_errors == 3
+    assert a.disable_logging is True
+
+    a.prepend("k-l-m: %s", "nn")
+    assert a.valid is False
+    assert a.error_types == ["k-l-m", "undefined", "undefined", "a-b"]
+    assert a.descriptions == [
+        "k-l-m: nn",
+        "h ii jjj",
+        "e: ff ggg",
+        "a-b: cc ddd",
+    ]
     assert a.validation_errors == 4
     assert a.disable_logging is True
 
@@ -3351,21 +3441,25 @@ def test_validity_state_reset():
     a = ValidityState()
     assert a.valid is True
     assert a.error_types == []
+    assert a.descriptions == []
     assert a.validation_errors == 0
     assert a.disable_logging is True
     a.reset()
     assert a.valid is True
     assert a.error_types == []
+    assert a.descriptions == []
     assert a.validation_errors == 0
     assert a.disable_logging is True
 
-    b = ValidityState(False, ["a", "b"], 2, False)
+    b = ValidityState(False, ["a", "b"], ["A", "B"], 2, False)
     assert b.valid is False
     assert b.error_types == ["a", "b"]
+    assert b.descriptions == ["A", "B"]
     assert b.validation_errors == 2
     assert b.disable_logging is False
     b.reset()
     assert b.valid is True
     assert b.error_types == []
+    assert b.descriptions == []
     assert b.validation_errors == 0
     assert b.disable_logging is False
