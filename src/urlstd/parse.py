@@ -6,12 +6,15 @@ from __future__ import annotations
 
 import codecs
 import copy
+import csv
 import enum
+import gzip
 import logging
 import re
 import string
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, NamedTuple, Optional, Self, overload
 from urllib.parse import ParseResult, quote, quote_plus
 from urllib.parse import unquote_to_bytes as percent_decode
@@ -36,6 +39,7 @@ __all__ = [
     "URLParserState",
     "URLRecord",
     "URLSearchParams",
+    "URLValidator",
     "parse_qsl",
     "parse_url",
     "string_percent_decode",
@@ -137,6 +141,15 @@ UTF16BE_CODECS = frozenset(["utf_16_be", "utf-16be", "utf-16-be"])
 UTF16LE_CODECS = frozenset(["utf_16_le", "utf-16le", "utf-16-le"])
 
 ERROR_TYPE_UNDEFINED = "undefined"
+
+with gzip.open(
+    Path(__file__).parent / "data" / "uri-schemes-1.csv.gz", "rt"
+) as f:
+    REGISTERED_SCHEMES: list[str] = [
+        x["URI Scheme"] for x in csv.DictReader(f.read().split("\n"))
+    ]
+del f
+REGISTERED_SCHEMES.remove("shttp (OBSOLETE)")
 
 
 def cpstream(s: str) -> Iterable[str]:
@@ -2778,6 +2791,74 @@ class URLParserState(enum.IntEnum):
     SPECIAL_AUTHORITY_IGNORE_SLASHES_STATE = enum.auto()
     SPECIAL_AUTHORITY_SLASHES_STATE = enum.auto()
     SPECIAL_RELATIVE_OR_AUTHORITY_STATE = enum.auto()
+
+
+class URLValidator:
+    """Validates a URL string."""
+
+    @classmethod
+    def is_valid(
+        cls,
+        urlstring: str,
+        base: Optional[str | URLRecord] = None,
+        encoding: str = "utf-8",
+        **kwargs,
+    ) -> bool:
+        """Returns *True* if *urlstring* against a base URL *base* is a valid URL.
+
+        Args:
+            urlstring: An absolute-URL or a relative-URL to verify.
+                If *urlstring* is a relative-URL, *base* is required.
+            base: An absolute-URL for a relative-URL *urlstring*.
+            encoding: The encoding to encode URL’s query. If the encoding fails,
+                it will be replaced with the appropriate XML character reference.
+
+        Returns:
+            *True* if *urlstring* against a base URL *base* is a valid URL,
+            *False* otherwise.
+        """
+        validity: ValidityState | None = kwargs.get("validity")
+        if validity is None:
+            validity = kwargs["validity"] = ValidityState()
+        else:
+            validity.reset()
+
+        try:
+            url = parse_url(urlstring, base=base, encoding=encoding, **kwargs)
+        except URLParseError:
+            return False
+
+        old = copy.deepcopy(validity)
+        cls.is_valid_url_scheme(url.scheme, **kwargs)
+        validity += old
+        return validity.validation_errors == 0
+
+    @classmethod
+    def is_valid_url_scheme(cls, value: str, **kwargs) -> bool:
+        """Returns *True* if *value* is a valid URL-scheme that is registered
+        in the IANA URI Schemes registry.
+
+        Args:
+            value: A URL-scheme to verify.
+
+        Returns:
+            *True* if *value* is a valid URL-scheme, *False* otherwise.
+        """
+        validity: ValidityState | None = kwargs.get("validity")
+        if validity is None:
+            validity = kwargs["validity"] = ValidityState()
+        else:
+            validity.reset()
+
+        # https://url.spec.whatwg.org/#url-scheme-string
+        scheme = value.lower()
+        if len(scheme) > 0 and scheme in REGISTERED_SCHEMES:
+            return True
+        validity.prepend(
+            "scheme is not registered in the IANA URI Schemes registry: %r",
+            scheme,
+        )
+        return False
 
 
 @dataclass

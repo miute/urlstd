@@ -23,6 +23,7 @@ from urlstd.parse import (
     URLParserState,
     URLRecord,
     URLSearchParams,
+    URLValidator,
     ValidityState,
     get_logger,
     is_url_code_points,
@@ -3037,6 +3038,284 @@ def test_url_repr():
         "hash='#c'"
         ")>"
     )
+
+
+def test_url_validator_is_valid(caplog):
+    caplog.set_level(logging.INFO)
+    validity = ValidityState()
+
+    # invalid-URL-unit
+    assert (
+        URLValidator.is_valid("ht\ntps://www.\r\nexample.com\n\r/\n\n")
+        is False
+    )
+
+    # invalid-credentials
+    assert (
+        URLValidator.is_valid(
+            "https://@test@test@example:800/", "http://doesnotmatter/"
+        )
+        is False
+    )
+
+    # invalid-reverse-solidus
+    assert URLValidator.is_valid("file:\\c:") is False
+
+    # file-invalid-Windows-drive-letter
+    assert (
+        URLValidator.is_valid("file:c://foo/bar.html", "file:///tmp/mock/path")
+        is False
+    )
+
+    # file-invalid-Windows-drive-letter-host
+    assert (
+        URLValidator.is_valid("file://c://foo/bar", "file:///c:/baz/qux")
+        is False
+    )
+
+    # host-missing
+    assert URLValidator.is_valid("sc://:/") is False
+
+    # missing-scheme-non-relative-URL
+    assert URLValidator.is_valid("////c:/") is False
+
+    # port-out-of-range
+    assert URLValidator.is_valid("http://f:999999/c") is False
+
+    # port-invalid
+    assert URLValidator.is_valid("http://foo:-80/") is False
+
+    # special-scheme-missing-following-solidus
+    assert URLValidator.is_valid("file:\\c:\\foo\\bar") is False
+
+    # unregistered scheme
+    assert URLValidator.is_valid("sc:\\../%GH") is False
+
+    # normal
+    assert URLValidator.is_valid("https://example.org/") is True
+
+    # with encoding
+    assert URLValidator.is_valid("http://example.org/test?yÿ") is True
+    assert (
+        URLValidator.is_valid(
+            "http://example.org/test?yÿ", encoding="windows-1251"
+        )
+        is True
+    )
+    assert (
+        URLValidator.is_valid(
+            "http://example.org/test?yÿ", encoding="windows-1252"
+        )
+        is True
+    )
+
+    # with ValidityState
+    # invalid-URL-unit
+    assert (
+        URLValidator.is_valid(
+            "ht\ntps://www.\r\nexample.com\n\r/\n\n", validity=validity
+        )
+        is False
+    )
+    assert validity.valid is False
+    assert validity.error_types == ["invalid-URL-unit", "invalid-URL-unit"]
+    assert validity.descriptions[0].startswith("invalid-URL-unit: ")
+    assert validity.validation_errors == 2
+
+    # invalid-credentials
+    assert (
+        URLValidator.is_valid(
+            "https://@test@test@example:800/",
+            "http://doesnotmatter/",
+            validity=validity,
+        )
+        is False
+    )
+    assert validity.valid is False
+    assert validity.error_types == [
+        "invalid-credentials",
+        "invalid-credentials",
+        "invalid-credentials",
+    ]
+    assert validity.descriptions[0].startswith("invalid-credentials: ")
+    assert validity.validation_errors == 3
+
+    # invalid-reverse-solidus
+    assert URLValidator.is_valid("file:\\c:", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == [
+        "invalid-reverse-solidus",
+        "special-scheme-missing-following-solidus",
+    ]
+    assert validity.descriptions[0].startswith("invalid-reverse-solidus: ")
+    assert validity.validation_errors == 2
+
+    # file-invalid-Windows-drive-letter
+    assert (
+        URLValidator.is_valid(
+            "file:c://foo/bar.html", "file:///tmp/mock/path", validity=validity
+        )
+        is False
+    )
+    assert validity.valid is False
+    assert validity.error_types == [
+        "file-invalid-Windows-drive-letter",
+        "special-scheme-missing-following-solidus",
+    ]
+    assert validity.descriptions[0].startswith(
+        "file-invalid-Windows-drive-letter: "
+    )
+    assert validity.validation_errors == 2
+
+    # file-invalid-Windows-drive-letter-host
+    assert (
+        URLValidator.is_valid(
+            "file://c://foo/bar", "file:///c:/baz/qux", validity=validity
+        )
+        is False
+    )
+    assert validity.valid is False
+    assert validity.error_types == [
+        "file-invalid-Windows-drive-letter-host",
+    ]
+    assert validity.descriptions[0].startswith(
+        "file-invalid-Windows-drive-letter-host: "
+    )
+    assert validity.validation_errors == 1
+
+    # host-missing
+    assert URLValidator.is_valid("sc://:/", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["host-missing"]
+    assert validity.descriptions[0].startswith("host-missing: ")
+    assert validity.validation_errors == 1
+
+    # missing-scheme-non-relative-URL
+    assert URLValidator.is_valid("////c:/", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["missing-scheme-non-relative-URL"]
+    assert validity.descriptions[0].startswith(
+        "missing-scheme-non-relative-URL: "
+    )
+    assert validity.validation_errors == 1
+
+    # port-out-of-range
+    assert (
+        URLValidator.is_valid("http://f:999999/c", validity=validity) is False
+    )
+    assert validity.valid is False
+    assert validity.error_types == ["port-out-of-range"]
+    assert validity.descriptions[0].startswith("port-out-of-range: ")
+    assert validity.validation_errors == 1
+
+    # port-invalid
+    assert URLValidator.is_valid("http://foo:-80/", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["port-invalid"]
+    assert validity.descriptions[0].startswith("port-invalid: ")
+    assert validity.validation_errors == 1
+
+    # special-scheme-missing-following-solidus
+    assert (
+        URLValidator.is_valid("file:\\c:\\foo\\bar", validity=validity)
+        is False
+    )
+    assert validity.valid is False
+    assert validity.error_types == [
+        "invalid-reverse-solidus",
+        "invalid-reverse-solidus",
+        "invalid-reverse-solidus",
+        "special-scheme-missing-following-solidus",
+    ]
+    assert validity.descriptions[-1].startswith(
+        "special-scheme-missing-following-solidus: "
+    )
+    assert validity.validation_errors == 4
+
+    # unregistered scheme
+    assert URLValidator.is_valid("sc:\\../%GH", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == [
+        "undefined",
+        "invalid-URL-unit",
+        "invalid-URL-unit",
+    ]
+    assert validity.descriptions[0].startswith("scheme is not registered")
+    assert validity.validation_errors == 3
+
+    # normal
+    assert (
+        URLValidator.is_valid("https://example.org/", validity=validity)
+        is True
+    )
+    assert validity.valid is True
+    assert validity.error_types == []
+    assert validity.descriptions == []
+    assert validity.validation_errors == 0
+
+    # with encoding
+    assert (
+        URLValidator.is_valid(
+            "http://example.org/test?yÿ",
+            encoding="windows-1251",
+            validity=validity,
+        )
+        is True
+    )
+    assert validity.valid is True
+    assert validity.error_types == []
+    assert validity.descriptions == []
+    assert validity.validation_errors == 0
+
+    assert (
+        URLValidator.is_valid(
+            "http://example.org/test?yÿ",
+            encoding="windows-1252",
+            validity=validity,
+        )
+        is True
+    )
+    assert validity.valid is True
+    assert validity.error_types == []
+    assert validity.descriptions == []
+    assert validity.validation_errors == 0
+
+    assert len(caplog.record_tuples) == 0
+
+
+def test_url_validator_is_valid_url_scheme(caplog):
+    caplog.set_level(logging.INFO)
+
+    assert URLValidator.is_valid_url_scheme("") is False
+    assert URLValidator.is_valid_url_scheme("about") is True
+    assert URLValidator.is_valid_url_scheme("ABOUT") is True
+    assert URLValidator.is_valid_url_scheme("about:") is False
+
+    # IANA-URI-Schemes
+    #  https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml
+    assert URLValidator.is_valid_url_scheme("aaa") is True
+    assert URLValidator.is_valid_url_scheme("aaaa") is False
+
+    validity = ValidityState()
+    assert URLValidator.is_valid_url_scheme("", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["undefined"]
+    assert validity.descriptions[0].startswith("scheme is not registered ")
+    assert validity.validation_errors == 1
+
+    assert URLValidator.is_valid_url_scheme("aaa", validity=validity) is True
+    assert validity.valid is True
+    assert validity.error_types == []
+    assert validity.descriptions == []
+    assert validity.validation_errors == 0
+
+    assert URLValidator.is_valid_url_scheme("aaaa", validity=validity) is False
+    assert validity.valid is False
+    assert validity.error_types == ["undefined"]
+    assert validity.descriptions[0].startswith("scheme is not registered ")
+    assert validity.validation_errors == 1
+
+    assert len(caplog.record_tuples) == 0
 
 
 @pytest.mark.parametrize(
