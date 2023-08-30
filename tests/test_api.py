@@ -2902,6 +2902,10 @@ def test_url_can_parse_01(caplog):
     assert URL.can_parse("http:\\x")
     assert URL.can_parse("http:\\x", "http://example.org/")
 
+    base = URL("http://example.org/foo/bar")
+    assert not URL.can_parse("http://2001::1", base)
+    assert URL.can_parse("http://[2001::1]", base)
+
     assert len(caplog.record_tuples) == 0
 
 
@@ -2985,7 +2989,34 @@ def test_url_can_parse_02(caplog):
     assert validity.error_types == []
     assert validity.validation_errors == 0
 
+    base = URL("http://example.org/foo/bar")
+    assert not URL.can_parse("http://2001::1", base, validity=validity)
+    assert validity.valid is False
+    assert validity.error_types == ["port-invalid", "IPv4-out-of-range-part"]
+    assert validity.validation_errors == 2
+
+    assert URL.can_parse("http://[2001::1]", base, validity=validity)
+    assert validity.valid is True
+    assert validity.error_types == []
+    assert validity.validation_errors == 0
+
     assert len(caplog.record_tuples) == 0
+
+
+def test_url_construct():
+    base = URL("http://example.org/foo/bar")
+    url = URL("[61:24:74]:98", base=base)
+    assert url.href == "http://example.org/foo/[61:24:74]:98"
+    assert url.origin == "http://example.org"
+    assert url.protocol == "http:"
+    assert len(url.username) == 0
+    assert len(url.password) == 0
+    assert url.host == "example.org"
+    assert url.hostname == "example.org"
+    assert len(url.port) == 0
+    assert url.pathname == "/foo/[61:24:74]:98"
+    assert len(url.search) == 0
+    assert len(url.hash) == 0
 
 
 def test_url_equals():

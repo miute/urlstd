@@ -2323,8 +2323,11 @@ class URL:
         port='', pathname='/%EF%BF%BD', search='?%EF%BF%BD', hash='#%EF%BF%BD')>
     """
 
-    def __init__(self, url: str, base: Optional[str] = None):
-        self._url: URLRecord = parse_url(url, base=base)
+    def __init__(self, url: str, base: Optional[str | URL] = None):
+        _base: str | URLRecord | None = (
+            base._url if isinstance(base, URL) else base
+        )
+        self._url: URLRecord = parse_url(url, base=_base)
         self._query: URLSearchParams = URLSearchParams(self._url)
 
     def __eq__(self, other: Any) -> bool:
@@ -2371,7 +2374,9 @@ class URL:
         return self.href
 
     @classmethod
-    def can_parse(cls, url: str, base: Optional[str] = None, **kwargs) -> bool:
+    def can_parse(
+        cls, url: str, base: Optional[str | URL] = None, **kwargs
+    ) -> bool:
         """Returns *True* if *url* against a base URL *base* is parsable and valid.
 
         Args:
@@ -2389,8 +2394,11 @@ class URL:
         else:
             validity.reset()
 
+        _base: str | URLRecord | None = (
+            base._url if isinstance(base, URL) else base
+        )
         try:
-            _ = parse_url(url, base=base, **kwargs)
+            _ = parse_url(url, base=_base, **kwargs)
         except URLParseError:
             return False
         return True
