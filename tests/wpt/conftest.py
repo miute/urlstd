@@ -2,7 +2,6 @@ import sys
 
 import icupy.icu as icu
 import pytest
-from py.xml import html
 
 
 def pytest_html_report_title(report):
@@ -17,12 +16,12 @@ def pytest_html_report_title(report):
 
 
 def pytest_html_results_table_header(cells):
-    cells.insert(2, html.th("Description"))
+    cells.insert(2, "<th>Description</th>")
     cells.pop()
 
 
 def pytest_html_results_table_row(report, cells):
-    cells.insert(2, html.td(report.description))
+    cells.insert(2, f"<td>{report.description}</td>")
     cells.pop()
 
 
