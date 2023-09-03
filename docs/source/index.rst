@@ -21,7 +21,7 @@ urlstd
    :alt: codecov
    :target: https://codecov.io/gh/miute/urlstd
 
-**urlstd** is a Python implementation of the WHATWG `URL Standard <https://url.spec.whatwg.org/>`_.
+**urlstd** is a Python implementation of the WHATWG `URL Living Standard <https://url.spec.whatwg.org/>`_.
 
 This library provides URL class, URLSearchParams class, and low-level APIs that comply with the URL specification.
 
@@ -30,6 +30,8 @@ Supported APIs
 --------------
 
 - `URL class <https://url.spec.whatwg.org/#url-class>`_: :class:`urlstd.parse.URL`
+
+  - `canParse <https://url.spec.whatwg.org/#dom-url-canparse>`_: :meth:`~urlstd.parse.URL.can_parse`
 
   - `href <https://url.spec.whatwg.org/#dom-url-href>`_: :attr:`~urlstd.parse.URL.href`
 
@@ -113,11 +115,17 @@ Supported APIs
 
     - `URL path serializer <https://url.spec.whatwg.org/#url-path-serializer>`_: :meth:`~urlstd.parse.URLRecord.serialize_path`
 
-  - `domain to ASCII <https://url.spec.whatwg.org/#concept-domain-to-ascii>`_: :meth:`urlstd.parse.IDNA.domain_to_ascii`
+  - `Hosts (domains and IP addresses) <https://url.spec.whatwg.org/#hosts-(domains-and-ip-addresses)>`_
 
-  - `host parser <https://url.spec.whatwg.org/#concept-host-parser>`_: :meth:`urlstd.parse.Host.parse`
+    - `IDNA <https://url.spec.whatwg.org/#idna>`_
 
-  - `host serializer <https://url.spec.whatwg.org/#concept-host-serializer>`_: :meth:`urlstd.parse.Host.serialize`
+      - `domain to ASCII <https://url.spec.whatwg.org/#concept-domain-to-ascii>`_: :meth:`urlstd.parse.IDNA.domain_to_ascii`
+
+      - `domain to Unicode <https://url.spec.whatwg.org/#concept-domain-to-unicode>`_: :meth:`urlstd.parse.IDNA.domain_to_unicode`
+
+    - `host parser <https://url.spec.whatwg.org/#concept-host-parser>`_: :meth:`urlstd.parse.Host.parse`
+
+    - `host serializer <https://url.spec.whatwg.org/#concept-host-serializer>`_: :meth:`urlstd.parse.Host.serialize`
 
   - `percent-decode a string <https://url.spec.whatwg.org/#string-percent-decode>`_: :func:`urlstd.parse.string_percent_decode`
 
@@ -127,6 +135,23 @@ Supported APIs
 
   - `application/x-www-form-urlencoded serializer <https://url.spec.whatwg.org/#concept-urlencoded-serializer>`_: :func:`urlstd.parse.urlencode`
 
+  - Validation
+
+    - Hosts (domains and IP addresses): :class:`urlstd.parse.HostValidator`
+
+      - `valid host string <https://url.spec.whatwg.org/#valid-host-string>`_: :meth:`~urlstd.parse.HostValidator.is_valid`
+
+      - `valid domain string <https://url.spec.whatwg.org/#valid-domain-string>`_: :meth:`~urlstd.parse.HostValidator.is_valid_domain`
+
+      - `valid IPv4-address string <https://url.spec.whatwg.org/#valid-ipv4-address-string>`_: :meth:`~urlstd.parse.HostValidator.is_valid_ipv4_address`
+
+      - `valid IPv6-address string <https://url.spec.whatwg.org/#valid-ipv6-address-string>`_: :meth:`~urlstd.parse.HostValidator.is_valid_ipv6_address`
+
+    - URL: :class:`urlstd.parse.URLValidator`
+
+      - `valid URL string <https://url.spec.whatwg.org/#valid-url-string>`_: :meth:`~urlstd.parse.URLValidator.is_valid`
+
+      - `valid URL-scheme string <https://url.spec.whatwg.org/#url-scheme-string>`_: :meth:`~urlstd.parse.URLValidator.is_valid_url_scheme`
 
 .. toctree::
    :maxdepth: 2
