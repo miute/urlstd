@@ -40,6 +40,7 @@ __all__ = [
     "URLRecord",
     "URLSearchParams",
     "URLValidator",
+    "ValidityState",
     "parse_qsl",
     "parse_url",
     "string_percent_decode",
@@ -706,7 +707,41 @@ class Host:
 
 
 class HostValidator:
-    """Validates a host string."""
+    """Validates a host string.
+
+    Examples:
+        >>> HostValidator.is_valid('a..b')
+        False
+        >>> HostValidator.is_valid('127.0.0x0.1')
+        False
+        >>> HostValidator.is_valid('[1::1::1]')
+        False
+
+        >>> validity = ValidityState()
+        >>> HostValidator.is_valid('a..b', validity=validity)
+        False
+        >>> validity
+        ValidityState(valid=False, error_types=['domain-to-ASCII'],
+        descriptions=["domain-to-ASCII: Unicode ToASCII records an error: \
+domain='a..b' errors=UIDNA_ERROR_EMPTY_LABEL (0x0001)"],
+        validation_errors=1, disable_logging=True)
+
+        >>> HostValidator.is_valid('127.0.0x0.1', validity=validity)
+        False
+        >>> validity
+        ValidityState(valid=False, error_types=['IPv4-non-decimal-part'],
+        descriptions=["IPv4-non-decimal-part: IPv4 address contains numbers \
+expressed using hexadecimal or octal digits: '0x0' in '127.0.0x0.1'"],
+        validation_errors=1, disable_logging=True)
+
+        >>> HostValidator.is_valid('[1::1::1]', validity=validity)
+        False
+        >>> validity
+        ValidityState(valid=False, error_types=['IPv6-multiple-compression'],
+        descriptions=["IPv6-multiple-compression: IPv6 address is compressed in \
+more than one spot: '1::1::1'"],
+        validation_errors=1, disable_logging=True)
+    """
 
     @classmethod
     def is_valid(cls, host: str, **kwargs) -> bool:
@@ -715,6 +750,9 @@ class HostValidator:
 
         Args:
             host: A host string (a domain string and an IP address string) to verify.
+
+        Keyword Args:
+            validity: A :class:`.ValidityState` object that stores validation results.
 
         Returns:
             *True* if *host* is a valid host, *False* otherwise.
@@ -743,6 +781,9 @@ class HostValidator:
         Args:
             domain: A domain string to verify.
 
+        Keyword Args:
+            validity: A :class:`.ValidityState` object that stores validation results.
+
         Returns:
             *True* if *domain* is a valid domain, *False* otherwise.
         """
@@ -766,6 +807,9 @@ class HostValidator:
 
         Args:
             address: An IPv4-address string to verify.
+
+        Keyword Args:
+            validity: A :class:`.ValidityState` object that stores validation results.
 
         Returns:
             *True* if *address* is a valid IPv4-address, *False* otherwise.
@@ -838,6 +882,9 @@ class HostValidator:
         Args:
             address: An IPv6-address string to verify.
 
+        Keyword Args:
+            validity: A :class:`.ValidityState` object that stores validation results.
+
         Returns:
             *True* if *address* is a valid IPv6-address, *False* otherwise.
         """
@@ -860,6 +907,9 @@ class HostValidator:
 
         Args:
             host: A opaque-host string to verify.
+
+        Keyword Args:
+            validity: A :class:`.ValidityState` object that stores validation results.
 
         Returns:
             *True* if *host* is a valid opaque-host, *False* otherwise.
@@ -1502,17 +1552,17 @@ class IPv6Address:
 class Origin(NamedTuple):
     """A named tuple that represents the origin of the URL."""
 
-    #: A URL’s scheme.
     scheme: str
+    """A URL’s scheme."""
 
-    #: A URL’s host.
     host: str | int | tuple[int, ...] | None
+    """A URL’s host."""
 
-    #: A URL’s port.
     port: int | None
+    """A URL’s port."""
 
-    #: A URL’s domain.
     domain: str | None
+    """A URL’s domain."""
 
     def __str__(self) -> str:
         """Returns a string representation of the origin.
@@ -1579,32 +1629,32 @@ class Origin(NamedTuple):
 class URLRecord:
     """A data class that represents a universal identifier."""
 
-    #: A URL’s scheme.
     scheme: str = ""
+    """A URL’s scheme."""
 
-    #: A URL’s username.
     username: str = ""
+    """A URL’s username."""
 
-    #: A URL’s password.
     password: str = ""
+    """A URL’s password."""
 
-    #: A URL’s host.
     host: Optional[str | int | tuple[int, ...]] = None
+    """A URL’s host."""
 
-    #: A URL’s port.
     port: Optional[int] = None
+    """A URL’s port."""
 
-    #: A URL’s path.
     path: list[str] | str = field(default_factory=list)  # type: ignore
+    """A URL’s path."""
 
-    #: A URL’s query.
     query: Optional[str] = None
+    """A URL’s query."""
 
-    #: A URL’s fragment.
     fragment: Optional[str] = None
+    """A URL’s fragment."""
 
-    #: A URL’s blob URL entry. (unused)
     blob_url_entry: Optional[str] = None
+    """A URL’s blob URL entry. (unused)"""
 
     def __eq__(self, other: Any) -> bool:
         """Returns *True* if *other* is equal to this object.
@@ -2282,7 +2332,14 @@ class URL:
         urlstd.error.URLParseError: Raised when URL parsing fails.
 
     Examples:
-        To parse a string into a URL with using a base URL:
+        To parse a string into a ``URL``:
+
+        >>> URL('http://user:pass@foo:21/bar;par?b#c')
+        <URL(href='http://user:pass@foo:21/bar;par?b#c', origin='http://foo:21',
+        protocol='http:', username='user', password='pass', host='foo:21',
+        hostname='foo', port='21', pathname='/bar;par', search='?b', hash='#c')>
+
+        To parse a string into a ``URL`` with using a base URL:
 
         >>> URL('//foo/bar', base='http://example.org/foo/bar')
         <URL(href='http://foo/bar', origin='http://foo', protocol='http:',
@@ -2377,16 +2434,21 @@ class URL:
     def can_parse(
         cls, url: str, base: Optional[str | URL] = None, **kwargs
     ) -> bool:
-        """Returns *True* if *url* against a base URL *base* is parsable and valid.
+        """Returns *True* if *url* against a base URL *base* is parsable.
 
         Args:
             url: An absolute-URL or a relative-URL.
                 If *url* is a relative-URL, *base* is required.
             base: An absolute-URL for a relative-URL *url*.
 
+        Keyword Args:
+            validity: A :class:`.ValidityState` object that stores validation results.
+
         Returns:
-            *True* if *url* against a base URL *base* is parsable and valid,
-            *False* otherwise.
+            *True* if *url* against a base URL *base* is parsable, *False* otherwise.
+
+        See Also:
+            :meth:`URLValidator.is_valid`
         """
         validity: ValidityState | None = kwargs.get("validity")
         if validity is None:
@@ -2802,7 +2864,36 @@ class URLParserState(enum.IntEnum):
 
 
 class URLValidator:
-    """Validates a URL string."""
+    """Validates a URL string.
+
+    Examples:
+        >>> URL.can_parse('https://user:password@example.org/')
+        True
+        >>> URLValidator.is_valid('https://user:password@example.org/')
+        False
+        >>> URL.can_parse('file:///C|/demo')
+        True
+        >>> URLValidator.is_valid('file:///C|/demo')
+        False
+
+        >>> validity = ValidityState()
+        >>> URLValidator.is_valid('https://user:password@example.org/', \
+validity=validity)
+        False
+        >>> validity
+        ValidityState(valid=False, error_types=['invalid-credentials'],
+        descriptions=["invalid-credentials: input includes credentials: \
+'https://user:password@example.org/' at position 21"],
+        validation_errors=1, disable_logging=True)
+
+        >>> URLValidator.is_valid('file:///C|/demo', validity=validity)
+        False
+        >>> validity
+        ValidityState(valid=False, error_types=['invalid-URL-unit'],
+        descriptions=["invalid-URL-unit: code point is found that is not a URL unit: \
+U+007C (|) in 'file:///C|/demo' at position 9"],
+        validation_errors=1, disable_logging=True)
+    """
 
     @classmethod
     def is_valid(
@@ -2821,9 +2912,15 @@ class URLValidator:
             encoding: The encoding to encode URL’s query. If the encoding fails,
                 it will be replaced with the appropriate XML character reference.
 
+        Keyword Args:
+            validity: A :class:`.ValidityState` object that stores validation results.
+
         Returns:
             *True* if *urlstring* against a base URL *base* is a valid URL,
             *False* otherwise.
+
+        See Also:
+            :meth:`URL.can_parse`
         """
         validity: ValidityState | None = kwargs.get("validity")
         if validity is None:
@@ -2849,8 +2946,17 @@ class URLValidator:
         Args:
             value: A URL-scheme to verify.
 
+        Keyword Args:
+            validity: A :class:`.ValidityState` object that stores validation results.
+
         Returns:
             *True* if *value* is a valid URL-scheme, *False* otherwise.
+
+        Examples:
+            >>> URLValidator.is_valid_url_scheme('aaa')  # diameter protocol
+            True
+            >>> URLValidator.is_valid_url_scheme('aaaa')  # unknown scheme
+            False
         """
         validity: ValidityState | None = kwargs.get("validity")
         if validity is None:
@@ -2869,15 +2975,51 @@ class URLValidator:
         return False
 
 
-@dataclass
+@dataclass(eq=False)
 class ValidityState:
+    """A validation status.
+
+    See Also:
+        :class:`HostValidator`, :class:`URLValidator`
+
+    Examples:
+        >>> URL.can_parse('https://example/%?%#%')
+        True
+        >>> validity = ValidityState()
+        >>> URLValidator.is_valid('https://example/%?%#%', validity=validity)
+        False
+        >>> validity.valid
+        False
+        >>> validity.validation_errors
+        3
+        >>> validity.descriptions[0]
+        "invalid-URL-unit: incorrect percent encoding is found: '%' in \
+'https://example/%?%#%' at position 20"
+        >>> validity.descriptions[1]
+        "invalid-URL-unit: incorrect percent encoding is found: '%#%' in \
+'https://example/%?%#%' at position 18"
+        >>> validity.descriptions[2]
+        "invalid-URL-unit: incorrect percent encoding is found: '%?%' in \
+'https://example/%?%#%' at position 16"
+    """
+
     valid: bool = True
+    """*True* if there are no validation errors, *False* otherwise."""
+
     error_types: list[str] = field(default_factory=list)
+    """A list of error type names."""
+
     descriptions: list[str] = field(default_factory=list)
+    """A list of error descriptions."""
+
     validation_errors: int = 0
+    """A number of validation errors."""
+
     disable_logging: bool = True
+    """*True* to disable logging, *False* otherwise."""
 
     def __add__(self, other: Any) -> ValidityState:
+        """*This API is for internal use only.*"""
         if not isinstance(other, ValidityState):
             return NotImplemented
         return ValidityState(
@@ -2889,6 +3031,7 @@ class ValidityState:
         )
 
     def __iadd__(self, other: Any) -> Self:
+        """*This API is for internal use only.*"""
         if not isinstance(other, ValidityState):
             return NotImplemented
         self.valid &= other.valid
@@ -2898,6 +3041,7 @@ class ValidityState:
         return self
 
     def prepend(self, msg: str, *args) -> None:
+        """*This API is for internal use only.*"""
         self.valid = False
         matched = VALIDATION_ERROR_TYPE_RE.search(msg)
         self.error_types.insert(
@@ -2907,6 +3051,7 @@ class ValidityState:
         self.validation_errors += 1
 
     def reset(self) -> None:
+        """*This API is for internal use only.*"""
         self.valid = True
         self.error_types.clear()
         self.descriptions.clear()
