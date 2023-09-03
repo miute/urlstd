@@ -1,0 +1,79 @@
+﻿urlstd.parse.Origin
+===================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: Origin
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ~Origin.__str__
+
+
+
+
+
+
+
+
+      ~Origin.is_same_origin
+
+
+      ~Origin.is_same_origin_domain
+
+
+
+
+
+
+   .. rubric:: Attributes:
+
+   .. autosummary::
+
+
+      ~Origin.domain
+
+
+      ~Origin.host
+
+
+      ~Origin.port
+
+
+      ~Origin.scheme

@@ -1,0 +1,43 @@
+﻿urlstd.parse.Host
+=================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: Host
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ~Host.parse
+
+
+      ~Host.serialize

@@ -1,0 +1,90 @@
+﻿urlstd.parse.URLSearchParams
+============================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: URLSearchParams
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+      ~URLSearchParams.__add__
+
+
+
+      ~URLSearchParams.__contains__
+
+
+
+
+      ~URLSearchParams.__eq__
+
+
+
+
+
+      ~URLSearchParams.__getitem__
+
+
+
+
+
+
+      ~URLSearchParams.__iter__
+
+
+
+      ~URLSearchParams.__len__
+
+
+
+
+
+
+
+
+
+
+      ~URLSearchParams.__str__
+
+
+
+
+
+      ~URLSearchParams.append
+
+
+      ~URLSearchParams.attach
+
+
+      ~URLSearchParams.delete
+
+
+      ~URLSearchParams.entries
+
+
+      ~URLSearchParams.get
+
+
+      ~URLSearchParams.get_all
+
+
+      ~URLSearchParams.has
+
+
+      ~URLSearchParams.keys
+
+
+      ~URLSearchParams.set
+
+
+      ~URLSearchParams.sort
+
+
+      ~URLSearchParams.values

@@ -2,14 +2,25 @@ API Reference
 =============
 
 
-Modules
--------
-
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :hidden:
 
-   urlstd.parse
    urlstd.error
+
+
+.. currentmodule:: urlstd.error
+
+Exceptions
+----------
+
+.. autosummary::
+
+   HostParseError
+   IDNAError
+   IPv4AddressParseError
+   IPv6AddressParseError
+   URLParseError
 
 
 .. currentmodule:: urlstd.parse
@@ -18,6 +29,8 @@ URL and URLSearchParams
 -----------------------
 
 .. autosummary::
+   :toctree: generated
+   :template: autosummary/class.rst
 
    URL
    URLSearchParams
@@ -30,18 +43,23 @@ Classes
 ^^^^^^^
 
 .. autosummary::
+   :toctree: generated
 
    BasicURLParser
    Host
+   HostValidator
    IDNA
    Origin
    URLParserState
    URLRecord
+   URLValidator
+   ValidityState
 
 Functions
 ^^^^^^^^^
 
 .. autosummary::
+   :toctree: generated
 
    parse_qsl
    parse_url
@@ -52,17 +70,3 @@ Functions
    utf8_decode
    utf8_encode
    utf8_percent_encode
-
-
-.. currentmodule:: urlstd.error
-
-Exceptions
-^^^^^^^^^^
-
-.. autosummary::
-
-   HostParseError
-   IDNAError
-   IPv4AddressParseError
-   IPv6AddressParseError
-   URLParseError

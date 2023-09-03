@@ -1,0 +1,6 @@
+﻿urlstd.parse.urlparse
+=====================
+
+.. currentmodule:: urlstd.parse
+
+.. autofunction:: urlparse

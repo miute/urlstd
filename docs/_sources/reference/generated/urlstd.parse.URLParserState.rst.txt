@@ -1,0 +1,160 @@
+﻿urlstd.parse.URLParserState
+===========================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: URLParserState
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   .. rubric:: Attributes:
+
+   .. autosummary::
+
+
+      ~URLParserState.EOF
+
+
+      ~URLParserState.AUTHORITY_STATE
+
+
+      ~URLParserState.FILE_HOST_STATE
+
+
+      ~URLParserState.FILE_SLASH_STATE
+
+
+      ~URLParserState.FILE_STATE
+
+
+      ~URLParserState.FRAGMENT_STATE
+
+
+      ~URLParserState.HOSTNAME_STATE
+
+
+      ~URLParserState.HOST_STATE
+
+
+      ~URLParserState.NO_SCHEME_STATE
+
+
+      ~URLParserState.OPAQUE_PATH_STATE
+
+
+      ~URLParserState.PATH_OR_AUTHORITY_STATE
+
+
+      ~URLParserState.PATH_START_STATE
+
+
+      ~URLParserState.PATH_STATE
+
+
+      ~URLParserState.PORT_STATE
+
+
+      ~URLParserState.QUERY_STATE
+
+
+      ~URLParserState.RELATIVE_SLASH_STATE
+
+
+      ~URLParserState.RELATIVE_STATE
+
+
+      ~URLParserState.SCHEME_START_STATE
+
+
+      ~URLParserState.SCHEME_STATE
+
+
+      ~URLParserState.SPECIAL_AUTHORITY_IGNORE_SLASHES_STATE
+
+
+      ~URLParserState.SPECIAL_AUTHORITY_SLASHES_STATE
+
+
+      ~URLParserState.SPECIAL_RELATIVE_OR_AUTHORITY_STATE

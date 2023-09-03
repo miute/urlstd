@@ -1,0 +1,42 @@
+﻿urlstd.parse.URLValidator
+=========================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: URLValidator
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ~URLValidator.is_valid
+
+
+      ~URLValidator.is_valid_url_scheme

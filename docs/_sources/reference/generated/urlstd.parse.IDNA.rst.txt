@@ -1,0 +1,44 @@
+﻿urlstd.parse.IDNA
+=================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: IDNA
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ~IDNA.domain_to_ascii
+
+
+      ~IDNA.domain_to_unicode

@@ -1,0 +1,58 @@
+﻿urlstd.parse.BasicURLParser
+===========================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: BasicURLParser
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ~BasicURLParser.parse

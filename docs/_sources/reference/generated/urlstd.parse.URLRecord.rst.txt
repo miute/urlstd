@@ -1,0 +1,111 @@
+﻿urlstd.parse.URLRecord
+======================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: URLRecord
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+
+
+      ~URLRecord.__eq__
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ~URLRecord.__str__
+
+
+
+      ~URLRecord.cannot_have_username_password_port
+
+
+      ~URLRecord.equals
+
+
+      ~URLRecord.has_opaque_path
+
+
+      ~URLRecord.includes_credentials
+
+
+      ~URLRecord.is_not_special
+
+
+      ~URLRecord.is_special
+
+
+      ~URLRecord.serialize_host
+
+
+      ~URLRecord.serialize_path
+
+
+      ~URLRecord.serialize_url
+
+
+      ~URLRecord.shorten_path
+
+
+
+
+
+
+   .. rubric:: Attributes:
+
+   .. autosummary::
+
+
+      ~URLRecord.blob_url_entry
+
+
+      ~URLRecord.fragment
+
+
+      ~URLRecord.host
+
+
+      ~URLRecord.href
+
+
+      ~URLRecord.origin
+
+
+      ~URLRecord.password
+
+
+      ~URLRecord.port
+
+
+      ~URLRecord.query
+
+
+      ~URLRecord.scheme
+
+
+      ~URLRecord.username
+
+
+      ~URLRecord.path

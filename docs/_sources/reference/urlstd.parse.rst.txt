@@ -12,6 +12,7 @@ urlstd.parse
         __dataclass_fields__,
         __dataclass_params__,
         __dict__,
+        __format__,
         __getnewargs__,
         __hash__,
         __init__,

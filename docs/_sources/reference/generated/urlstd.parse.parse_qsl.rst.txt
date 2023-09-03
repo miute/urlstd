@@ -1,0 +1,6 @@
+﻿urlstd.parse.parse\_qsl
+=======================
+
+.. currentmodule:: urlstd.parse
+
+.. autofunction:: parse_qsl

@@ -1,0 +1,72 @@
+﻿urlstd.parse.ValidityState
+==========================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: ValidityState
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+      ~ValidityState.__add__
+
+
+
+
+
+
+
+
+
+
+
+      ~ValidityState.__iadd__
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ~ValidityState.prepend
+
+
+      ~ValidityState.reset
+
+
+
+
+
+
+   .. rubric:: Attributes:
+
+   .. autosummary::
+
+
+      ~ValidityState.disable_logging
+
+
+      ~ValidityState.valid
+
+
+      ~ValidityState.validation_errors
+
+
+      ~ValidityState.error_types
+
+
+      ~ValidityState.descriptions

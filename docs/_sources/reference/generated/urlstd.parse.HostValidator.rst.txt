@@ -1,0 +1,51 @@
+﻿urlstd.parse.HostValidator
+==========================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: HostValidator
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ~HostValidator.is_valid
+
+
+      ~HostValidator.is_valid_domain
+
+
+      ~HostValidator.is_valid_ipv4_address
+
+
+      ~HostValidator.is_valid_ipv6_address
+
+
+      ~HostValidator.is_valid_opaque_host

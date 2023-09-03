@@ -1,0 +1,6 @@
+﻿urlstd.parse.utf8\_encode
+=========================
+
+.. currentmodule:: urlstd.parse
+
+.. autofunction:: utf8_encode

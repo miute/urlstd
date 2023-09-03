@@ -1,0 +1,6 @@
+﻿urlstd.parse.string\_percent\_decode
+====================================
+
+.. currentmodule:: urlstd.parse
+
+.. autofunction:: string_percent_decode

@@ -1,0 +1,90 @@
+﻿urlstd.parse.URL
+================
+
+.. currentmodule:: urlstd.parse
+
+.. autoclass:: URL
+   :noindex:
+   :show-inheritance:
+
+
+
+   .. rubric:: Methods:
+
+   .. autosummary::
+
+
+
+
+      ~URL.__eq__
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ~URL.__str__
+
+
+
+      ~URL.can_parse
+
+
+      ~URL.equals
+
+
+
+
+
+
+   .. rubric:: Attributes:
+
+   .. autosummary::
+
+
+      ~URL.hash
+
+
+      ~URL.host
+
+
+      ~URL.hostname
+
+
+      ~URL.href
+
+
+      ~URL.origin
+
+
+      ~URL.password
+
+
+      ~URL.pathname
+
+
+      ~URL.port
+
+
+      ~URL.protocol
+
+
+      ~URL.search
+
+
+      ~URL.search_params
+
+
+      ~URL.username
