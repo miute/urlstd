@@ -13,8 +13,8 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
 ## Supported APIs
 
 - [URL class](https://url.spec.whatwg.org/#url-class)
-  - class urlstd.parse.`URL(url: str, base: Optional[str] = None)`
-    - [canParse](https://url.spec.whatwg.org/#dom-url-canparse): `classmethod can_parse(url: str, base: Optional[str] = None) -> bool`
+  - class urlstd.parse.`URL(url: str, base: Optional[str | URL] = None)`
+    - [canParse](https://url.spec.whatwg.org/#dom-url-canparse): classmethod `can_parse(url: str, base: Optional[str | URL] = None) -> bool`
     - stringifier: `__str__() -> str`
     - [href](https://url.spec.whatwg.org/#dom-url-href): `readonly property href: str`
     - [origin](https://url.spec.whatwg.org/#dom-url-origin): `readonly property origin: str`
@@ -99,6 +99,9 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
       - [valid domain string](https://url.spec.whatwg.org/#valid-domain-string): classmethod `is_valid_domain(domain: str) -> bool`
       - [valid IPv4-address string](https://url.spec.whatwg.org/#valid-ipv4-address-string): classmethod `is_valid_ipv4_address(address: str) -> bool`
       - [valid IPv6-address string](https://url.spec.whatwg.org/#valid-ipv6-address-string): classmethod `is_valid_ipv6_address(address: str) -> bool`
+    - class urlstd.parse.`URLValidator`
+      - [valid URL string](https://url.spec.whatwg.org/#valid-url-string): classmethod `is_valid(urlstring: str, base: Optional[str | URLRecord] = None, encoding: str = "utf-8") -> bool`
+      - valid [URL-scheme string](https://url.spec.whatwg.org/#url-scheme-string): classmethod `is_valid_url_scheme(value: str) -> bool`
 
 - Compatibility with standard library `urllib`
   - urlstd.parse.`urlparse(urlstring: str, base: str = None, encoding: str = "utf-8", allow_fragments: bool = True) -> urllib.parse.ParseResult`
@@ -108,10 +111,17 @@ This library provides `URL` class, `URLSearchParams` class, and low-level APIs t
 
 ## Basic Usage
 
-To parse a string into a `URL` with using a base URL:
+To parse a string into a `URL`:
 
 ```python
 from urlstd.parse import URL
+URL('http://user:pass@foo:21/bar;par?b#c')
+# → <URL(href='http://user:pass@foo:21/bar;par?b#c', origin='http://foo:21', protocol='http:', username='user', password='pass', host='foo:21', hostname='foo', port='21', pathname='/bar;par', search='?b', hash='#c')>
+```
+
+To parse a string into a `URL` with using a base URL:
+
+```python
 url = URL('?ﬃ&🌈', base='http://example.org')
 url  # → <URL(href='http://example.org/?%EF%AC%83&%F0%9F%8C%88', origin='http://example.org', protocol='http:', username='', password='', host='example.org', hostname='example.org', port='', pathname='/', search='?%EF%AC%83&%F0%9F%8C%88', hash='')>
 url.search  # → '?%EF%AC%83&%F0%9F%8C%88'
@@ -121,6 +131,29 @@ params.sort()
 params  # → URLSearchParams([('🌈', ''), ('ﬃ', '')])
 url.search  # → '?%F0%9F%8C%88=&%EF%AC%83='
 str(url)  # → 'http://example.org/?%F0%9F%8C%88=&%EF%AC%83='
+```
+
+To validate a URL string:
+
+```python
+from urlstd.parse import URL, URLValidator, ValidityState
+URL.can_parse('https://user:password@example.org/')  # → True
+URLValidator.is_valid('https://user:password@example.org/')  # → False
+validity = ValidityState()
+URLValidator.is_valid('https://user:password@example.org/', validity=validity)
+validity.valid  # → False
+validity.validation_errors  # → 1
+validity.descriptions[0]  # → "invalid-credentials: input includes credentials: 'https://user:password@example.org/' at position 21"
+```
+
+```python
+URL.can_parse('file:///C|/demo')  # → True
+URLValidator.is_valid('file:///C|/demo')  # → False
+validity = ValidityState()
+URLValidator.is_valid('file:///C|/demo', validity=validity)  # → False
+validity.valid  # → False
+validity.validation_errors  # → 1
+validity.descriptions[0]  # → "invalid-URL-unit: code point is found that is not a URL unit: U+007C (|) in 'file:///C|/demo' at position 9"
 ```
 
 To parse a string into a `urllib.parse.ParseResult` with using a base URL:

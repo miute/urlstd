@@ -1,9 +1,12 @@
 # Changelog
 
-## v2023.7.26.dev1 / WIP
+## v2023.7.26 / 2023-09-03
 
 Implement latest specifications of the [URL Living Standard](https://url.spec.whatwg.org/commit-snapshots/fff33c343f01575c691bba6cdeeefb9d09e792a9/).
 
+- NEW
+  - Add host validator as `urlstd.parse.HostValidator` class
+  - Add URL validator as `urlstd.parse.URLValidator` class
 - ADDED
   - Add `URL.can_parse()`
   - Add `URL.__eq__()` and `URL.equals()`
@@ -11,10 +14,13 @@ Implement latest specifications of the [URL Living Standard](https://url.spec.wh
   - Add `URLSearchParams.__eq__()`
   - Add `URLSearchParams.__getitem__()`
   - Add `IDNA.domain_to_unicode()`
+  - Add `Origin.is_same_origin()`
+  - Add `Origin.is_same_origin_domain()`
 - FIXED
   - Fix improper handling of the `VerifyDnsLength` flag in `IDNA.domain_to_ascii()`
   - Fix incorrect domain length in `IDNA.domain_to_ascii()`
   - Fix `parse_url()` treats `base=""` as `base=None`
+  - Fix string representation of `URL` and `URLRecord`
 - IMPROVED
   - Change Python type hints to a new style
   - Update validation error message
