@@ -15,7 +15,7 @@ import string
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, NamedTuple, Optional, Self, overload
+from typing import Any, NamedTuple, Optional, overload
 from urllib.parse import ParseResult, quote, quote_plus
 from urllib.parse import unquote_to_bytes as percent_decode
 
@@ -3030,7 +3030,7 @@ class ValidityState:
             self.disable_logging,
         )
 
-    def __iadd__(self, other: Any) -> Self:
+    def __iadd__(self, other: Any) -> ValidityState:
         """*This API is for internal use only.*"""
         if not isinstance(other, ValidityState):
             return NotImplemented
