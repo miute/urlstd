@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "urlstd"
-version = "2023.7.26"
+version = "2023.7.26.1"
 description = "Python implementation of the WHATWG URL Standard"
 license = "MIT"
 authors = ["Tetsuya Miura <miute.dev@gmail.com>"]

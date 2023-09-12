@@ -1,5 +1,10 @@
 # Changelog
 
+## v2023.7.26.1 / 2023-09-12
+
+- FIXED
+  - Remove typing.Self
+
 ## v2023.7.26 / 2023-09-03
 
 Implement latest specifications of the [URL Living Standard](https://url.spec.whatwg.org/commit-snapshots/fff33c343f01575c691bba6cdeeefb9d09e792a9/).
