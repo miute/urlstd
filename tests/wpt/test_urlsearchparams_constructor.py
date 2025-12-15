@@ -163,12 +163,12 @@ def test_parse_percent_encoded_2384():
 
 def test_parse_d83d_dca9():
     """Parse \\uD83D\\uDCA9"""
-    params = URLSearchParams("a=b\uD83D\uDCA9c")
+    params = URLSearchParams("a=b\ud83d\udca9c")
     # assert params.get("a") == "b\uD83D\uDCA9c", list(params)
     # NOTE: "b\uD83D\uDCA9c" and "b\U0001F4A9c" are not equal in Python.
-    assert params.get("a") == "b\U0001F4A9c", list(params)
-    params = URLSearchParams("a\uD83D\uDCA9b=c")
-    assert params.get("a\uD83D\uDCA9b") == "c", list(params)
+    assert params.get("a") == "b\U0001f4a9c", list(params)
+    params = URLSearchParams("a\ud83d\udca9b=c")
+    assert params.get("a\ud83d\udca9b") == "c", list(params)
 
 
 def test_parse_percent_encoded_d83d_dca9():
@@ -176,9 +176,9 @@ def test_parse_percent_encoded_d83d_dca9():
     params = URLSearchParams("a=b%f0%9f%92%a9c")
     # assert params.get("a") == "b\uD83D\uDCA9c", list(params)
     # NOTE: "b\uD83D\uDCA9c" and "b\U0001F4A9c" are not equal in Python.
-    assert params.get("a") == "b\U0001F4A9c", list(params)
+    assert params.get("a") == "b\U0001f4a9c", list(params)
     params = URLSearchParams("a%f0%9f%92%a9b=c")
-    assert params.get("a\uD83D\uDCA9b") == "c", list(params)
+    assert params.get("a\ud83d\udca9b") == "c", list(params)
 
 
 def test_sequences_of_strings():
@@ -211,18 +211,18 @@ def test_sequences_of_strings():
             "name": "array with two keys",
         },
         {
-            "input": {"\uD835x": "1", "xx": "2", "\uD83Dx": "3"},
-            "output": [["\uFFFDx", "3"], ["xx", "2"]],
+            "input": {"\ud835x": "1", "xx": "2", "\ud83dx": "3"},
+            "output": [["\ufffdx", "3"], ["xx", "2"]],
             "name": "2 unpaired surrogates (no trailing)",
         },
         {
-            "input": {"x\uDC53": "1", "x\uDC5C": "2", "x\uDC65": "3"},
-            "output": [["x\uFFFD", "3"]],
+            "input": {"x\udc53": "1", "x\udc5c": "2", "x\udc65": "3"},
+            "output": [["x\ufffd", "3"]],
             "name": "3 unpaired surrogates (no leading)",
         },
         {
-            "input": {"a\0b": "42", "c\uD83D": "23", "d\u1234": "foo"},
-            "output": [["a\0b", "42"], ["c\uFFFD", "23"], ["d\u1234", "foo"]],
+            "input": {"a\0b": "42", "c\ud83d": "23", "d\u1234": "foo"},
+            "output": [["a\0b", "42"], ["c\ufffd", "23"], ["d\u1234", "foo"]],
             "name": "object with NULL, non-ASCII, and surrogate keys",
         },
     ],

@@ -111,10 +111,10 @@ def test_serialize_00():
 def test_serialize_d83d_dca9():
     """Serialize \\uD83D\\uDCA9"""
     params = URLSearchParams()
-    params.append("a", "b\uD83D\uDCA9c")
+    params.append("a", "b\ud83d\udca9c")
     assert params + "" == "a=b%F0%9F%92%A9c"
     params.delete("a")
-    params.append("a\uD83D\uDCA9b", "c")
+    params.append("a\ud83d\udca9b", "c")
     assert params + "" == "a%F0%9F%92%A9b=c"
 
 
