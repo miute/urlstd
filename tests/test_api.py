@@ -1409,7 +1409,7 @@ def test_idna_domain_to_ascii_raise_icuerror(caplog, mocker):
 def test_idna_domain_to_ascii_use_std3_rules(caplog):
     """Unicode ToASCII: UseSTD3ASCIIRules=true: A domain contains non-LDH ASCII."""
     caplog.set_level(logging.INFO)
-    domain = "a\u2260b\u226Ec\u226Fd"
+    domain = "a\u2260b\u226ec\u226fd"
 
     assert IDNA.domain_to_ascii(domain) == "xn--abcd-5n9aqdi"
     assert len(caplog.record_tuples) == 0
@@ -1595,7 +1595,7 @@ def test_idna_domain_to_unicode_use_std3_rules(caplog):
     caplog.set_level(logging.INFO)
 
     ascii_domain = "xn--abcd-5n9aqdi"
-    domain = "a\u2260b\u226Ec\u226Fd"
+    domain = "a\u2260b\u226ec\u226fd"
     assert IDNA.domain_to_unicode(ascii_domain) == domain
     assert len(caplog.record_tuples) == 0
 
@@ -3553,15 +3553,15 @@ def test_urlsearchparams_construct_raise_exception():
 def test_urlsearchparams_construct_with_surrogates():
     """URLSearchParams construct with 3 unpaired surrogates (no leading)"""
     params = URLSearchParams(
-        [["x\uDC53", "1"], ["x\uDC53", 2], ["x\uDC53", 3.0]]
+        [["x\udc53", "1"], ["x\udc53", 2], ["x\udc53", 3.0]]
     )
     assert len(params) == 3
-    assert params.get("x\uDC53") == "1"
-    assert params.get("x\uFFFD") == "1"
-    assert params.get_all("x\uDC53") == ("1", "2", "3.0")
-    assert params.get_all("x\uFFFD") == ("1", "2", "3.0")
+    assert params.get("x\udc53") == "1"
+    assert params.get("x\ufffd") == "1"
+    assert params.get_all("x\udc53") == ("1", "2", "3.0")
+    assert params.get_all("x\ufffd") == ("1", "2", "3.0")
 
-    params.delete("x\uFFFD")
+    params.delete("x\ufffd")
     assert len(params) == 0
 
 
