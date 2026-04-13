@@ -11,8 +11,8 @@ tests = [
         "output": [["a", "b"], ["a", "a"], ["z", "b"], ["z", "a"]],
     },
     {
-        "input": "\uFFFD=x&\uFFFC&\uFFFD=a",
-        "output": [["\uFFFC", ""], ["\uFFFD", "x"], ["\uFFFD", "a"]],
+        "input": "\ufffd=x&\ufffc&\ufffd=a",
+        "output": [["\ufffc", ""], ["\ufffd", "x"], ["\ufffd", "a"]],
     },
     {
         "input": "ﬃ&🌈",
@@ -20,8 +20,8 @@ tests = [
         "output": [["🌈", ""], ["ﬃ", ""]],
     },
     {
-        "input": "é&e\uFFFD&e\u0301",
-        "output": [["e\u0301", ""], ["e\uFFFD", ""], ["é", ""]],
+        "input": "é&e\ufffd&e\u0301",
+        "output": [["e\u0301", ""], ["e\ufffd", ""], ["é", ""]],
     },
     {
         "input": "z=z&a=a&z=y&a=b&z=x&a=c&z=w&a=d&z=v&a=e&z=u&a=f&z=t&a=g",
